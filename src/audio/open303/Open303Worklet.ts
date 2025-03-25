@@ -1,3 +1,4 @@
+import { linToExp, linToLin } from "./Functions";
 import { Open303 } from "./Open303";
 
 interface MidiMessage {
@@ -60,22 +61,49 @@ class Open303Processor extends AudioWorkletProcessor {
   }
 
   processMidiMessage(midiMessage: MidiMessage) {
-    console.log(midiMessage)
     switch (midiMessage.command) {
       case 0x90:
         if (midiMessage.data !== 0) {
-          console.log("303 note on", midiMessage)
+          // console.log("303 note on", midiMessage)
           this.synthUnit.noteOn(midiMessage.value, midiMessage.data, 0);
         } else {
-          console.log("303 note off (0x90)")
+          // console.log("303 note off (0x90)")
           this.synthUnit.noteOn(midiMessage.value, 0, 0);
-          // this.synthUnit.releaseNote(midiMessage.value);
         }
         break;
       case 0x80:
-        console.log("303 note off (0x80)")
+        // console.log("303 note off (0x80)")
         this.synthUnit.noteOn(midiMessage.value, 0, 0);
-        // this.synthUnit.releaseNote(midiMessage.value);
+        break;
+      case 0xB0:
+        switch (midiMessage.value) {
+          case 0x7b:
+            console.log("All Notes off", this.midiInput)
+            this.midiInput.length = 0;
+            this.synthUnit.allNotesOff();
+            break;
+          case 7:
+            this.synthUnit.setVolume(linToLin(midiMessage.data, 0.0, 1.0, -60.0, 0.0));
+            break;
+          case 74:
+            this.synthUnit.setCutoff(linToExp(midiMessage.data, 0.0, 127.0, 314.0,  2394.0));
+            break;
+          case 71:
+            this.synthUnit.setResonance(linToLin(midiMessage.data, 0.0, 127.0, 0.0, 100.0));
+            break;
+          case 81:
+            this.synthUnit.setEnvMod(linToLin(midiMessage.data, 0.0, 127.0, 0.0, 100.0));
+            break;
+          case 100:
+            this.synthUnit.setWaveform(linToLin(midiMessage.data, 0.0, 127.0, 0.0, 1.0));
+            break;
+          case 101:
+            this.synthUnit.setDecay(linToExp(midiMessage.data, 0.0, 127.0, 200.0, 2000.0));
+            break;
+          case 102:
+            this.synthUnit.setAccent(linToLin(midiMessage.data, 0.0, 127.0, 0.0, 100.0));
+            break;
+        }
         break;
       }
   }

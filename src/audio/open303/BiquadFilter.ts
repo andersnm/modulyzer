@@ -1,3 +1,5 @@
+import { dB2amp } from "./Functions";
+
 export class BiquadFilter {
   private frequency: number = 1000.0;
   private gain: number = 0.0;
@@ -77,7 +79,7 @@ export class BiquadFilter {
       case 2: // LOWPASS12
         s = Math.sin(w);
         c = Math.cos(w);
-        const qLP12 = this.dB2amp(this.gain);
+        const qLP12 = dB2amp(this.gain);
         const alphaLP12 = s / (2.0 * qLP12);
         const scaleLP12 = 1.0 / (1.0 + alphaLP12);
         this.a1 = 2.0 * c * scaleLP12;
@@ -99,7 +101,7 @@ export class BiquadFilter {
       case 4: // HIGHPASS12
         s = Math.sin(w);
         c = Math.cos(w);
-        const qHP12 = this.dB2amp(this.gain);
+        const qHP12 = dB2amp(this.gain);
         const alphaHP12 = s / (2.0 * qHP12);
         const scaleHP12 = 1.0 / (1.0 + alphaHP12);
         this.a1 = 2.0 * c * scaleHP12;
@@ -149,11 +151,6 @@ export class BiquadFilter {
     this.x2 = 0.0;
     this.y1 = 0.0;
     this.y2 = 0.0;
-  }
-
-  // Convert decibels to amplitude
-  private dB2amp(dB: number): number {
-    return Math.pow(10, dB / 20);
   }
 
   getSample(inn)

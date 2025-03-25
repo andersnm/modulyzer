@@ -75,8 +75,12 @@ export class Oscillator extends Instrument {
                 this.gainNode.gain.setTargetAtTime(0, time, 0.02)
             }
         } else if (command === 0xB0) {
-            // controller #1; the type
-            this.oscNode.type = oscTypeTable[value];
+            switch (value) {
+                case 0:
+                    // controller #1; the type
+                    this.oscNode.type = oscTypeTable[data];
+                    break;
+            }
         }
     }
 }

@@ -68,13 +68,18 @@ export class ComboDelay extends Instrument {
         this.dryGainNode.connect(this.outputNode);
     }
 
-    sendMidi(time: any, command: any, value: any, data: any) {
+    sendMidi(time: number, command: number, value: number, data: number) {
         // controller 0-3 mapped per pins
         if (command === 0xB0) {
-            // controller #1; delay ms
-            this.delayNode.delayTime.setValueAtTime(value, time);
-        } else if (command === 0xB1) {
-            this.delayGainNode.gain.setValueAtTime(value, time);
+            switch (value) {
+                case 0:
+                    this.delayNode.delayTime.setValueAtTime(data, time);
+                    break;
+                case 1:
+                    // controller #1; delay ms
+                    this.delayGainNode.gain.setValueAtTime(value, time);
+                    break;
+            }
         }
     }
 }

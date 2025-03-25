@@ -3,22 +3,12 @@ import { BiquadFilter } from "./BiquadFilter";
 import { BlendOscillator } from "./BlendOscillator";
 import { DecayEnvelope } from "./DecayEnvelope";
 import { EllipticQuarterBandFilter } from "./EllipticQuarterBandFilter";
+import { dB2amp, expToLin, linToLin, pitchToFreq } from "./Functions";
 import { LeakyIntegrator } from "./LeakyIntegrator";
 import { MipMappedWaveTable } from "./MipMappedWavetable";
 import { OnePoleFilter } from "./OnePoleFilter";
 import { TeeBeeFilter } from "./TeeBeeFilter";
 
-// function pitchToFreq(pitch)
-// {
-//   return 8.1757989156437073336828122976033 * Math.exp(0.057762265046662109118102676788181*pitch);
-//   //return 440.0*( pow(2.0, (pitch-69.0)/12.0) ); // naive, slower but numerically more precise
-// }
-
-function pitchToFreq(pitch, masterTuneA4 = 440)
-{
-  return masterTuneA4 * 0.018581361171917516667460937040007
-    * Math.exp(0.057762265046662109118102676788181*pitch);
-}
 
 export class Open303 {
   static oversampling = 4;
@@ -133,13 +123,7 @@ export class Open303 {
     this.filter = new TeeBeeFilter();
     this.antiAliasFilter = new EllipticQuarterBandFilter();
     // this.sequencer = new ;
-    this.noteList = []; /*{
-      clear: () => {},
-      remove: (note: any) => {},
-      empty: () => true,
-      front: () => ({ getKey: () => -1, getVelocity: () => 0 }),
-      push_front: (note: any) => {},
-    };*/
+    this.noteList = [];
   }
 
   setSampleRate(newSampleRate: number): void {
@@ -155,13 +139,21 @@ export class Open303 {
     this.allpass.setSampleRate(newSampleRate);
     this.notch.setSampleRate(newSampleRate);
 
-    const oversampling = 4; // Example value
-    this.highpass1.setSampleRate(oversampling * newSampleRate);
+    this.highpass1.setSampleRate(Open303.oversampling * newSampleRate);
 
-    this.oscillator.setSampleRate(oversampling * newSampleRate);
-    this.filter.setSampleRate(oversampling * newSampleRate);
+    this.oscillator.setSampleRate(Open303.oversampling * newSampleRate);
+    this.filter.setSampleRate(Open303.oversampling * newSampleRate);
   }
 
+  setWaveform(newWaveform: number) { 
+    this.oscillator.setBlendFactor(newWaveform); 
+  }
+
+  setVolume(newLevel: number) {
+    this.level = newLevel;
+    this.ampScaler = dB2amp(this.level);
+  }
+  
   setEnvMod(newEnvMod: number): void {
     this.envMod = newEnvMod;
     this.calculateEnvModScalerAndOffset();
@@ -204,8 +196,8 @@ export class Open303 {
       const sHiF = 4.194548788411135;
       const sHiC = 0.864344900642434;
 
-      const e = this.linToLin(this.envMod, 0.0, 100.0, 0.0, 1.0);
-      const c = this.expToLin(this.cutoff, c0, c1, 0.0, 1.0);
+      const e = linToLin(this.envMod, 0.0, 100.0, 0.0, 1.0);
+      const c = expToLin(this.cutoff, c0, c1, 0.0, 1.0);
       const sLo = sLoF * e + sLoC;
       const sHi = sHiF * e + sHiC;
       this.envScaler = (1 - c) * sLo + c * sHi;
@@ -217,14 +209,6 @@ export class Open303 {
       this.envOffset =
         this.envScaler !== 0.0 ? -(downRatio - 1.0) / (upRatio - downRatio) : 0.0;
     }
-  }
-
-  private linToLin(value: number, minSrc: number, maxSrc: number, minDst: number, maxDst: number): number {
-    return ((value - minSrc) / (maxSrc - minSrc)) * (maxDst - minDst) + minDst;
-  }
-
-  private expToLin(value: number, minSrc: number, maxSrc: number, minDst: number, maxDst: number): number {
-    return Math.log(value / minSrc) / Math.log(maxSrc / minSrc) * (maxDst - minDst) + minDst;
   }
 
   private pitchOffsetToFreqFactor(offset: number): number {

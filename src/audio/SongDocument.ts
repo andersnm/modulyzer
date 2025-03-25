@@ -382,6 +382,7 @@ export class SongDocument extends EventTarget {
 
     exportProjectJson() {
         const project = {
+            bpm: this.bpm,
             instruments: this.instruments.map(instrument => ({
                 name: instrument.name,
                 ref: instrument.instrumentId,
@@ -427,10 +428,13 @@ export class SongDocument extends EventTarget {
     }
 
     importProjectJson(json) {
-        // this.instruments = [];
-        // this.connections = [];
-        // this.patterns = [];
         this.clearAll();
+
+        if (json.bpm) {
+            this.setBpm(json.bpm);
+        } else {
+            this.setBpm(125);
+        }
 
         for (let jsonInstrument of json.instruments) {
             const i = this.createInstrument(jsonInstrument.ref, jsonInstrument.name, jsonInstrument.x, jsonInstrument.y);

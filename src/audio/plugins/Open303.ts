@@ -24,6 +24,21 @@ export class Open303Factory extends InstrumentFactory {
                 type: "note",
                 name: "Note",
             },
+            {
+                type: "controller",
+                name: "Cutoff",
+                value: 74,
+            },
+            {
+                type: "controller",
+                name: "Resonance",
+                value: 71,
+            },
+            {
+                type: "controller",
+                name: "EnvMod",
+                value: 81,
+            },
         ];
     }
 
@@ -44,7 +59,7 @@ export class Open303 extends Instrument {
         this.outputNode = this.open303Node;
     }
 
-    sendMidi(time: any, command: any, value: any, data: any) {
+    sendMidi(time: number, command: number, value: number, data: number) {
         this.open303Node.port.postMessage({type:"midi", time, command, value, data});
     }
 }
