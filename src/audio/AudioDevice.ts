@@ -23,6 +23,9 @@ export class AudioDevice {
         const dx7WorkletUrl = new URL("./dx7/Dx7Worklet.ts", import.meta.url);
         await this.context.audioWorklet.addModule(dx7WorkletUrl);
 
+        const open303WorkletUrl = new URL("./Open303/Open303Worklet.ts", import.meta.url);
+        await this.context.audioWorklet.addModule(open303WorkletUrl);
+
         // TODO; record differently and on-demand
 
         const stream = await navigator.mediaDevices.getUserMedia({audio: {advanced: [{ deviceId: inputDeviceId}]}, video: false});

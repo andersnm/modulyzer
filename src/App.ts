@@ -16,6 +16,7 @@ import { ReverbFactory } from "./audio/plugins/Reverb";
 import { Dx7Factory } from "./audio/plugins/Dx7";
 import { Player } from "./audio/Player";
 import { WaveTrackerFactory } from "./audio/plugins/WaveTracker";
+import { Open303Factory } from "./audio/plugins/Open303";
 
 function patternEventNoteOn(time: number, note: number, velocity: number = 127, channel: number = 0) {
     return { 
@@ -167,6 +168,7 @@ export class Appl extends ApplicationBase implements IComponent {
         new ReverbFactory(),
         new Dx7Factory(),
         new WaveTrackerFactory(),
+        new Open303Factory(),
     ];
 
     constructor() {
