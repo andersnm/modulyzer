@@ -436,12 +436,7 @@ export class Player {
                         instrument.sendMidi(deviceTime + event.time, 0xB0 + pin.value, event.value, 0);
                     } else if (pin.type === "note") {
                         console.log("Sending note", column, deviceTime, event.time, event.value, event.data0);
-                        if (event.data0 !== 0) {
-                            // use nonzero data1 for note-on, data0 is velocity
-                            instrument.sendMidi(deviceTime + event.time, 0x90, event.value, event.data0);
-                        } else {
-                            instrument.sendMidi(deviceTime + event.time, 0x91, event.value, 0);
-                        }
+                        instrument.sendMidi(deviceTime + event.time, 0x90, event.value, event.data0);
                     } else {
                         console.error("Unknown pin type" + pin.type);
                     }

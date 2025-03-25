@@ -62,23 +62,16 @@ export class WaveTracker extends Instrument {
 
     sendMidi(time: any, command: any, value: any, data: any) {
         if (command === 0x90) {
-            // note on -> map to wav
-            // create new buffersource, stop previous in channel - we dont ave cannels
-            // const freq = value; //noteToFreq(value);
-
             const wave = this.getWaveByNote(value);
             if (!wave) {
                 return;
             }
 
-            // const myArrayBuffer = context.createBuffer(1, panel.document.recording.buffers[0].length, context.sampleRate);
-            // const nowBuffering = myArrayBuffer.getChannelData(0);
-            // nowBuffering.set(panel.document.recording.buffers[0])
-
             const node = this.context.createBufferSource();
             node.buffer = wave.audioBuffer;
             node.addEventListener("ended", () => {
-                console.log("end of playback")
+                console.log("end of playback");
+
             });
 
             console.log("wave note on, ", value, time)
@@ -86,9 +79,6 @@ export class WaveTracker extends Instrument {
             node.connect(this.gainNode);
 
             node.start(time);
-
-        } else if (command === 0x91) {
-            console.log("osc note off, ", time)
         } else if (command === 0xB0) {
             // controller #1; the type
             // this.oscNode.type = oscTypeTable[value];

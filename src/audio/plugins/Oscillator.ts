@@ -63,15 +63,17 @@ export class Oscillator extends Instrument {
 
     sendMidi(time: number, command: number, value: number, data: number): void {
         if (command === 0x90) {
-            // note on
-            const freq = noteToFreq(value);
-            console.log("osc note on, ", value, freq, time)
-            this.oscNode.frequency.setValueAtTime(freq, time);
-            this.gainNode.gain.setTargetAtTime(1, time, 0.02)
-        } else if (command === 0x91) {
-            // note off
-            console.log("osc note off, ", time)
-            this.gainNode.gain.setTargetAtTime(0, time, 0.02)
+            if (data !== 0) {
+                // note on
+                const freq = noteToFreq(value);
+                console.log("osc note on, ", value, freq, time)
+                this.oscNode.frequency.setValueAtTime(freq, time);
+                this.gainNode.gain.setTargetAtTime(1, time, 0.02)
+            } else {
+                // note off
+                console.log("osc note off, ", time)
+                this.gainNode.gain.setTargetAtTime(0, time, 0.02)
+            }
         } else if (command === 0xB0) {
             // controller #1; the type
             this.oscNode.type = oscTypeTable[value];
