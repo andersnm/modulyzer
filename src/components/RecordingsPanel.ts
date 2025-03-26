@@ -71,22 +71,14 @@ export class RecordingsPanel implements IComponent {
                 type: "button",
                 icon: "hgi-stroke hgi-plus-sign-square",
                 label: "New...",
-                // action: "create-new-recording",
                 click: () => app.executeCommand("show-create-new-recording"),
             },
             {
                 type: "button",
                 icon: "hgi-stroke hgi-folder",
                 label: "Open...",
-                click: () => app.executeCommand("show-open-wave"),
+                click: () => app.uploadWave(),
             },
-            // {
-            //     type: "button",
-            //     icon: "hgi-stroke hgi-refresh",
-            //     label: "Refresh...",
-            //     click: () => this.bind(),
-            //     // action: "refresh-recordings",
-            // },
         ]);
 
         this.list = new DataTable(this);

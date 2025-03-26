@@ -17,6 +17,7 @@ import { Dx7Factory } from "./audio/plugins/Dx7";
 import { Player } from "./audio/Player";
 import { WaveTrackerFactory } from "./audio/plugins/WaveTracker";
 import { Open303Factory } from "./audio/plugins/Open303";
+import { WAVDecoder } from "./wavefile/WAVDecoder";
 
 function patternEventNoteOn(time: number, note: number, velocity: number = 127, channel: number = 0) {
     return { 
@@ -337,6 +338,7 @@ export class Appl extends ApplicationBase implements IComponent {
     uploadProject() {
         const input = document.createElement("input");
         input.type = "file";
+        input.accept = ".json";
 
         input.onchange = (event: Event) => {
             const target = event.target as HTMLInputElement;
@@ -349,6 +351,30 @@ export class Appl extends ApplicationBase implements IComponent {
                     // callback(reader.result);
                 };
                 reader.readAsText(file);
+            }
+        };
+
+        input.click();
+    }
+
+    uploadWave() {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".wav";
+
+        input.onchange = (event: Event) => {
+            const target = event.target as HTMLInputElement;
+            const file = target.files?.[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    console.log("QAV", reader.result);
+                    const dc = new WAVDecoder();
+                    const wav = dc.decode(reader.result as ArrayBuffer)
+                    console.log(wav);
+                    this.song.createWave(file.name, wav.length, wav.sampleRate, wav.channels);
+                };
+                reader.readAsArrayBuffer(file);
             }
         };
 
