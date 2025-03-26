@@ -18,6 +18,7 @@ class Open303Processor extends AudioWorkletProcessor {
 
     console.log("303 inits");
     this.synthUnit = new Open303();
+    this.synthUnit.setSampleRate(sampleRate);
     this.synthUnit.setCutoff(500); // expToLin( 500.0,  314.0,  2394.0, 0.0,  1.0);
     this.synthUnit.setResonance(50); // linToLin(  50.0,    0.0,   100.0, 0.0,  1.0);
     this.synthUnit.setEnvMod(0.25)

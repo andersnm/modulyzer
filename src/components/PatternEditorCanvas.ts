@@ -2,7 +2,7 @@ import { IComponent } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 import { Appl } from "../App";
 import { InstrumentDocument, PatternDocument } from "../audio/SongDocument";
-import { formatNote, formatU8, getCursorColumnAt, getCursorColumnAtPosition, getCursorColumnIndex, getPatternRenderColumns, getRenderColumnWidth } from "./PatternEditorHelper";
+import { CursorColumnInfo, formatNote, formatU8, getCursorColumnAt, getCursorColumnAtPosition, getCursorColumnIndex, getCursorColumns, getPatternRenderColumns, getRenderColumnWidth } from "./PatternEditorHelper";
 
 const maxPolyphonic = 8;
 
@@ -13,6 +13,7 @@ export class PatternEditorCanvas implements IComponent {
     cursorColumn: number = 0;
     cursorTime: number = 0;
     pattern: PatternDocument;
+    scrollRow: number = 0;
 
     constructor(app: Appl) {
         this.app = app;
@@ -74,8 +75,7 @@ export class PatternEditorCanvas implements IComponent {
         }
 
         this.cursorColumn = getCursorColumnIndex(renderColumns, cursorColumn); //.position; // index!
-
-        this.cursorTime = Math.floor(e.offsetY / fontHeight) - 1;
+        this.cursorTime = Math.floor(e.offsetY / fontHeight) - 1 + this.scrollRow;
 
         this.redrawCanvas();
     };
@@ -95,18 +95,18 @@ export class PatternEditorCanvas implements IComponent {
         // console.log("KEYPP", e.key)
         switch (e.key) {
             case "ArrowUp":
-            // TODO; cursor in document
                 if (this.cursorTime> 0) {
                     this.cursorTime--;
+                    this.scrollIntoView();
                     this.redrawCanvas();
                     e.stopPropagation(); // dont run global handler
                     e.preventDefault(); // dont do canvas default
                 }
                 break;
             case "ArrowDown":
-                // TODO: max sequencer length
-                if (this.cursorTime < 8192) {
+                if (this.cursorTime < this.pattern.duration) {
                     this.cursorTime++;
+                    this.scrollIntoView();
                     this.redrawCanvas();
                     e.stopPropagation(); // dont run global handler
                     e.preventDefault(); // dont do canvas default
@@ -141,6 +141,48 @@ export class PatternEditorCanvas implements IComponent {
                 break;
             case "Backspace":
                 break;
+            case "Tab":
+                if (e.shiftKey) {
+                    this.movePreviousColumn();
+                } else {
+                    this.moveNextColumn();
+                }
+                this.scrollIntoView();
+                this.redrawCanvas();
+                e.stopPropagation(); // dont run global handler
+                e.preventDefault(); // dont do canvas default
+                break;
+            case "Home":
+                this.cursorColumn = 0;
+                this.scrollIntoView();
+                this.redrawCanvas();
+                e.stopPropagation(); // dont run global handler
+                e.preventDefault(); // dont do canvas default
+                break;
+            case "End":
+                const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
+                const cursorColumns = getCursorColumns(renderColumns);
+                this.cursorColumn = cursorColumns.length - 1;
+                this.scrollIntoView();
+                this.redrawCanvas();
+                e.stopPropagation(); // dont run global handler
+                e.preventDefault(); // dont do canvas default
+                break;
+            case "PageUp":
+                this.cursorTime = Math.max(this.cursorTime - 16, 0);
+                this.scrollIntoView();
+                this.redrawCanvas();
+                e.stopPropagation(); // dont run global handler
+                e.preventDefault(); // dont do canvas default
+                break;
+
+            case "PageDown":
+                this.cursorTime = Math.min(this.cursorTime + 16, this.pattern.duration);
+                this.scrollIntoView();
+                this.redrawCanvas();
+                e.stopPropagation(); // dont run global handler
+                e.preventDefault(); // dont do canvas default
+                break;
             default:
                 console.log(e);
                 break;
@@ -156,6 +198,65 @@ export class PatternEditorCanvas implements IComponent {
             this.onNumberKeyDown(e);
         }
     };
+
+    moveNextColumn() {
+        const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
+        const cursorColumns = getCursorColumns(renderColumns);
+        const ccc = cursorColumns[this.cursorColumn];
+
+        for (let i = this.cursorColumn + 1; i < cursorColumns.length; i++) {
+            const cc = cursorColumns[i];
+            if (ccc.tabStep != cc.tabStep) {
+                this.cursorColumn = i;
+                break;
+            }
+        }
+    }
+
+    movePreviousColumn() {
+        const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
+        const cursorColumns = getCursorColumns(renderColumns);
+
+        let ccc = cursorColumns[this.cursorColumn];
+        let i: number;
+
+        // first scan backwards until tabStep changes
+        for (i = this.cursorColumn - 1; i >= 0; i--) {
+            const cc = cursorColumns[i];
+            if (ccc.tabStep != cc.tabStep) {
+                break;
+            }
+        }
+
+        ccc = cursorColumns[i];
+
+        // then find first column in current tabstep
+        for (; i >= 0; i--) {
+            const cc = cursorColumns[i];
+            if (ccc.tabStep != cc.tabStep) {
+                break;
+            }
+        }
+
+        this.cursorColumn = i + 1;
+    }
+
+    scrollIntoView() {
+        const ctx = this.canvas.getContext("2d");
+        ctx.font = "14px monospace";
+        const em = ctx.measureText("M");
+        const fontHeight = em.fontBoundingBoxAscent + em.fontBoundingBoxDescent;
+
+        const visibleRows = Math.floor(this.canvas.height / fontHeight) - 1;
+
+        if (this.cursorTime - this.scrollRow > visibleRows) {
+            this.scrollRow = this.cursorTime - visibleRows
+        }
+
+        if (this.cursorTime - this.scrollRow < 0) {
+            this.scrollRow = this.cursorTime;
+        }
+    }
 
     deleteAtCursor() {
         const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
@@ -375,23 +476,28 @@ export class PatternEditorCanvas implements IComponent {
                     continue;
                 }
 
+                let eventScreenTime = patternEvent.time - this.scrollRow;
+                if (eventScreenTime < 0) {
+                    continue;
+                }
+
                 ctx.fillStyle = "#FFF";
 
                 if (renderColumn.type === "note") {
                     if (patternEvent.data0 !== 0) {
-                        ctx.fillText(formatNote(patternEvent.value), x, patternEvent.time * fontHeight + em.fontBoundingBoxAscent + fontHeight)
+                        ctx.fillText(formatNote(patternEvent.value), x, eventScreenTime * fontHeight + em.fontBoundingBoxAscent + fontHeight)
                     } else {
-                        ctx.fillText("---", x, patternEvent.time * fontHeight + em.fontBoundingBoxAscent + fontHeight)
+                        ctx.fillText("---", x, eventScreenTime * fontHeight + em.fontBoundingBoxAscent + fontHeight)
                     }
                 } else if (renderColumn.type === "velo") {
                     if (patternEvent.data0 != 0) {
-                        ctx.fillText(formatU8(patternEvent.data0), x, patternEvent.time * fontHeight + em.fontBoundingBoxAscent + fontHeight)
+                        ctx.fillText(formatU8(patternEvent.data0), x, eventScreenTime * fontHeight + em.fontBoundingBoxAscent + fontHeight)
                     } else {
-                        ctx.fillText("--", x, patternEvent.time * fontHeight + em.fontBoundingBoxAscent + fontHeight)
+                        ctx.fillText("--", x, eventScreenTime * fontHeight + em.fontBoundingBoxAscent + fontHeight)
                     }
                 } else {
                     const value = patternEvent.value;
-                    ctx.fillText(formatU8(value), x, patternEvent.time * fontHeight + em.fontBoundingBoxAscent + fontHeight)
+                    ctx.fillText(formatU8(value), x, eventScreenTime * fontHeight + em.fontBoundingBoxAscent + fontHeight)
                 }
             }
 
@@ -405,17 +511,30 @@ export class PatternEditorCanvas implements IComponent {
             ctx.stroke();
         }
 
+        // cursor
         const currentCursorColumn = getCursorColumnAt(renderColumns, this.cursorColumn);
         if (currentCursorColumn) {
+            ctx.save();
             const cursorX = currentCursorColumn.position * em.width;
             const cursorWidth = currentCursorColumn.size * em.width;
             ctx.fillStyle = "#FFF";
-
-            const ori = ctx.globalCompositeOperation;
             ctx.globalCompositeOperation = "difference";
-            ctx.fillRect(cursorX, (this.cursorTime * fontHeight) + fontHeight, cursorWidth, fontHeight)
-            ctx.globalCompositeOperation = ori;
+            ctx.fillRect(cursorX, ((this.cursorTime - this.scrollRow) * fontHeight) + fontHeight, cursorWidth, fontHeight)
+            ctx.restore();
         }
+
+        // scroll
+        const visibleRows = Math.floor(this.canvas.height / fontHeight) - 1;
+        const totalRows = this.pattern.duration;
+
+        ctx.strokeStyle = "#FFF";
+        ctx.strokeRect(this.canvas.width - 20, 0, 20, this.canvas.height)
+
+        const scrollbarHeight = Math.floor((visibleRows / totalRows) * this.canvas.height);
+        const scrollbarPosition = Math.floor((this.scrollRow / totalRows) * this.canvas.height);
+
+        ctx.fillStyle = "#AAA";
+        ctx.fillRect(this.canvas.width - 20, scrollbarPosition, 20, scrollbarHeight);
     }
 
     getDomNode(): Node {
