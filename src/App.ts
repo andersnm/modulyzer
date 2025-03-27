@@ -18,6 +18,7 @@ import { Player } from "./audio/Player";
 import { WaveTrackerFactory } from "./audio/plugins/WaveTracker";
 import { Open303Factory } from "./audio/plugins/Open303";
 import { WAVDecoder } from "./wavefile/WAVDecoder";
+import { WAVEncoder, WAVFormat } from "./wavefile/WAVEncoder";
 
 function patternEventNoteOn(time: number, note: number, velocity: number = 127, channel: number = 0) {
     return { 
@@ -379,6 +380,22 @@ export class Appl extends ApplicationBase implements IComponent {
         };
 
         input.click();
+    }
+
+    downloadWave(wave: WaveDocumentEx) {
+        const enc = new WAVEncoder();
+        const wav = enc.encode(wave.sampleRate, WAVFormat.Int32, wave.buffers )
+        let blob = new Blob([wav], {type: "application/wav"});
+
+        var a = window.document.createElement("a");
+        window.document.body.appendChild(a);
+        a.style.display = "none";
+
+        var url = window.URL.createObjectURL(blob);
+        a.href = url;
+        a.download = "test.wav";
+        a.click();
+        window.URL.revokeObjectURL(url);
     }
 
     recordWave: WaveDocumentEx = null;

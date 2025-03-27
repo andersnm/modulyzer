@@ -13,15 +13,13 @@ export class WaveEditorCanvas implements IComponent {
     zoom?: WaveRange;
     playPosition: number;
     mouseDown: boolean = false;
-    selectionStart: number = 0;
-    selectionEnd: number = 0;
 
     constructor(parent: INotify) {
         this.parent = parent;
         this.container = document.createElement("div");
         this.container.className = "flex-1 w-full pb-1";
-        
-        this.canvas = FlexCanvas(); // document.createElement("canvas");
+
+        this.canvas = FlexCanvas();
         this.canvas.className = "rounded-lg";
         this.canvas.tabIndex = 0;
 
@@ -40,79 +38,42 @@ export class WaveEditorCanvas implements IComponent {
     }
 
     onMounted = () => {
-        console.log("MOUTNED WE")
-
-        // window.addEventListener("resize", this.onResize)
-        // this.onResize();
     };
 
     onUnmounted = () => {
-        // window.removeEventListener("resize", this.onResize)
     };
 
     onResize = () => {
-        // console.log("W!!window resize");
         this.redrawCanvas();
     };
 
-    onMouseDown = (e: MouseEvent) => {
-        // TODO; POINTER EVENTS INSTEAD?? setPointerCapture
-        console.log("ITS A DOWN")
-
+    onMouseDown = (e: PointerEvent) => {
         if (!this.mouseDown) {
-            if (this.selectionStart !== this.selectionEnd) {
-                // clear selection
-                // this.dispatch(this.props, "select", null);
-            }
+            this.clearSelection();
 
             this.mouseDown = true;
-            this.selectionStart = samplePositionFromPixel(this.canvas, e.offsetX, this.zoom, this.buffers[0].length);
-
-            this.redrawCanvas();
+            const samplePosition = samplePositionFromPixel(this.canvas, e.offsetX, this.zoom, this.buffers[0].length);
+            this.setSelection(samplePosition, samplePosition);
+            this.canvas.setPointerCapture(e.pointerId);
         }
     };
 
-    onMouseUp = (e: MouseEvent) => {
-        // TODO; POINTER EVENTS INSTEAD?? setPointerCapture
+    onMouseUp = (e: PointerEvent) => {
         if (!this.mouseDown) {
             return;
         }
 
         this.mouseDown = false;
-        // emit selection changed, if changed
+        this.canvas.releasePointerCapture(e.pointerId);
     };
 
     onMouseMove = (e: MouseEvent) => {
-        // TODO; POINTER EVENTS INSTEAD?? setPointerCapture
         if (!this.mouseDown) {
             return;
         }
 
-        // set new selection -> canvas px to samplePos
-        // const n = e.offsetX / this.canvas.width;
-        // const samplePosition = Math.floor(n * this.props.recordingBuffer.length);
-        this.selectionEnd = samplePositionFromPixel(this.canvas, e.offsetX, this.zoom, this.buffers[0].length);
-
-        // const selection = {
-        //     start: Math.min(this.selectionStart, this.selectionEnd),
-        //     end: Math.max(this.selectionStart, this.selectionEnd),
-        // };
-
-        console.log("ITS A MOV", this.selectionStart, this.selectionEnd)
-        
-        this.parent.notify(this, "selchange");
-
-        this.redrawCanvas();
-
-        // this.props.selection = {
-        //     start: Math.min(this.selectionStart, this.selectionEnd),
-        //     end: Math.max(this.selectionStart, this.selectionEnd),
-        // };
-
-        // should react to selection? dispatch selection changed
-        // this.dispatch(this.props, "select", selection)
-
-        // console.log(e.offsetX, e.offsetY, "SAMPLEPOS", samplePosition )
+        const samplePosition = samplePositionFromPixel(this.canvas, e.offsetX, this.zoom, this.buffers[0].length);
+        this.setSelection(this.selection.start, samplePosition);
     };
 
     onContextMenu = (e: MouseEvent) => {
@@ -125,16 +86,40 @@ export class WaveEditorCanvas implements IComponent {
         e.preventDefault();
     };
 
-    setSelection(start, end) {
-        
+    setSelection(start: number, end: number) {
+        if (this.selection && this.selection.start === start && this.selection.end === end) {
+            return;
+        }
+
+        this.selection = { start, end };
+
+        console.log(this.selection)
+        this.parent.notify(this, "selchange");
+        this.redrawCanvas();
+    }
+
+    clearSelection() {
+        if (!this.selection) {
+            return;
+        }
+
+        this.selection = null;
+        this.parent.notify(this, "selchange");
+        this.redrawCanvas();
+    }
+
+    setZoom(start: number, end: number) {
+        if (this.zoom && this.zoom.start === start && this.zoom.end === end) {
+            return;
+        }
+
+        console.log("edit: zoom")
+        this.zoom = { start, end };
+        this.parent.notify(this, "zoomchange");
+        this.redrawCanvas();
     }
 
     redrawCanvas() {
-        // if (!this.props) return;
-
-        console.log("REDRAW")
-        // need to lookup component from -- canvas dom?? and then call this, it gets nasty
-        // console.log("HELLO REDRAW REQUESTED", this.props.recordingBuffer)
         const ctx = this.canvas.getContext("2d");
 
         // Need height space for scrollbar, and time maarkers - want "full wave preview with timestamps, dragable-zoom-range-handles and scroll"
@@ -150,24 +135,16 @@ export class WaveEditorCanvas implements IComponent {
         }
 
         // marg mellom channels; neutral-800 bar, height 0,25rem
-
-        const start = Math.min(this.selectionStart, this.selectionEnd);
-        const end = Math.max(this.selectionStart, this.selectionEnd);
-
         for (let i = 0; i < channelCount; i++) {
-            console.log("REDRAW-X", i)
             drawWaveBuffer(ctx, 0, channelMargin * i + h * i, this.canvas.width, h, this.zoom, this.playPosition, this.buffers[i], "#000", "#fff");
 
-            if (start && end)
+            if (this.selection) {
+                const start = Math.min(this.selection.start, this.selection.end);
+                const end = Math.max(this.selection.start, this.selection.end);
+        
                 drawWaveRange(ctx, 0, channelMargin * i + h * i, this.canvas.width, h, this.zoom, {start, end}, this.buffers[i].length, "#FFF");
-
+            }
         }
-
-        // // will do a separate WaveScrollCanvas, WaveEditCanvas
-        // for (let i = 0; i < channelCount; i++) {
-        //     this.drawBuffer(ctx, 0, editorHeight + channelMargin + sh * i, this.canvas.width, sh, null, this.props.buffers[0]);
-        // }
-
     }
 
     getDomNode(): Node {

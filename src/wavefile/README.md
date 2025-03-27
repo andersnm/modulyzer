@@ -2,4 +2,5 @@ https://github.com/oampo/audiofile.js
 
 License: WTFPL
 
-Ported to TypeScript using Bing Copilot.
+Decoder ported to TypeScript using Bing Copilot. 
+Encoder implemented by Bing Copilot. 
