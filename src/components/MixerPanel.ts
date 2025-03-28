@@ -37,7 +37,7 @@ export class MixerPanel implements IComponent {
 
     async addInstrument() {
         const instrumentFactoryPicker = new InstrumentFactoryPicker(this.app, this);
-        const result = await this.app.modalDialogContainer.showModal(instrumentFactoryPicker)
+        const result = await this.app.modalDialogContainer.showModal("Select Instrument", instrumentFactoryPicker)
         if (!result) {
             return;
         }

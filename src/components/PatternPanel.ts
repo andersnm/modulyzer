@@ -35,7 +35,7 @@ export class PatternPanel implements IComponent {
 
     async addColumn() {
         const instrumentPinPicker = new InstrumentPinPicker(this.app, this);
-        const result = await this.app.modalDialogContainer.showModal(instrumentPinPicker)
+        const result = await this.app.modalDialogContainer.showModal("Select Instrument and Pin", instrumentPinPicker)
         if (!result) {
             return;
         }

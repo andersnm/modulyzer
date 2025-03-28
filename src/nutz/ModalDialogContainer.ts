@@ -14,7 +14,7 @@ export class ModalDialogContainer {
     constructor() {
     }
 
-    async showModal(content: IComponent) {
+    async showModal(title: string, content: IComponent) {
 
         // insert wrapper in body, render topmost modal
         //             new NutzElement("div", { className: "relative z-10",
@@ -38,7 +38,7 @@ export class ModalDialogContainer {
             });
         }, new DomText("X"));
 
-        const dialogPanel = new Panel(new DomText("Titl"), closeContainer, content);
+        const dialogPanel = new Panel(new DomText(title), closeContainer, content);
 
         dialogInnerWrapNode.appendChild(dialogPanel.getDomNode())
         dialogInnerNode.appendChild(dialogInnerWrapNode);
@@ -48,20 +48,9 @@ export class ModalDialogContainer {
 
         document.body.appendChild(wrapperNode);
 
-        // dialog = return new NutzElement("div", {
-        // className: "fixed inset-0 z-10 w-screen overflow-y-auto",
-        // content: () => new NutzElement("div", {
-        //     className: "flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0",
-        //     // <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-        //     content: () => new NutzElement("div", {
-        //         className: "relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg",
-        //         content: () => new Panel({
-
         // return promise tat resulves when dialog is closed
         // and the content must be able to endDialog too
         return new Promise((resolve) => {
-            // this.resolveStack.push(resolve);
-            
             this.modalStack.push({
                 resolve,
                 element: wrapperNode

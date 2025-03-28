@@ -21,7 +21,7 @@ export class CreateWaveCommand implements INotify {
     async handle() {
         const audioConfiguration = new CreateWavePanel(this);
 
-        const result = await this.app.modalDialogContainer.showModal(audioConfiguration);
+        const result = await this.app.modalDialogContainer.showModal("Create Wave", audioConfiguration);
 
         if (result) {
             const channelCount = audioConfiguration.channels;

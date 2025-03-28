@@ -85,7 +85,7 @@ export class WavePanel implements IComponent {
     async showWaveProperties() {
         const wavePanel = new WavePropertiesPanel(this.app, this, this.document.name, this.document.note);
         
-        const result = await this.app.modalDialogContainer.showModal(wavePanel);
+        const result = await this.app.modalDialogContainer.showModal("Wave Properties", wavePanel);
 
         if (!result) {
             return;

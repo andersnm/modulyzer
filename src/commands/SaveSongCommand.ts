@@ -20,7 +20,7 @@ export class SaveSongCommand implements INotify {
 
         const savePanel = new SaveAsPanel(this.app, this, this.app.song.name + ".json");
 
-        const result = await this.app.modalDialogContainer.showModal(savePanel);
+        const result = await this.app.modalDialogContainer.showModal("Save As", savePanel);
 
         if (!result) {
             return;
