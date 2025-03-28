@@ -1,13 +1,16 @@
 import { ButtonToolbar, FormGroup, IComponent, INotify } from "../nutz";
+import { bindNoteDropdown } from "./PatternEditorHelper";
 
 export class CreateNewPanel implements IComponent {
     parent: INotify;
     container: HTMLElement;
     nameInput: HTMLInputElement;
     durationInput: HTMLInputElement;
+    noteSelect: HTMLSelectElement;
 
     name: string = "Untitled";
     duration: number = 600;
+    note: number = 60;
 
     constructor(parent: INotify) {
         this.parent = parent;
@@ -34,6 +37,16 @@ export class CreateNewPanel implements IComponent {
 
         const durationGroup = FormGroup("Duration (sec)", this.durationInput);
 
+        this.noteSelect = document.createElement("select");
+        this.noteSelect.className = "w-full rounded-lg p-1 bg-neutral-800";
+        this.noteSelect.addEventListener("change", () => {
+            this.note = parseInt(this.noteSelect.value);
+        });
+
+        bindNoteDropdown(this.noteSelect, this.note);
+
+        const noteGroup = FormGroup("Note", this.noteSelect);
+
         const buttonContainer = ButtonToolbar([
             {
                 type: "button",
@@ -51,6 +64,7 @@ export class CreateNewPanel implements IComponent {
 
         this.container.appendChild(nameGroup);
         this.container.appendChild(durationGroup);
+        this.container.appendChild(noteGroup);
         this.container.appendChild(buttonContainer);
     }
 

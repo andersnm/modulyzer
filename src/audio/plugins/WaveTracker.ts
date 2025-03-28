@@ -1,4 +1,4 @@
-import { Player } from "../Player";
+import { Player, Wave } from "../Player";
 import { Instrument, InstrumentFactory, Pin, PIN_FLAG_WAVE } from "./InstrumentFactory";
 
 export class WaveTrackerFactory extends InstrumentFactory {
@@ -33,12 +33,16 @@ export class WaveTrackerFactory extends InstrumentFactory {
     }
 }
 
+interface WaveNode {
+    wave: Wave;
+    node: AudioBufferSourceNode;
+}
+
 export class WaveTracker extends Instrument {
     context: AudioContext;
     player: Player;
-    // reverbNode: AudioBufferSourceNode;
     gainNode: GainNode;
-    nodes: AudioBufferSourceNode[] = []; // TODO; note+node
+    nodes: WaveNode[] = []; // TODO; note+node
 
     constructor(context: AudioContext, factory: InstrumentFactory, player: Player) {
         super(factory);
@@ -51,37 +55,65 @@ export class WaveTracker extends Instrument {
     }
 
     getWaveByNote(note: number) {
-        const waveIndex = note % 12;
-        const wave = this.player.waves[waveIndex];
-        if (!wave) {
-            return null;
+        for (let wave of this.player.waves) {
+            if (wave.note === note) {
+                return wave;
+            }
         }
 
-        return wave;
+        return null;
     }
 
     sendMidi(time: any, command: any, value: any, data: any) {
         if (command === 0x90) {
-            const wave = this.getWaveByNote(value);
-            if (!wave) {
-                return;
+            if (data !== 0) {
+                this.noteOn(value, data, time);
+            } else {
+                this.noteOff(value, time);
+            }
+        } else if (command === 0xB0) {
+            // controller #1;
+        }
+    }
+
+    noteOn(note, velocity, time) {
+        const wave = this.getWaveByNote(note);
+        if (!wave) {
+            return;
+        }
+
+        // stop if already playing
+        this.noteOff(note, time);
+
+        const node = this.context.createBufferSource();
+        node.buffer = wave.audioBuffer;
+
+        const waveNode = {wave, node};
+        this.nodes.push(waveNode); // there may be two same notes here, but will sort out after the "ended" event
+
+        node.addEventListener("ended", () => {
+            console.log("end of playback");
+            node.disconnect(this.gainNode);
+            const i = this.nodes.indexOf(waveNode)
+            this.nodes.splice(i, 1);
+        });
+
+        node.connect(this.gainNode);
+
+        node.start(time);
+    }
+
+    noteOff(note, time) {
+        for (let i = 0; i < this.nodes.length; ) {
+            const n = this.nodes[i];
+            if (n.wave.note === note) {
+                console.log("Note stopped", n.wave)
+                n.node.stop(time);
+                this.nodes.splice(i, 1);
+                break;
             }
 
-            const node = this.context.createBufferSource();
-            node.buffer = wave.audioBuffer;
-            node.addEventListener("ended", () => {
-                console.log("end of playback");
-
-            });
-
-            console.log("wave note on, ", value, time)
-            
-            node.connect(this.gainNode);
-
-            node.start(time);
-        } else if (command === 0xB0) {
-            // controller #1; the type
-            // this.oscNode.type = oscTypeTable[value];
+            i++;
         }
     }
 }

@@ -90,7 +90,7 @@ export class InstrumentPinPicker implements IComponent {
 
         let index = 0;
         for (let pin of pins) {
-            var option = document.createElement("option");
+            const option = document.createElement("option");
             option.text = pin.name;
             option.value = index.toString();
             option.selected = index === this.pinIndex;
@@ -111,7 +111,7 @@ export class InstrumentPinPicker implements IComponent {
 
         let index = 0;
         for (let instrument of this.app.song.instruments) {
-            var option = document.createElement("option");
+            const option = document.createElement("option");
             option.text = instrument.name + " - " + instrument.instrumentId;
             option.value = index.toString();
             option.selected = index === this.instrumentIndex;

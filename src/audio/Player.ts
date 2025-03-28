@@ -77,6 +77,7 @@ export class Connection {
 
 export class Wave {
     name: string;
+    note: number;
     sampleRate: number;
     sampleCount: number;
     buffers: Float32Array[];
@@ -241,6 +242,7 @@ export class Player {
             wave.buffers = w.buffers; // maybe dont need this
             wave.audioBuffer = audioBuffer;
             wave.name = w.name;
+            wave.note = w.note;
             wave.sampleCount = w.sampleCount;
             wave.sampleRate = w.sampleRate;
             this.waves.push(wave);
@@ -252,6 +254,9 @@ export class Player {
             const w = ev.detail;
 
             const wave = waveMap.get(w);
+            wave.note = w.note;
+            wave.name = w.name;
+
             for (let i = 0; i < w.buffers.length; i++) {
                 const buffer = wave.audioBuffer.getChannelData(i);
                 buffer.set(w.buffers[i]);

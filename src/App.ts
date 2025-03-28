@@ -373,7 +373,7 @@ export class Appl extends ApplicationBase implements IComponent {
                     const dc = new WAVDecoder();
                     const wav = dc.decode(reader.result as ArrayBuffer)
                     console.log(wav);
-                    this.song.createWave(file.name, wav.length, wav.sampleRate, wav.channels);
+                    this.song.createWave(file.name, 60, wav.length, wav.sampleRate, wav.channels);
                 };
                 reader.readAsArrayBuffer(file);
             }

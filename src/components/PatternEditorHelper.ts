@@ -1,4 +1,4 @@
-import { Instrument, InstrumentFactory, Pin } from "../audio/plugins/InstrumentFactory";
+import { InstrumentFactory } from "../audio/plugins/InstrumentFactory";
 import { InstrumentDocument, PatternColumnDocument, PatternDocument } from "../audio/SongDocument";
 
 export function formatNote(note: number) {
@@ -15,6 +15,17 @@ export function formatU8(value: number) {
     }
 
     return hex;
+}
+
+export function bindNoteDropdown(noteSelect: HTMLSelectElement, note: number) {
+    for (let i = 21; i <= 108; i++) {
+        const option = document.createElement("option");
+        option.text = formatNote(i);
+        option.value = i.toString();
+        option.selected = i === note;
+
+        noteSelect.options.add(option);
+    }
 }
 
 export interface RenderColumnInfo {

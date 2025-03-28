@@ -86,7 +86,7 @@ export class WaveDocumentEx {
     sampleCount: number;
     sampleRate: number;
     buffers: Float32Array[];
-    // key: IDBValidKey;
+    note: number;
 }
 
 export interface WaveRange {
@@ -324,9 +324,10 @@ export class SongDocument extends EventTarget {
         this.dispatchEvent(new CustomEvent("deleteSequenceEvent", { detail: sequenceEvent }));
     }
 
-    createWave(name: string, sampleCount: number, sampleRate: number, buffers: Float32Array[]) {
+    createWave(name: string, note: number, sampleCount: number, sampleRate: number, buffers: Float32Array[]) {
         const wave = new WaveDocumentEx();
         wave.name = name;
+        wave.note = note;
         wave.sampleCount = sampleCount;
         wave.sampleRate = sampleRate;
         wave.buffers = buffers;
@@ -335,6 +336,13 @@ export class SongDocument extends EventTarget {
         this.dispatchEvent(new CustomEvent("createWave", { detail: wave }));
 
         return wave;
+    }
+
+    updateWave(wave: WaveDocumentEx, name: string, note: number) {
+        wave.name = name;
+        wave.note = note;
+
+        this.dispatchEvent(new CustomEvent("updateWave", { detail: wave }));
     }
 
     deleteWave(wave: WaveDocumentEx) {
@@ -481,10 +489,10 @@ export class SongDocument extends EventTarget {
         }
 
         // waves -> embed or refer to filenames (in storage, zip, ??)
+
         for (let jsonWave of json.waves) {
             const buffers = jsonWave.buffers.map(b => decompressBase64ToFloat32Array(b));
-            this.createWave(jsonWave.name, jsonWave.sampleCount, jsonWave.sampleRate, buffers);
+            this.createWave(jsonWave.name, jsonWave.note, jsonWave.sampleCount, jsonWave.sampleRate, buffers);
         }
     }
-
 }

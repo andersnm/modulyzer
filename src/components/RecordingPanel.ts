@@ -3,6 +3,7 @@ import { WaveScrollCanvas } from "./WaveScrollCanvas";
 import { Appl } from "../App";
 import { ButtonToolbar, IComponent } from "../nutz";
 import { WaveDocumentEx } from "../audio/SongDocument";
+import { WavePropertiesPanel } from "./WavePropertiesPanel";
 
 export class RecordingPanel implements IComponent {
     app: Appl;
@@ -64,6 +65,12 @@ export class RecordingPanel implements IComponent {
                 label: "Save",
                 click: () => app.downloadWave(this.document),
             },
+            {
+                type: "button",
+                icon: "hgi-stroke hgi-folder",
+                label: "Edit...",
+                click: () => this.showWaveProperties(),
+            },
 
         ]);
 
@@ -73,6 +80,18 @@ export class RecordingPanel implements IComponent {
 
         this.container.addEventListener("nutz:mounted", this.onMounted);
         this.container.addEventListener("nutz:unmounted", this.onUnmounted);
+    }
+
+    async showWaveProperties() {
+        const wavePanel = new WavePropertiesPanel(this.app, this, this.document.name, this.document.note);
+        
+        const result = await this.app.modalDialogContainer.showModal(wavePanel);
+
+        if (!result) {
+            return;
+        }
+
+        this.app.song.updateWave(this.document, wavePanel.name, wavePanel.note);
     }
 
     onMounted = () => {
@@ -141,6 +160,12 @@ export class RecordingPanel implements IComponent {
                     const end = this.waveScroll.zoom.end;
                     this.waveEditor.setZoom(start, end);
                 }
+            }
+        } else if (source instanceof WavePropertiesPanel) {
+            if (eventName === "ok") {
+                this.app.modalDialogContainer.endModal(true);
+            } else if (eventName === "cancel") {
+                this.app.modalDialogContainer.endModal(false);
             }
         }
     }
