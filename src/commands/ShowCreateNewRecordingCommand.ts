@@ -25,7 +25,7 @@ export class ShowCreateNewRecordingCommand implements INotify {
         const result = await this.app.modalDialogContainer.showModal(audioConfiguration);
 
         if (result) {
-            const channelCount = 1;
+            const channelCount = audioConfiguration.channels;
             const sampleRate = this.app.device?.context.sampleRate ?? 44100;
 
             const sampleCount = audioConfiguration.duration * sampleRate;

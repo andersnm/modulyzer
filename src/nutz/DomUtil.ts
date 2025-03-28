@@ -1,6 +1,10 @@
-export function domAppendNodes(domElement: ChildNode, childNodes: Node[]) {
-    for (let childNode of childNodes) {
-        domElement.appendChild(childNode);
+export function domAppendNodes(domElement: ChildNode, childNodes: Node|Node[]) {
+    if (Array.isArray(childNodes)) {
+        for (let childNode of childNodes) {
+            domElement.appendChild(childNode);
+        }
+    } else {
+        domElement.appendChild(childNodes);
     }
 }
 

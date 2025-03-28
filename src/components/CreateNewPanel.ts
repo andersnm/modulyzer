@@ -1,4 +1,4 @@
-import { ButtonToolbar, FormGroup, IComponent, INotify } from "../nutz";
+import { ButtonToolbar, FormGroup, FormGroupRadio, IComponent, INotify } from "../nutz";
 import { bindNoteDropdown } from "./PatternEditorHelper";
 
 export class CreateNewPanel implements IComponent {
@@ -11,6 +11,7 @@ export class CreateNewPanel implements IComponent {
     name: string = "Untitled";
     duration: number = 600;
     note: number = 60;
+    channels: number = 1;
 
     constructor(parent: INotify) {
         this.parent = parent;
@@ -47,6 +48,18 @@ export class CreateNewPanel implements IComponent {
 
         const noteGroup = FormGroup("Note", this.noteSelect);
 
+        const monoRadio = new FormGroupRadio("mode0", "mode", "1", "Mono", this.channels === 1);
+        monoRadio.input.addEventListener("change", () => {
+            this.channels = parseInt(monoRadio.input.value);
+        });
+
+        const stereoRadio = new FormGroupRadio("mode1", "mode", "2", "Stereo", this.channels === 2);
+        stereoRadio.input.addEventListener("change", () => {
+            this.channels = parseInt(stereoRadio.input.value);
+        });
+
+        const modeGroup = FormGroup("Mode", [ monoRadio.getDomNode(), stereoRadio.getDomNode() ]);
+
         const buttonContainer = ButtonToolbar([
             {
                 type: "button",
@@ -65,88 +78,11 @@ export class CreateNewPanel implements IComponent {
         this.container.appendChild(nameGroup);
         this.container.appendChild(durationGroup);
         this.container.appendChild(noteGroup);
+        this.container.appendChild(modeGroup);
         this.container.appendChild(buttonContainer);
     }
 
     getDomNode(): Node {
         return this.container;
     }
-
-    // // panel, w/button-toolbar on top, and list below, print number of watches -> need pagination??
-    // render() {
-    //     const createNew = () => {
-    //         this.dispatch(this.props, "createNew", this.props); // the backing object
-    //     };
-
-    //     const cancel = () => {
-    //         this.dispatch(this.props, "cancel");
-    //     };
-
-    //     return [
-    //         new FormGroup({ 
-    //             label: "Name", 
-    //             input: [ 
-    //                 new NutzElement("input", {
-    //                     className: "w-full rounded-lg p-1 bg-neutral-800",
-    //                     value: () => this.props.name,
-    //                     type: "text",
-    //                     change: (e) => this.props.name = (e.target as HTMLInputElement).value
-    //                 }),
-    //             ],
-    //         }),
-
-    //         new FormGroup({ 
-    //             label: "Duration (sec)", 
-    //             input: [
-    //                 new NutzElement("input", {
-    //                     className: "text-right w-20 rounded-lg p-1 bg-neutral-800",
-    //                     value: () => this.props.durationSec.toString(),
-    //                     type: "number",
-    //                     size: 8,
-    //                     change: (e) => this.props.durationSec = parseInt((e.target as HTMLInputElement).value)
-    //                 }),
-    //                 new NutzElement("div", {
-    //                     className: "text-xs",
-    //                     content: () => [
-    //                         new NutzText(() => "Sample Rate: " + this.props.sampleRate + "hz"),
-    //                     ],
-    //                 }),
-    //             ],
-    //         }),
-
-    //         // radio - record from; stereo, left, right - TODO; separate new and record, and have stereo/mono here
-    //         new FormGroupRadioList({ 
-    //             label: "Channels", 
-    //             name: "recordingChannels",
-    //             value: () => (this.props.channelCount == 2 ? "stereo" : "mono"),
-    //             items: [
-    //                 {
-    //                     text: "Stereo",
-    //                     value: "stereo",
-    //                 },
-    //                 {
-    //                     text: "Mono",
-    //                     value: "mono"
-    //                 }
-    //             ],
-    //             change: (e: string) => { 
-    //                 this.props.channelCount = e == "stereo" ? 2 : 1;
-    //                 console.log("Radio", e)
-    //             }
-    //         }),
-    //         new ButtonToolbar({
-    //             content: [
-    //                 new Button({
-    //                     content: [ new NutzText("Create") ],
-    //                     click: e => createNew()
-    //                 }),
-    //                 new Button({
-    //                     content: [ new NutzText("Cancel") ],
-    //                     // content: new YoluiSlot(() => text(this, "Cancel")),
-    //                     click: e => cancel()
-    //                 })
-    //             ]
-    //         })
-    //     ];
-    // }
 }
