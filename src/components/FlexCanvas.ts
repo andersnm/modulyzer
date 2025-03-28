@@ -38,7 +38,7 @@ export function FlexCanvas() {
     }
 
     const onMounted = () => {
-        onResize();
+        onGlobalResize();
 
         window.addEventListener("resize", onGlobalResize);
         mountedParentElement = canvas.parentElement;
