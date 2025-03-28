@@ -1,13 +1,14 @@
 import { Decoder } from "./Decoder";
 
-export class WAVDecoder extends Decoder {
+export interface WAVFile {
+    sampleRate: number;
+    bitDepth: number;
+    channels: Float32Array[];
+    length: number;
+}
 
-    decode(data: ArrayBuffer): {
-        sampleRate: number;
-        bitDepth: number;
-        channels: Float32Array[];
-        length: number;
-    } | null {
+export class WAVDecoder extends Decoder {
+    decode(data: ArrayBuffer): WAVFile | null {
         const decoded: any = {};
         let offset = 0;
 
@@ -35,21 +36,21 @@ export class WAVDecoder extends Decoder {
 
             if (chunk.name === 'fmt ') {
                 // File encoding
-                const encoding = this.readIntL(data, offset, 2);
+                const encoding = this.readInt16(data, offset);
                 offset += 2;
 
-                if (encoding !== 0x0001) {
-                    // Only support PCM
-                    console.error('Cannot decode non-PCM encoded WAV file');
+                if (encoding !== 0x0001 && encoding !== 0x0003) {
+                    // Only support PCM (0x0001) and IEEE float (0x0003)
+                    console.error('Cannot decode non-PCM or non-IEEE float WAV files');
                     return null;
                 }
 
                 // Number of channels
-                const numberOfChannels = this.readIntL(data, offset, 2);
+                const numberOfChannels = this.readInt16(data, offset);
                 offset += 2;
 
                 // Sample rate
-                const sampleRate = this.readIntL(data, offset, 4);
+                const sampleRate = this.readInt32(data, offset);
                 offset += 4;
 
                 // Ignore bytes/sec - 4 bytes
@@ -59,7 +60,7 @@ export class WAVDecoder extends Decoder {
                 offset += 2;
 
                 // Bit depth
-                const bitDepth = this.readIntL(data, offset, 2);
+                const bitDepth = this.readInt16(data, offset);
                 const bytesPerSample = bitDepth / 8;
                 offset += 2;
 
@@ -67,6 +68,7 @@ export class WAVDecoder extends Decoder {
                 decoded.bitDepth = bitDepth;
                 decoded.bytesPerSample = bytesPerSample;
                 decoded.numberOfChannels = numberOfChannels;
+                decoded.encoding = encoding;
             } else if (chunk.name === 'data') {
                 const length = chunk.length / (decoded.bytesPerSample * decoded.numberOfChannels);
                 const channels: Float32Array[] = [];
@@ -75,22 +77,37 @@ export class WAVDecoder extends Decoder {
                     channels.push(new Float32Array(length));
                 }
 
-                for (let i = 0; i < decoded.numberOfChannels; i++) {
-                    const channel = channels[i];
-                    for (let j = 0; j < length; j++) {
-                        const index = offset + (j * decoded.numberOfChannels + i) * decoded.bytesPerSample;
-                        let value = this.readIntL(data, index, decoded.bytesPerSample);
+                for (let i = 0; i < length; i++) {
+                    for (let j = 0; j < decoded.numberOfChannels; j++) {
+                        let value;
 
-                        const range = 1 << (decoded.bitDepth - 1);
-                        if (value >= range) {
-                            value |= ~(range - 1);
+                        if (decoded.encoding === 0x0001) {
+                            // PCM encoding
+                            if (decoded.bitDepth === 8) {
+                                // uint8 PCM (0-255 -> -1.0 to 1.0)
+                                value = this.readUint8(data, offset) - 128;
+                                channels[j][i] = value / 128;
+                            } else if (decoded.bitDepth === 16) {
+                                // int16 PCM (-32768 to 32767 -> -1.0 to 1.0)
+                                value = this.readInt16(data, offset);
+                                channels[j][i] = value / 32768;
+                            } else if (decoded.bitDepth === 32) {
+                                // int32 PCM (-2^31 to 2^31-1 -> -1.0 to 1.0)
+                                value = this.readInt32(data, offset);
+                                channels[j][i] = value / 2147483648;
+                            }
+                        } else if (decoded.encoding === 0x0003 && decoded.bitDepth === 32) {
+                            // IEEE float32 PCM (-1.0 to 1.0)
+                            value = this.readFloat32(data, offset);
+                            channels[j][i] = value;
                         }
-                        channel[j] = value / range;
+
+                        offset += decoded.bytesPerSample;
                     }
                 }
+
                 decoded.channels = channels;
                 decoded.length = length;
-                offset += chunk.length;
             } else {
                 offset += chunk.length;
             }

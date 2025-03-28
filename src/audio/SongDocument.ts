@@ -87,6 +87,61 @@ export class WaveDocumentEx {
     sampleRate: number;
     buffers: Float32Array[];
     note: number;
+
+    insertRange(at: number, rangeBuffers: Float32Array[]) {
+        const rangeLength = rangeBuffers[0].length;
+        const originalLength = this.buffers[0].length;
+        const buffers = this.buffers.map(b => new Float32Array(originalLength + rangeLength));
+
+        for (let i = 0; i < buffers.length; i++) {
+            const buffer = buffers[i];
+            const recordingBuffer = this.buffers[i];
+            const rangeBuffer = rangeBuffers[i % rangeBuffers.length]; // mod -> mono to stereo
+            // reconstruct the whole buffer, with the inserted range in the middle
+            buffer.set(recordingBuffer.subarray(0, at), 0);
+            buffer.set(rangeBuffer, at);
+            buffer.set(recordingBuffer.subarray(at), at + rangeBuffer.length);
+        }
+
+        console.log("Updating after insert")
+        this.sampleCount = originalLength + rangeLength;
+        this.buffers = buffers;
+    }
+
+    deleteRange(start: number, end: number) {
+        const rangeLength = (end - start);
+        const originalLength = this.buffers[0].length;
+
+        const buffers = this.buffers.map(b => new Float32Array(originalLength - rangeLength));
+
+        for (let i = 0; i < buffers.length; i++) {
+            const buffer = buffers[i];
+            const recordingBuffer = this.buffers[i];
+
+            buffer.set(recordingBuffer.subarray(0, start), 0);
+            buffer.set(recordingBuffer.subarray(end), start);
+        }
+
+        console.log("Updating after delete")
+        this.sampleCount = originalLength - rangeLength;
+        this.buffers = buffers;
+    }
+
+    replaceRange(at, rangeBuffers: Float32Array[]) {
+        const buffers = this.buffers;
+
+        for (let i = 0; i < buffers.length; i++) {
+            const buffer = buffers[i];
+            const rangeBuffer = rangeBuffers[i % rangeBuffers.length]; // mod -> mono to stereo
+
+            // update the buffer inline
+            buffer.set(rangeBuffer, at);
+        }
+    }
+
+    copyRange(start: number, end: number): Float32Array[] {
+        return this.buffers.map(buffer => buffer.slice(start, end));
+    }
 }
 
 export interface WaveRange {
@@ -495,4 +550,5 @@ export class SongDocument extends EventTarget {
             this.createWave(jsonWave.name, jsonWave.note, jsonWave.sampleCount, jsonWave.sampleRate, buffers);
         }
     }
+    
 }

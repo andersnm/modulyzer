@@ -86,6 +86,12 @@ export class WaveEditorCanvas implements IComponent {
         e.preventDefault();
     };
 
+    clear() {
+        this.buffers = [new Float32Array(0)];
+        this.clearSelection();
+        this.clearZoom();
+    }
+
     setSelection(start: number, end: number) {
         if (this.selection && this.selection.start === start && this.selection.end === end) {
             return;
@@ -115,6 +121,16 @@ export class WaveEditorCanvas implements IComponent {
 
         console.log("edit: zoom")
         this.zoom = { start, end };
+        this.parent.notify(this, "zoomchange");
+        this.redrawCanvas();
+    }
+
+    clearZoom() {
+        if (!this.zoom) {
+            return;
+        }
+
+        this.zoom = null;
         this.parent.notify(this, "zoomchange");
         this.redrawCanvas();
     }

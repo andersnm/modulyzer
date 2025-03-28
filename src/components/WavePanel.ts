@@ -4,6 +4,7 @@ import { Appl } from "../App";
 import { ButtonToolbar, IComponent } from "../nutz";
 import { WaveDocumentEx } from "../audio/SongDocument";
 import { WavePropertiesPanel } from "./WavePropertiesPanel";
+import { readClipboardWave, writeClipboardWave } from "../Clipboard";
 
 export class WavePanel implements IComponent {
     app: Appl;
@@ -25,9 +26,21 @@ export class WavePanel implements IComponent {
         this.toolbar = ButtonToolbar([
             {
                 type: "button",
+                label: "Copy",
+                icon: "hgi-stroke hgi-copy-01",
+                click: () => this.copy(),
+            },
+            {
+                type: "button",
+                label: "Paste",
+                icon: "hgi-stroke hgi-column-insert",
+                click: () => this.paste(),
+            },
+            {
+                type: "button",
                 label: "Crop",
                 icon: "hgi-stroke hgi-crop",
-                click: () => {},
+                click: () => this.crop(),
             },
             {
                 type: "button",
@@ -83,8 +96,12 @@ export class WavePanel implements IComponent {
     }
 
     async showWaveProperties() {
+        if (!this.document) {
+            console.error("Not editing wave");
+            return;
+        }
+
         const wavePanel = new WavePropertiesPanel(this.app, this, this.document.name, this.document.note);
-        
         const result = await this.app.modalDialogContainer.showModal("Wave Properties", wavePanel);
 
         if (!result) {
@@ -96,16 +113,75 @@ export class WavePanel implements IComponent {
 
     onMounted = () => {
         this.app.song.addEventListener("updateWave", this.onUpdate);
+        this.app.song.addEventListener("deleteWave", this.onDeleteWave);
     };
 
     onUnmounted = () => {
         this.app.song.removeEventListener("updateWave", this.onUpdate);
+        this.app.song.removeEventListener("deleteWave", this.onDeleteWave);
     };
 
-    onUpdate = () => {
+    onUpdate = (ev: CustomEvent<WaveDocumentEx>) => {
+        this.waveEditor.buffers = ev.detail.buffers;
         this.waveEditor.redrawCanvas();
+
+        this.waveScroll.buffers = ev.detail.buffers;
         this.waveScroll.redrawCanvas();
     };
+
+    onDeleteWave = (ev: CustomEvent<WaveDocumentEx>) => {
+        if (ev.detail !== this.document) {
+            return;
+        }
+
+        this.waveEditor.clear();
+        this.waveScroll.clear();
+        this.document = null;
+    }
+
+    crop() {
+        if (!this.waveEditor.selection) {
+            return;
+        }
+        const start = Math.min(this.waveEditor.selection.start, this.waveEditor.selection.end);
+        const end = Math.max(this.waveEditor.selection.start, this.waveEditor.selection.end);
+
+        this.document.deleteRange(end, this.document.sampleCount);
+        this.document.deleteRange(0, start);
+
+        this.waveEditor.clearSelection();
+        this.waveEditor.clearZoom();
+
+        this.app.song.updateWave(this.document, this.document.name, this.document.note);
+    }
+
+    async copy() {
+        if (!this.waveEditor.selection) {
+            return;
+        }
+
+        const start = Math.min(this.waveEditor.selection.start, this.waveEditor.selection.end);
+        const end = Math.max(this.waveEditor.selection.start, this.waveEditor.selection.end);
+
+        const rangeBuffers = this.document.copyRange(start, end);
+        await writeClipboardWave(this.document.sampleRate, rangeBuffers);
+    }
+
+    async paste() {
+        const wavFile = await readClipboardWave();
+
+        if (!wavFile) {
+            return;
+        }
+
+        let offset = 0;
+        if (this.waveEditor.selection) {
+            offset = this.waveEditor.selection.end;
+        }
+
+        this.document.insertRange(offset, wavFile.channels);
+        this.app.song.updateWave(this.document, this.document.name, this.document.note);
+    }
 
 
     zoomRelative(ratio: number) {

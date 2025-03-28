@@ -311,6 +311,12 @@ export class WaveScrollCanvas implements IComponent {
         }
     }
 
+    clear() {
+        this.clearSelection();
+        this.zoom = null;
+        this.buffers = [new Float32Array(0)];
+        this.redrawCanvas();
+    }
 
     setSelection(start: number, end: number) {
         if (this.selection && this.selection.start === start && this.selection.end === end) {

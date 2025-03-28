@@ -257,11 +257,21 @@ export class Player {
             wave.note = w.note;
             wave.name = w.name;
 
-            for (let i = 0; i < w.buffers.length; i++) {
-                const buffer = wave.audioBuffer.getChannelData(i);
-                buffer.set(w.buffers[i]);
-            }
+            if (w.sampleCount !== wave.sampleCount) {
+                const audioBuffer = this.context.createBuffer(w.buffers.length, w.sampleCount, w.sampleRate);
+                for (let i = 0; i < w.buffers.length; i++) {
+                    const buffer = audioBuffer.getChannelData(i);
+                    buffer.set(w.buffers[i]);
+                }
 
+                wave.audioBuffer = audioBuffer;
+                wave.sampleCount = w.sampleCount;
+            } else {
+                for (let i = 0; i < w.buffers.length; i++) {
+                    const buffer = wave.audioBuffer.getChannelData(i);
+                    buffer.set(w.buffers[i]);
+                }
+            }
         });
 
         song.addEventListener("createPattern", (ev: CustomEvent<PatternDocument>) => {
