@@ -1,10 +1,7 @@
 import { Appl } from "../App";
-import { AudioDevice } from "../audio/AudioDevice";
-import { tryGetMicrophonePermission } from "../audio/AudioUtil";
-import { AudioConfiguration } from "../components/AudioConfiguration";
-import { RecordingsPanel } from "../components/RecordingsPanel";
+import { RecordingsPanel } from "../components/WavesPanel";
 
-export class ShowRecordingsCommand {
+export class ShowWavesCommand {
     constructor(private app: Appl) {
     }
 

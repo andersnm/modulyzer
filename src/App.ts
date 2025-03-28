@@ -1,11 +1,10 @@
-import { RecordingsPanel } from "./components/RecordingsPanel";
-import { ApplicationBase, ButtonToolbar, DomText, FullScreen, GridFrameContainer, IComponent, TabFrameContainer, visitNodeAndChildNodesBreadth, visitNodeAndChildNodesDepth } from "./nutz";
+import { ApplicationBase, ButtonToolbar, FullScreen, GridFrameContainer, IComponent, TabFrameContainer, visitNodeAndChildNodesBreadth, visitNodeAndChildNodesDepth } from "./nutz";
 import { MenuBar } from "./nutz/Menubar";
 import { ModalDialogContainer } from "./nutz/ModalDialogContainer";
 import { mainMenu, MenuItem } from './menu/menu';
 import { tryGetMicrophonePermission } from "./audio/AudioUtil";
 import { AudioDevice } from "./audio/AudioDevice";
-import { RecordingPanel } from "./components/RecordingPanel";
+import { WavePanel } from "./components/WavePanel";
 import { SongDocument, WaveDocumentEx } from "./audio/SongDocument";
 import { InstrumentFactory } from "./audio/plugins/InstrumentFactory";
 import { MasterFactory } from "./audio/plugins/Master";
@@ -198,7 +197,7 @@ export class Appl extends ApplicationBase implements IComponent {
                 type: "button",
                 label: "",
                 icon: "hgi-stroke hgi-download-04",
-                click: () => this.executeCommand("save"),
+                click: () => this.executeCommand("save-song"),
             },
             // 
             {
@@ -301,7 +300,7 @@ export class Appl extends ApplicationBase implements IComponent {
 
         // await this.storage.open();
         this.executeCommand("show-patterns");
-        this.executeCommand("show-recordings");
+        this.executeCommand("show-waves");
 
         const permission = await tryGetMicrophonePermission();
 
@@ -310,7 +309,7 @@ export class Appl extends ApplicationBase implements IComponent {
         this.executeCommand("show-pattern-editor");
 
         // recording panel = waveeditorpanel - redigerer én wave i prosjekte.
-        const wq = new RecordingPanel(this);
+        const wq = new WavePanel(this);
         this.mainTabs.addTab("Wave", wq);
 
         const mq = new MixerPanel(this);
@@ -352,30 +351,6 @@ export class Appl extends ApplicationBase implements IComponent {
                     // callback(reader.result);
                 };
                 reader.readAsText(file);
-            }
-        };
-
-        input.click();
-    }
-
-    uploadWave() {
-        const input = document.createElement("input");
-        input.type = "file";
-        input.accept = ".wav";
-
-        input.onchange = (event: Event) => {
-            const target = event.target as HTMLInputElement;
-            const file = target.files?.[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = () => {
-                    console.log("QAV", reader.result);
-                    const dc = new WAVDecoder();
-                    const wav = dc.decode(reader.result as ArrayBuffer)
-                    console.log(wav);
-                    this.song.createWave(file.name, 60, wav.length, wav.sampleRate, wav.channels);
-                };
-                reader.readAsArrayBuffer(file);
             }
         };
 

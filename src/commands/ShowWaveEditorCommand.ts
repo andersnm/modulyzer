@@ -1,6 +1,6 @@
 import { Appl } from "../App";
 import { WaveDocumentEx } from "../audio/SongDocument";
-import { RecordingPanel } from "../components/RecordingPanel";
+import { WavePanel } from "../components/WavePanel";
 
 export class ShowWaveEditorCommand {
     constructor(private app: Appl) {
@@ -13,14 +13,14 @@ export class ShowWaveEditorCommand {
             this.app.mainTabs.setCurrentTab(tabIndex);
 
             if (wave) {
-                const pq = this.app.mainTabs.tabContent[tabIndex] as RecordingPanel;
+                const pq = this.app.mainTabs.tabContent[tabIndex] as WavePanel;
                 pq.setWave(wave);
             }
 
             return;
         }
 
-        const pq = new RecordingPanel(this.app);
+        const pq = new WavePanel(this.app);
         if (wave) {
             pq.setWave(wave);
         } else if (this.app.song.waves[0]) {

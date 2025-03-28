@@ -1,14 +1,13 @@
 import { Appl } from "../App";
-import { CreateNewPanel } from "../components/CreateNewPanel";
+import { CreateWavePanel } from "../components/CreateWavePanel";
 import { IComponent, INotify } from "../nutz";
 
-export class ShowCreateNewRecordingCommand implements INotify {
+export class CreateWaveCommand implements INotify {
     constructor(private app: Appl) {
     }
 
     notify(source: IComponent, eventName: string, ...args: any): void {
-        console.log("APP NOTIFY", source, eventName, args)
-        if (source instanceof CreateNewPanel) {
+        if (source instanceof CreateWavePanel) {
             if (eventName === "ok") {
                 // this resolves await showModal
                 this.app.modalDialogContainer.endModal(true);
@@ -20,7 +19,7 @@ export class ShowCreateNewRecordingCommand implements INotify {
     }
 
     async handle() {
-        const audioConfiguration = new CreateNewPanel(this);
+        const audioConfiguration = new CreateWavePanel(this);
 
         const result = await this.app.modalDialogContainer.showModal(audioConfiguration);
 

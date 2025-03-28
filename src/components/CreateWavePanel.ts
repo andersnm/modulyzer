@@ -1,7 +1,7 @@
 import { ButtonToolbar, FormGroup, FormGroupRadio, IComponent, INotify } from "../nutz";
 import { bindNoteDropdown } from "./PatternEditorHelper";
 
-export class CreateNewPanel implements IComponent {
+export class CreateWavePanel implements IComponent {
     parent: INotify;
     container: HTMLElement;
     nameInput: HTMLInputElement;

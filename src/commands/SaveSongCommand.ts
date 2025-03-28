@@ -1,9 +1,8 @@
 import { Appl } from "../App";
-import { OpenWavePanel } from "../components/RecordingsPanel";
 import { SaveAsPanel } from "../components/SaveAsPanel";
 import { IComponent, INotify } from "../nutz";
 
-export class ShowSaveAsCommand implements INotify {
+export class SaveSongCommand implements INotify {
     constructor(private app: Appl) {
     }
 

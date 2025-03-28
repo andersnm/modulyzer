@@ -9,12 +9,12 @@ export interface MenuItem {
 export const fileMenu: MenuItem[] = [
     {
         label: "New...",
-        action: "show-create-new-recording"
+        action: "create-wave"
     },
     {
         icon: "hgi-stroke hgi-folder-02",
         label: "Open...",
-        action: "show-create-new-recording"
+        action: "create-wave"
     },
     {
         icon: "hgi-stroke hgi-download-04",

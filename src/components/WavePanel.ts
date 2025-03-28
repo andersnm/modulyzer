@@ -5,7 +5,7 @@ import { ButtonToolbar, IComponent } from "../nutz";
 import { WaveDocumentEx } from "../audio/SongDocument";
 import { WavePropertiesPanel } from "./WavePropertiesPanel";
 
-export class RecordingPanel implements IComponent {
+export class WavePanel implements IComponent {
     app: Appl;
     document: WaveDocumentEx;
     container: HTMLElement;

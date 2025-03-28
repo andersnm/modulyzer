@@ -1,29 +1,27 @@
-// import './style.css'
-import { ShowAudioConfigurationCommand } from './commands/ShowAudioConfigurationCommand';
-import { ShowCreateNewRecordingCommand } from './commands/ShowCreateNewRecordingCommand';
-import { ShowExportRecordingCommand } from './commands/ShowExportRecordingCommand';
-import { ShowSequenceEditorCommand } from './commands/ShowSequenceEditorCommand';
 import { Appl } from './App';
-import { ShowRecordingsCommand } from './commands/ShowRecordingsCommand';
+import { ShowAudioConfigurationCommand } from './commands/ShowAudioConfigurationCommand';
+import { CreateWaveCommand } from './commands/CreateWaveCommand';
+import { ShowSequenceEditorCommand } from './commands/ShowSequenceEditorCommand';
+import { ShowWavesCommand } from './commands/ShowWavesCommand';
 import { ShowPatternsCommand } from './commands/ShowPatternsCommand';
-import { ShowOpenWaveCommand } from './commands/ShowOpenWaveCommand';
+import { OpenWaveCommand } from './commands/OpenWaveCommand';
 import { ShowPatternEditorCommand } from './commands/ShowPatternEditorCommand';
 import { ShowWaveEditorCommand } from './commands/ShowWaveEditorCommand';
-import { ShowSaveAsCommand } from './commands/ShowSaveAsCommand';
+import { SaveSongCommand } from './commands/SaveSongCommand';
 import { RecordWaveCommand } from './commands/RecordWaveCommand';
 
 const app = new Appl();
 // app.registerCommand("play-current-recording", new PlayCurrentRecordingCommand(app))
 app.registerCommand("show-audio-configuration", new ShowAudioConfigurationCommand(app))
-app.registerCommand("show-create-new-recording", new ShowCreateNewRecordingCommand(app))
-app.registerCommand("show-recordings", new ShowRecordingsCommand(app))
+app.registerCommand("show-waves", new ShowWavesCommand(app))
 app.registerCommand("show-patterns", new ShowPatternsCommand(app))
 app.registerCommand("show-pattern-editor", new ShowPatternEditorCommand(app))
 app.registerCommand("show-wave-editor", new ShowWaveEditorCommand(app))
-app.registerCommand("show-open-wave", new ShowOpenWaveCommand(app))
-// app.registerCommand("show-export-recording", new ShowExportRecordingCommand(app))
 app.registerCommand("show-sequence-editor", new ShowSequenceEditorCommand(app))
-app.registerCommand("save", new ShowSaveAsCommand(app))
+app.registerCommand("save-song", new SaveSongCommand(app))
+
+app.registerCommand("create-wave", new CreateWaveCommand(app))
+app.registerCommand("open-wave", new OpenWaveCommand(app))
 app.registerCommand("record-wave", new RecordWaveCommand(app))
 
 // app.registerCommand("copy-selection", new CopySelectionCommand(app))
