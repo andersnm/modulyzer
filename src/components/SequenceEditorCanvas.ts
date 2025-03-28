@@ -22,8 +22,8 @@ export class SequenceEditorCanvas implements IComponent {
         this.container = document.createElement("div");
         this.container.className = "flex-1 w-full pb-1";
         
-        this.canvas = FlexCanvas(); // document.createElement("canvas");
-        this.canvas.className = "rounded-lg";
+        this.canvas = FlexCanvas();
+        this.canvas.classList.add("rounded-lg");
         this.canvas.tabIndex = 0;
 
         this.canvas.addEventListener("pointerdown", this.onMouseDown);
