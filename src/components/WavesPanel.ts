@@ -1,4 +1,5 @@
 import { Appl } from "../App";
+import { readClipboardWave } from "../Clipboard";
 import { Button, ButtonToolbar, DataTable, IComponent } from "../nutz";
 import { formatNote } from "./PatternEditorHelper";
 
@@ -32,13 +33,19 @@ export class RecordingsPanel implements IComponent {
                 label: "Open...",
                 click: () => app.executeCommand("open-wave"),
             },
+            {
+                type: "button",
+                icon: "hgi-stroke hgi-folder",
+                label: "Paste New",
+                click: () => this.pasteNew(),
+            },
         ]);
 
         this.list = new DataTable(this);
+        this.list.addColumn("", "action")
         this.list.addColumn("Name", "name")
         this.list.addColumn("Duration", "duration")
         this.list.addColumn("Note", "note")
-        this.list.addColumn("-", "action")
 
         this.container.appendChild(this.buttonBar);
         this.container.appendChild(this.list.getDomNode());
@@ -50,10 +57,14 @@ export class RecordingsPanel implements IComponent {
     onMounted = async (ev) => {
         this.bind();
         this.app.song.addEventListener("createWave", this.onUpdate);
+        this.app.song.addEventListener("updateWave", this.onUpdate);
+        this.app.song.addEventListener("deleteWave", this.onUpdate);
     };
 
     onUnmounted = async (ev) => {
         this.app.song.removeEventListener("createWave", this.onUpdate);
+        this.app.song.removeEventListener("updateWave", this.onUpdate);
+        this.app.song.removeEventListener("deleteWave", this.onUpdate);
     };
 
     onUpdate = () => {
@@ -113,5 +124,15 @@ export class RecordingsPanel implements IComponent {
 
     getDomNode(): Node {
         return this.container;
+    }
+
+    async pasteNew() {
+        const wavFile = await readClipboardWave();
+
+        if (!wavFile) {
+            return;
+        }
+        
+        this.app.song.createWave(wavFile.name || "Clipboard", 60, wavFile.channels[0].length, wavFile.sampleRate, wavFile.channels);
     }
 }

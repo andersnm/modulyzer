@@ -5,7 +5,7 @@ export function formatNote(note: number) {
     const octave = Math.floor(note / 12) - 1;
     const notenum = (note % 12);
     const notes = ["C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#", "A-", "A#", "B-"]
-    return notes[notenum] + octave;
+    return (notes[notenum] + octave).toString();
 }
 
 export function formatU8(value: number) {

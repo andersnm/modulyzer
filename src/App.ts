@@ -253,7 +253,7 @@ export class Appl extends ApplicationBase implements IComponent {
 
     downloadWave(wave: WaveDocumentEx) {
         const enc = new WAVEncoder();
-        const wav = enc.encode(wave.sampleRate, WAVFormat.Int32, wave.buffers )
+        const wav = enc.encode(wave.name, wave.sampleRate, WAVFormat.Int32, wave.buffers )
         let blob = new Blob([wav], {type: "application/wav"});
 
         var a = window.document.createElement("a");

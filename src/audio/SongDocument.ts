@@ -481,6 +481,7 @@ export class SongDocument extends EventTarget {
             },
             waves: this.waves.map(wave => ({
                 name: wave.name,
+                note: wave.note,
                 sampleRate: wave.sampleRate,
                 sampleCount: wave.sampleCount,
                 buffers: wave.buffers.map(b => compressFloat32ArrayToBase64(b)),
@@ -547,7 +548,7 @@ export class SongDocument extends EventTarget {
 
         for (let jsonWave of json.waves) {
             const buffers = jsonWave.buffers.map(b => decompressBase64ToFloat32Array(b));
-            this.createWave(jsonWave.name, jsonWave.note, jsonWave.sampleCount, jsonWave.sampleRate, buffers);
+            this.createWave(jsonWave.name, jsonWave.note || 60, jsonWave.sampleCount, jsonWave.sampleRate, buffers);
         }
     }
     

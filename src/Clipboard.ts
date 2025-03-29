@@ -19,9 +19,9 @@ export async function readClipboardWave(): Promise<WAVFile> {
     return reader.decode(wavArrayBuffer);
 }
 
-export async function writeClipboardWave(sampleRate: number, buffers: Float32Array[]): Promise<void> {
+export async function writeClipboardWave(name: string, sampleRate: number, buffers: Float32Array[]): Promise<void> {
     const writer = new WAVEncoder();
-    const wavBuffer = writer.encode(sampleRate, WAVFormat.Float32, buffers);
+    const wavBuffer = writer.encode(name, sampleRate, WAVFormat.Float32, buffers);
 
     console.log(wavBuffer)
 

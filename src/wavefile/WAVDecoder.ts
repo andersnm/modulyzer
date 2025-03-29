@@ -1,6 +1,7 @@
 import { Decoder } from "./Decoder";
 
 export interface WAVFile {
+    name?: string;
     sampleRate: number;
     bitDepth: number;
     channels: Float32Array[];
@@ -108,6 +109,25 @@ export class WAVDecoder extends Decoder {
 
                 decoded.channels = channels;
                 decoded.length = length;
+            }  else if (chunk.name === 'LIST') {
+                const listType = this.readString(data, offset, 4);
+                offset += 4;
+
+                if (listType === 'INFO') {
+                    const listEnd = offset + chunk.length - 4; // Calculate end of LIST chunk
+                    while (offset < listEnd) {
+                        const infoChunk = this.readChunkHeaderL(data, offset);
+                        offset += 8;
+
+                        if (infoChunk.name === 'INAM') {
+                            decoded.name = this.readString(data, offset, infoChunk.length).replace(/\0/g, '');
+                        }
+
+                        offset += infoChunk.length; // Move to the next subchunk
+                    }
+                } else {
+                    offset += chunk.length - 4; // Skip LIST chunk if not INFO
+                }
             } else {
                 offset += chunk.length;
             }

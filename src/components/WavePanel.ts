@@ -26,6 +26,12 @@ export class WavePanel implements IComponent {
         this.toolbar = ButtonToolbar([
             {
                 type: "button",
+                label: "Cut",
+                icon: "hgi-stroke hgi-scissor-01",
+                click: () => this.cut(),
+            },
+            {
+                type: "button",
                 label: "Copy",
                 icon: "hgi-stroke hgi-copy-01",
                 click: () => this.copy(),
@@ -155,6 +161,22 @@ export class WavePanel implements IComponent {
         this.app.song.updateWave(this.document, this.document.name, this.document.note);
     }
 
+    async cut() {
+        if (!this.waveEditor.selection) {
+            return;
+        }
+
+        const start = Math.min(this.waveEditor.selection.start, this.waveEditor.selection.end);
+        const end = Math.max(this.waveEditor.selection.start, this.waveEditor.selection.end);
+
+        const rangeBuffers = this.document.copyRange(start, end);
+        await writeClipboardWave(this.document.name, this.document.sampleRate, rangeBuffers);
+
+        this.document.deleteRange(start, end);
+        this.waveEditor.clearSelection();
+        this.app.song.updateWave(this.document, this.document.name, this.document.note);
+    }
+
     async copy() {
         if (!this.waveEditor.selection) {
             return;
@@ -164,7 +186,7 @@ export class WavePanel implements IComponent {
         const end = Math.max(this.waveEditor.selection.start, this.waveEditor.selection.end);
 
         const rangeBuffers = this.document.copyRange(start, end);
-        await writeClipboardWave(this.document.sampleRate, rangeBuffers);
+        await writeClipboardWave(this.document.name, this.document.sampleRate, rangeBuffers);
     }
 
     async paste() {

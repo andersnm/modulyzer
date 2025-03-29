@@ -72,7 +72,8 @@ export class WaveEditorCanvas implements IComponent {
             return;
         }
 
-        const samplePosition = samplePositionFromPixel(this.canvas, e.offsetX, this.zoom, this.buffers[0].length);
+        let samplePosition = samplePositionFromPixel(this.canvas, e.offsetX, this.zoom, this.buffers[0].length);
+        samplePosition = Math.min(Math.max(samplePosition, 0), this.buffers[0].length);
         this.setSelection(this.selection.start, samplePosition);
     };
 

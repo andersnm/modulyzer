@@ -6,16 +6,19 @@ export enum WAVFormat {
 }
 
 export class WAVEncoder {
-    encode(sampleRate: number, format: WAVFormat, channels: Float32Array[]): ArrayBuffer {
+    encode(name: string, sampleRate: number, format: WAVFormat, channels: Float32Array[]): ArrayBuffer {
         const bytesPerSample = this.getBytesPerSample(format);
         const numberOfChannels = channels.length;
         const length = channels[0].length; // Assuming all channels have the same length
         const blockAlign = bytesPerSample * numberOfChannels;
         const byteRate = sampleRate * blockAlign;
 
+        // Prepare name data for INAM chunk
+        const listInfoChunkSize = 8 + 4 + 8 + name.length + 1; // INFO header + LIST + INAM header + data
+
         // Calculate the total file size: Header + fmt chunk + data chunk
         const dataChunkSize = length * blockAlign;
-        const fileSize = 44 + dataChunkSize; // 44 bytes is the header size for WAV
+        const fileSize = 44 + listInfoChunkSize + dataChunkSize; // 44 bytes is the header size for WAV
 
         const buffer = new ArrayBuffer(fileSize);
         const view = new DataView(buffer);
@@ -47,6 +50,24 @@ export class WAVEncoder {
         offset += 2;
         view.setUint16(offset, bytesPerSample * 8, true); // Bits per sample
         offset += 2;
+
+        // LIST chunk
+        this.writeString(view, offset, 'LIST');
+        offset += 4;
+        view.setUint32(offset, listInfoChunkSize - 8, true); // Size of LIST chunk minus "LIST" and size field
+        offset += 4;
+        this.writeString(view, offset, 'INFO');
+        offset += 4;
+
+        // INAM subchunk
+        this.writeString(view, offset, 'INAM');
+        offset += 4;
+        view.setUint32(offset, name.length + 1, true); // INAM chunk size
+        offset += 4;
+        this.writeString(view, offset, name);
+        offset += name.length;
+        view.setUint8(offset, 0);
+        offset += 1;
 
         // data chunk
         this.writeString(view, offset, 'data');
