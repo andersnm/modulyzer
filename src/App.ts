@@ -18,122 +18,7 @@ import { WaveTrackerFactory } from "./audio/plugins/WaveTracker";
 import { Open303Factory } from "./audio/plugins/Open303";
 import { WAVDecoder } from "./wavefile/WAVDecoder";
 import { WAVEncoder, WAVFormat } from "./wavefile/WAVEncoder";
-
-function patternEventNoteOn(time: number, note: number, velocity: number = 127, channel: number = 0) {
-    return { 
-        time: time,
-        value: note,
-        data0: velocity,
-        data1: 1,  // wait wat
-        channel: channel,
-    };
-}
-
-function patternEventNoteOff(time: number, note: number, channel: number = 0) {
-    return { 
-        time: time,
-        value: note,
-        data0: 0,
-        data1: 0,
-        channel: channel,
-    };
-}
-
-const songTemplate = {
-    instruments: [
-        {
-            ref: "@modulyzer/Master",
-            name: "Master",
-            x: 0, y: 0,
-        },
-        {
-            ref: "@modulyzer/Dx7",
-            name: "DX",
-            // ref: "@modulyzer/Oscillator",
-            // name: "Osc",
-            x: -0.7, y: 0,
-        },
-        {
-            ref: "@modulyzer/Reverb",
-            name: "Reverb",
-            x: -0.3, y: 0,
-        },
-    ],
-    connections: [
-        {
-            from: 1,
-            to: 2,
-        },
-        {
-            from: 2,
-            to: 0,
-        }
-    ],
-    patterns: [
-        {
-            name: "00",
-            duration: 32,
-            columns: [
-                {
-                    instrument: 1,
-                    pin: 0,
-                    events: [
-                        // TODO; integer time, player scales by bpm
-                        patternEventNoteOn(0, 60),
-                        patternEventNoteOff(1, 60),
-
-                        patternEventNoteOn(4, 64),
-                        patternEventNoteOff(5, 64),
-                
-                        patternEventNoteOn(8, 69),
-                        patternEventNoteOff(9, 69),
-                
-                        patternEventNoteOn(14, 73),
-                        patternEventNoteOff(15, 73),
-
-                        // //  channel 1
-                        patternEventNoteOn(0, 64, 127, 1),
-                        patternEventNoteOff(3, 64, 1),
-
-                        // patternEventNoteOn(6, 39, 127, 1),
-                        // patternEventNoteOff(11, 39, 1),
-
-                        // // c 2
-                        // patternEventNoteOn(0, 57, 127, 2),
-                        // patternEventNoteOff(13, 57, 2),
-
-                    ]
-                },
-                // {
-                //     instrument: 1,
-                //     pin: 1,
-                //     events: [],
-                // },
-            ]
-        }
-    ],
-    waves: [],
-    sequence: {
-        columns: [
-            {
-                events: [
-                    {
-                        time: 0,
-                        pattern: 0,
-                    },
-                    // {
-                    //     time: 8,
-                    //     pattern: 0,
-                    // },
-                    // {
-                    //     time: 12,
-                    //     pattern: 0,
-                    // },
-                ]
-            }
-        ],
-    },
-};
+import { PlayerSongAdapter } from "./audio/PlayerSongAdapter";
 
 class ElementComponent implements IComponent {
     constructor(private container: HTMLElement) {
@@ -156,9 +41,9 @@ export class Appl extends ApplicationBase implements IComponent {
     device: AudioDevice;
     song: SongDocument;
     player: Player;
+    playerSongAdapter: PlayerSongAdapter;
 
     modalDialogContainer: ModalDialogContainer;
-    // recordings: RecordingsPanel;
 
     domObserver: MutationObserver;
 
@@ -323,7 +208,12 @@ export class Appl extends ApplicationBase implements IComponent {
     async setAudioDevice(outputDeviceId, inputDeviceId) {
         await this.device.create(outputDeviceId, inputDeviceId);
 
-        this.player = new Player(this.song, this.instrumentFactories, this.device.context);
+        if (this.playerSongAdapter) {
+            // this.playerSongAdapter.detach();
+        }
+
+        this.player = new Player(this.instrumentFactories, this.device.context);
+        this.playerSongAdapter = new PlayerSongAdapter(this.player, this.song);
     }
 
     render() {
