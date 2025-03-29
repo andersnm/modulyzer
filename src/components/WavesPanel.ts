@@ -18,7 +18,7 @@ export class RecordingsPanel implements IComponent {
     constructor(app: Appl) {
         this.app = app;
         this.container = document.createElement("div");
-        this.container.className = "flex flex-col";
+        this.container.classList.add("flex", "flex-col", "w-full", "h-full");
 
         this.buttonBar = ButtonToolbar([
             {

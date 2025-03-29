@@ -3,6 +3,5 @@ export interface INotify {
 };
 
 export interface IComponent extends INotify {
-    // render(): IRenderResult;
     getDomNode(): Node;
 }

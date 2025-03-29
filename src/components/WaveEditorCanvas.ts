@@ -1,7 +1,29 @@
 import { WaveRange } from "../audio/SongDocument";
 import { convertRemToPixels, drawWaveBuffer, drawWaveRange, samplePositionFromPixel } from "../audio/WaveCanvasUtil";
-import { IComponent, INotify } from "../nutz";
+import { DragTarget, IComponent, INotify } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
+
+class DragSelect extends DragTarget {
+    component: WaveEditorCanvas;
+    start: number;
+    end: number;
+
+    constructor(component: WaveEditorCanvas, e: PointerEvent) {
+        super();
+
+        this.component = component;
+        this.start = samplePositionFromPixel(this.component.canvas, e.offsetX, null, this.component.buffers[0].length);
+    }
+
+    move(e: PointerEvent) {
+        this.end = samplePositionFromPixel(this.component.canvas, e.offsetX, null, this.component.buffers[0].length);
+        this.component.setSelection(this.start, this.end)
+    }
+
+    up(e: PointerEvent) {
+
+    }
+}
 
 export class WaveEditorCanvas implements IComponent {
     parent: INotify;
@@ -12,7 +34,7 @@ export class WaveEditorCanvas implements IComponent {
     selection?: WaveRange;
     zoom?: WaveRange;
     playPosition: number;
-    mouseDown: boolean = false;
+    dragTarget: DragTarget | null = null;
 
     constructor(parent: INotify) {
         this.parent = parent;
@@ -48,33 +70,30 @@ export class WaveEditorCanvas implements IComponent {
     };
 
     onMouseDown = (e: PointerEvent) => {
-        if (!this.mouseDown) {
+        if (!this.dragTarget) {
             this.clearSelection();
 
-            this.mouseDown = true;
-            const samplePosition = samplePositionFromPixel(this.canvas, e.offsetX, this.zoom, this.buffers[0].length);
-            this.setSelection(samplePosition, samplePosition);
+            this.dragTarget = new DragSelect(this, e);
             this.canvas.setPointerCapture(e.pointerId);
         }
     };
 
     onMouseUp = (e: PointerEvent) => {
-        if (!this.mouseDown) {
+        if (!this.dragTarget) {
             return;
         }
 
-        this.mouseDown = false;
         this.canvas.releasePointerCapture(e.pointerId);
+        this.dragTarget.up(e);
+        this.dragTarget = null;
     };
 
-    onMouseMove = (e: MouseEvent) => {
-        if (!this.mouseDown) {
+    onMouseMove = (e: PointerEvent) => {
+        if (!this.dragTarget) {
             return;
         }
 
-        let samplePosition = samplePositionFromPixel(this.canvas, e.offsetX, this.zoom, this.buffers[0].length);
-        samplePosition = Math.min(Math.max(samplePosition, 0), this.buffers[0].length);
-        this.setSelection(this.selection.start, samplePosition);
+        this.dragTarget.move(e);
     };
 
     onContextMenu = (e: MouseEvent) => {

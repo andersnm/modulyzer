@@ -11,25 +11,8 @@ drag zoom range edge = extend zoom
 // import { resizeCanvas } from "../FlexCanvasHelper";
 import { WaveRange } from "../audio/SongDocument";
 import { convertRemToPixels, drawWaveBuffer, drawWaveRange, samplePositionFromPixel } from "../audio/WaveCanvasUtil";
-import { IComponent, INotify } from "../nutz";
+import { DragTarget, IComponent, INotify, PointType, ptInRect, RectType } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
-
-type RectType = [number, number, number, number];
-type PointType = [number, number];
-
-function ptInRect(pt: PointType, rect: RectType) {
-    const [ x, y ] = pt;
-    const [ left, top, right, bottom ] = rect;
-    return x >= left && x < right && y >= top && y < bottom;
-}
-
-abstract class DragTarget {
-    constructor() {
-    }
-
-    abstract move(e);
-    abstract up(e);
-}
 
 class DragSelect extends DragTarget {
     component: WaveScrollCanvas;
@@ -252,7 +235,7 @@ export class WaveScrollCanvas implements IComponent {
         this.dragTarget = null;
     };
 
-    onMouseMove = (e: MouseEvent) => {
+    onMouseMove = (e: PointerEvent) => {
         if (this.zoomRect && ptInRect([e.offsetX, e.offsetY], this.zoomRect)) {
             this.canvas.style.cursor = "move";
         } else if (this.zoomHandleLeftRect && ptInRect([e.offsetX, e.offsetY], this.zoomHandleLeftRect)) { 

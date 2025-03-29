@@ -87,6 +87,8 @@ export class WaveDocumentEx {
     sampleRate: number;
     buffers: Float32Array[];
     note: number;
+    selection: WaveRange | null = null;
+    zoom: WaveRange | null = null;
 
     insertRange(at: number, rangeBuffers: Float32Array[]) {
         const rangeLength = rangeBuffers[0].length;
@@ -379,13 +381,15 @@ export class SongDocument extends EventTarget {
         this.dispatchEvent(new CustomEvent("deleteSequenceEvent", { detail: sequenceEvent }));
     }
 
-    createWave(name: string, note: number, sampleCount: number, sampleRate: number, buffers: Float32Array[]) {
+    createWave(name: string, note: number, sampleCount: number, sampleRate: number, buffers: Float32Array[], selection: WaveRange = null, zoom: WaveRange = null) {
         const wave = new WaveDocumentEx();
         wave.name = name;
         wave.note = note;
         wave.sampleCount = sampleCount;
         wave.sampleRate = sampleRate;
         wave.buffers = buffers;
+        wave.selection = selection;
+        wave.zoom = zoom;
         this.waves.push(wave);
 
         this.dispatchEvent(new CustomEvent("createWave", { detail: wave }));
@@ -393,9 +397,11 @@ export class SongDocument extends EventTarget {
         return wave;
     }
 
-    updateWave(wave: WaveDocumentEx, name: string, note: number) {
+    updateWave(wave: WaveDocumentEx, name: string, note: number, selection: WaveRange, zoom: WaveRange) {
         wave.name = name;
         wave.note = note;
+        wave.selection = selection;
+        wave.zoom = zoom;
 
         this.dispatchEvent(new CustomEvent("updateWave", { detail: wave }));
     }
@@ -484,6 +490,8 @@ export class SongDocument extends EventTarget {
                 note: wave.note,
                 sampleRate: wave.sampleRate,
                 sampleCount: wave.sampleCount,
+                selection: wave.selection,
+                zoom: wave.zoom,
                 buffers: wave.buffers.map(b => compressFloat32ArrayToBase64(b)),
             }))
         };
@@ -548,7 +556,7 @@ export class SongDocument extends EventTarget {
 
         for (let jsonWave of json.waves) {
             const buffers = jsonWave.buffers.map(b => decompressBase64ToFloat32Array(b));
-            this.createWave(jsonWave.name, jsonWave.note || 60, jsonWave.sampleCount, jsonWave.sampleRate, buffers);
+            this.createWave(jsonWave.name, jsonWave.note || 60, jsonWave.sampleCount, jsonWave.sampleRate, buffers, jsonWave.selection, jsonWave.zoom);
         }
     }
     

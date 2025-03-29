@@ -114,7 +114,7 @@ export class WavePanel implements IComponent {
             return;
         }
 
-        this.app.song.updateWave(this.document, wavePanel.name, wavePanel.note);
+        this.app.song.updateWave(this.document, wavePanel.name, wavePanel.note, this.document.selection, this.document.zoom);
     }
 
     onMounted = () => {
@@ -158,7 +158,7 @@ export class WavePanel implements IComponent {
         this.waveEditor.clearSelection();
         this.waveEditor.clearZoom();
 
-        this.app.song.updateWave(this.document, this.document.name, this.document.note);
+        this.app.song.updateWave(this.document, this.document.name, this.document.note, null, null);
     }
 
     async cut() {
@@ -174,7 +174,7 @@ export class WavePanel implements IComponent {
 
         this.document.deleteRange(start, end);
         this.waveEditor.clearSelection();
-        this.app.song.updateWave(this.document, this.document.name, this.document.note);
+        this.app.song.updateWave(this.document, this.document.name, this.document.note, null, this.document.zoom);
     }
 
     async copy() {
@@ -202,7 +202,7 @@ export class WavePanel implements IComponent {
         }
 
         this.document.insertRange(offset, wavFile.channels);
-        this.app.song.updateWave(this.document, this.document.name, this.document.note);
+        this.app.song.updateWave(this.document, this.document.name, this.document.note, this.document.selection, this.document.zoom);
     }
 
 
@@ -233,8 +233,11 @@ export class WavePanel implements IComponent {
                     const start = this.waveEditor.selection.start;
                     const end = this.waveEditor.selection.end;
                     this.waveScroll.setSelection(start, end);
+
+                    this.document.selection = { ... this.waveEditor.selection };
                 } else {
                     this.waveScroll.clearSelection();
+                    this.document.selection = null;
                 }
             } else if (eventName === "zoomchange") {
                 if (this.waveEditor.zoom) {
@@ -271,13 +274,19 @@ export class WavePanel implements IComponent {
     setWave(wave: WaveDocumentEx) {
         this.document = wave;
         this.waveEditor.buffers = this.document.buffers;
-        this.waveEditor.zoom = undefined;
-        this.waveEditor.selection = undefined;
-
-        this.waveEditor.redrawCanvas();
-
         this.waveScroll.buffers = this.document.buffers;
-        this.waveScroll.redrawCanvas();
+
+        if (wave.zoom) {
+            this.waveEditor.setZoom(wave.zoom.start, wave.zoom.end);
+        } else {
+            this.waveEditor.clearZoom();
+        }
+
+        if (wave.selection) {
+            this.waveEditor.setSelection(wave.selection.start, wave.selection.end);
+        } else {
+            this.waveEditor.clearSelection();
+        }
     }
 
     getDomNode(): Node {

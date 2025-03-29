@@ -39,7 +39,14 @@ export class WavePlayer extends EventTarget {
             this.nodes.push(node);
 
             node.connect(context.destination);
-            node.start(0);
+            if (wave.selection) {
+                const start = wave.selection.start / wave.sampleRate;
+                const end = wave.selection.end / wave.sampleRate;
+                const duration = end - start;
+                node.start(0, start, duration);
+            } else {
+                node.start(0);
+            }
         });
     }
 

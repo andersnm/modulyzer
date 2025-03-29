@@ -1,4 +1,4 @@
-import { IComponent } from "../nutz";
+import { DragTarget, IComponent, PointType, ptInRect, rectCenter, RectType } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 import { Appl } from "../App";
 import { ConnectionDocument, InstrumentDocument } from "../audio/SongDocument";
@@ -7,45 +7,15 @@ const boxWidth = 100;
 const boxHeight = 61; // 1.618
 const arrowSize = 10;
 
-type RectType = [number, number, number, number];
-type PointType = [number, number];
-
-function ptInRect(pt: PointType, rect: RectType) {
-    const [ x, y ] = pt;
-    const [ left, top, right, bottom ] = rect;
-    return x >= left && x < right && y >= top && y < bottom;
-}
-
-function rectCenter(rect: RectType): PointType {
-    return [
-        (rect[2] - rect[0]) / 2 + rect[0],
-        (rect[3] - rect[1]) / 2 + rect[1],
-    ]
-}
-
-
-abstract class DragTarget {
-    // action: string;
-    component: MixerCanvas;
-    // start: number;
-    // end: number;
-
-    constructor(component: MixerCanvas, e: PointerEvent) {
-        this.component = component;
-        // this.start = samplePositionFromPixel(this.component.canvas, e.offsetX, null, this.component.buffers[0].length);
-    }
-
-    abstract move(e);
-    abstract up(e);
-}
-
 class DragMove extends DragTarget {
     instrument: InstrumentDocument;
     relativePx: PointType;
+    component: MixerCanvas;
 
     constructor(component: MixerCanvas, instrument: InstrumentDocument, e: PointerEvent) {
-        super(component, e);
+        super();
 
+        this.component = component;
         this.instrument = instrument;
         const c = this.component.convertInstrumentToScreen([instrument.x, instrument.y]);
         this.relativePx = [ e.offsetX - c[0], e.offsetY - c[1] ];
@@ -68,10 +38,12 @@ class DragMove extends DragTarget {
 }
 
 class DragConnect extends DragTarget {
+    component: MixerCanvas;
 
     constructor(component: MixerCanvas, fromInstrument: InstrumentDocument, e: PointerEvent) {
-        super(component, e);
+        super();
 
+        this.component = component;
         this.component.connectFromInstrument = fromInstrument;
         this.component.connectToPt = [e.offsetX, e.offsetY];
     }
@@ -189,7 +161,7 @@ export class MixerCanvas implements IComponent {
         this.dragTarget = null;
     };
 
-    onMouseMove = (e: MouseEvent) => {
+    onMouseMove = (e: PointerEvent) => {
         if (!this.dragTarget) {
             return;
         }
