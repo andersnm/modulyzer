@@ -17,7 +17,7 @@ export abstract class ApplicationBase implements IApplication {
             throw new Error("No such command: " + cmd);
         }
 
-        command.handle(...args);
+        return command.handle(...args);
     }
 
     registerHotkey(key: string, cmd: string) {

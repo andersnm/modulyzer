@@ -19,6 +19,7 @@ import { Open303Factory } from "./audio/plugins/Open303";
 import { WAVDecoder } from "./wavefile/WAVDecoder";
 import { WAVEncoder, WAVFormat } from "./wavefile/WAVEncoder";
 import { PlayerSongAdapter } from "./audio/PlayerSongAdapter";
+import { WavePlayer } from "./audio/WavePlayer"; 
 
 class ElementComponent implements IComponent {
     constructor(private container: HTMLElement) {
@@ -42,6 +43,7 @@ export class Appl extends ApplicationBase implements IComponent {
     song: SongDocument;
     player: Player;
     playerSongAdapter: PlayerSongAdapter;
+    wavePlayer: WavePlayer;
 
     modalDialogContainer: ModalDialogContainer;
 
@@ -63,6 +65,8 @@ export class Appl extends ApplicationBase implements IComponent {
         this.song = new SongDocument();
 
         this.device = new AudioDevice();
+
+        this.wavePlayer = new WavePlayer(this);
 
         this.frame = new GridFrameContainer();
         this.fullscreen = new FullScreen(this.frame);

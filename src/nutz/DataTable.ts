@@ -1,3 +1,4 @@
+import { domAppendNodes } from "./DomUtil";
 import { IComponent, INotify } from "./IComponent";
 
 function getChildNodeIndex(childNodes, node) {
@@ -54,7 +55,13 @@ export class DataTable implements IComponent {
         for (let column of this.columns) {
             const value = data[column.propertyNameOrIndex];
             const td = document.createElement("td");
-            td.innerText = value;
+
+            if (typeof value === "string") {
+                td.innerText = value;
+            } else {
+                domAppendNodes(td, value);
+            }
+
             row.appendChild(td);
         }
 

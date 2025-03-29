@@ -64,7 +64,7 @@ export class WavePanel implements IComponent {
                 type: "button",
                 label: "Play",
                 icon: "hgi-stroke hgi-next",
-                click: () => {},
+                click: () => app.executeCommand("play-wave", this.document),
             },
             {
                 type: "button",

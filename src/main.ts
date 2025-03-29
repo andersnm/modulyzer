@@ -9,6 +9,7 @@ import { ShowPatternEditorCommand } from './commands/ShowPatternEditorCommand';
 import { ShowWaveEditorCommand } from './commands/ShowWaveEditorCommand';
 import { SaveSongCommand } from './commands/SaveSongCommand';
 import { RecordWaveCommand } from './commands/RecordWaveCommand';
+import { PlayWaveCommand } from './commands/PlayWaveCommand';
 
 const app = new Appl();
 // app.registerCommand("play-current-recording", new PlayCurrentRecordingCommand(app))
@@ -23,6 +24,7 @@ app.registerCommand("save-song", new SaveSongCommand(app))
 app.registerCommand("create-wave", new CreateWaveCommand(app))
 app.registerCommand("open-wave", new OpenWaveCommand(app))
 app.registerCommand("record-wave", new RecordWaveCommand(app))
+app.registerCommand("play-wave", new PlayWaveCommand(app))
 
 // app.registerCommand("copy-selection", new CopySelectionCommand(app))
 // app.registerCommand("cut-selection", new CutSelectionCommand(app))

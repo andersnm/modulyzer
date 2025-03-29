@@ -1,5 +1,5 @@
 import { Appl } from "../App";
-import { ButtonToolbar, DataTable, IComponent } from "../nutz";
+import { Button, ButtonToolbar, DataTable, IComponent } from "../nutz";
 import { formatNote } from "./PatternEditorHelper";
 
 function formatTime(sec: number): string {
@@ -38,6 +38,7 @@ export class RecordingsPanel implements IComponent {
         this.list.addColumn("Name", "name")
         this.list.addColumn("Duration", "duration")
         this.list.addColumn("Note", "note")
+        this.list.addColumn("-", "action")
 
         this.container.appendChild(this.buttonBar);
         this.container.appendChild(this.list.getDomNode());
@@ -73,11 +74,38 @@ export class RecordingsPanel implements IComponent {
     bind() {
         while (this.list.getRowCount()) this.list.removeRow(0);
 
+        let clickedButton = null;
+
         for (let item of this.app.song.waves) {
+            const playButton = Button();
+            const iconSpan = document.createElement("span");
+            iconSpan.className = "hgi-stroke hgi-next";
+            playButton.appendChild(iconSpan);
+
+            playButton.addEventListener("click", async (e: Event) => {
+
+                if (clickedButton === playButton) {
+                    this.app.wavePlayer.stopWave();
+                    return;
+                }
+
+                clickedButton = playButton;
+                iconSpan.className = "hgi-stroke hgi-stop";
+
+                await this.app.executeCommand("play-wave", item);
+
+                iconSpan.className = "hgi-stroke hgi-next";
+                clickedButton = null;
+
+                e.stopPropagation(); // dont run global handler
+                e.preventDefault(); // dont do button default
+            });
+
             this.list.addRow({
                 name: item.name,
                 duration: formatTime(item.sampleCount / item.sampleRate),
                 note: formatNote(item.note),
+                action: playButton
                 // (item.sampleRate / 1000) + "khz"
             });
         }
