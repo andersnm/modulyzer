@@ -31,6 +31,7 @@ export class PatternEditorCanvas implements IComponent {
 
         this.canvas.addEventListener("resize", this.onResize);
         this.canvas.addEventListener("keydown", this.onKeyDown);
+        this.canvas.addEventListener("keyup", this.onKeyUp);
         
         this.container.appendChild(this.canvas);
 
@@ -193,9 +194,17 @@ export class PatternEditorCanvas implements IComponent {
         const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
         const cursorColumn = getCursorColumnAt(renderColumns, this.cursorColumn);
         if (cursorColumn.type === "u4-basenote") {
-            this.onNoteKeyDown(e)
+            this.onNoteKeyDown(e, cursorColumn);
         } else {
             this.onNumberKeyDown(e);
+        }
+    };
+
+    onKeyUp = (e: KeyboardEvent) => {
+        const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
+        const cursorColumn = getCursorColumnAt(renderColumns, this.cursorColumn);
+        if (cursorColumn.type === "u4-basenote") {
+            this.onNoteKeyUp(e, cursorColumn);
         }
     };
 
@@ -266,37 +275,38 @@ export class PatternEditorCanvas implements IComponent {
         this.app.song.deletePatternEvent(patternColumn, patternEvent);
     }
 
-    onNoteTopKeyDown(ev: KeyboardEvent) {
+    getNoteForKey(code: string) {
         const kbTop = [ "KeyQ", "Digit2", "KeyW", "Digit3", "KeyE", "KeyR", "Digit5", "KeyT", "Digit6", "KeyY", "Digit7", "KeyU", ];
-        const k = kbTop.findIndex(k => k === ev.code);
-        if (k === -1) {
-            return false
-        }
-
-        this.editNote(60 + k);
-
-        return true;
-    }
-
-    onNoteBottomKeyDown(ev: KeyboardEvent) {
         const kbBottom = [ "KeyZ", "KeyS", "KeyX", "KeyD", "KeyC", "KeyV", "KeyG", "KeyB", "KeyH", "KeyN", "KeyJ", "KeyM", ];
-        const k = kbBottom.findIndex(k => k === ev.code);
-        if (k === -1) {
-            return false
+
+        const t = kbTop.findIndex(k => k === code);
+        if (t !== -1) {
+            return 60 + t;
         }
 
-        this.editNote(48 + k);
+        const b = kbBottom.findIndex(k => k === code);
+        if (b !== -1) {
+            return 48 + b;
+        }
 
-        return true;
+        return -1;
     }
 
-    onNoteKeyDown(ev: KeyboardEvent) {
+    onNoteKeyDown(ev: KeyboardEvent, cursorColumn: CursorColumnInfo) {
 
-        if (this.onNoteTopKeyDown(ev)) {
+        if (ev.repeat) {
             return;
         }
 
-        if (this.onNoteBottomKeyDown(ev)) {
+        const note = this.getNoteForKey(ev.code);
+        if (note !== -1) {
+            this.editNote(note);
+
+            // Send midi to instrumnt
+            // TODO: stuck notes if canvas loses focus before key up
+            const instrument = cursorColumn.renderColumn.patternColumn.instrument;
+            const playerInstrument = this.app.playerSongAdapter.instrumentMap.get(instrument);
+            playerInstrument.sendMidi(0, 0x90, note, 127);
             return;
         }
 
@@ -305,7 +315,15 @@ export class PatternEditorCanvas implements IComponent {
                 this.editNoteOff();
                 break;
         }
+    }
 
+    onNoteKeyUp(ev: KeyboardEvent, cursorColumn: CursorColumnInfo) {
+        const note = this.getNoteForKey(ev.code);
+        if (note !== -1) {
+            const instrument = cursorColumn.renderColumn.patternColumn.instrument;
+            const playerInstrument = this.app.playerSongAdapter.instrumentMap.get(instrument);
+            playerInstrument.sendMidi(0, 0x90, note, 0);
+        }
     }
 
     onNumberKeyDown(e: KeyboardEvent) {
@@ -397,7 +415,6 @@ export class PatternEditorCanvas implements IComponent {
         if (nextPatternEvent && nextPatternEvent.data0 === 0) {
             this.app.song.updatePatternEvent(nextPatternEvent, note, 0, cursorColumn.channel);
         }
-
     }
 
     editDigit(digit: number) {
