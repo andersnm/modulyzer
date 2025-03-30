@@ -1,6 +1,15 @@
 import { Connection, Pattern, PatternColumn, PatternEvent, Player, SequenceColumn, SequenceEvent, Wave } from "./Player";
-import { Instrument } from "./plugins/InstrumentFactory";
+import { CcChangeDetail, Instrument } from "./plugins/InstrumentFactory";
 import { ConnectionDocument, InstrumentDocument, PatternColumnDocument, PatternDocument, PatternEventDocument, SequenceColumnDocument, SequenceEventDocument, SongDocument, WaveDocumentEx } from "./SongDocument";
+
+function findByValue<K, V>(map: Map<K, V>, value: V): K | undefined {
+    for (const entry of map.entries()) {
+        if (entry[1] === value) {
+            return entry[0];
+        }
+    }
+    return undefined;
+}
 
 export class PlayerSongAdapter {
     player: Player; 
@@ -87,16 +96,47 @@ export class PlayerSongAdapter {
             console.error("Unknown instrument " + i.instrumentId, i);
             return;
         }
-        const instrument = factory.createInstrument(this.player.context, this.player);
-        this.player.instruments.push(instrument);
 
+        const instrument = factory.createInstrument(this.player.context, this.player);
+        instrument.addEventListener("ccchange", this.onInstrumentCcChange);
+
+        this.player.instruments.push(instrument);
         this.instrumentMap.set(i, instrument);
+
+        // Set CCs for all controller pins to initial or default
+        const pins = factory.getPins();
+        for (let pin of pins) {
+            if (pin.type !== "controller" || pin.value === undefined || pin.default === undefined) {
+                continue;
+            }
+
+            const ccValue = i.ccs[pin.value];
+            if (ccValue !== undefined) {
+                instrument.sendMidi(0, 0xB0, pin.value, ccValue);
+            } else {
+                instrument.sendMidi(0, 0xB0, pin.value, pin.default);
+            }
+        }
+    };
+
+    onInstrumentCcChange = (ev: CustomEvent<CcChangeDetail>) => {
+        // Only called for CCs with a pin
+        // TODO: reverse instrument map
+        const instrument = findByValue(this.instrumentMap, ev.detail.instrument);
+        if (!instrument) {
+            console.error("Document/player out of sync", ev.detail.instrument)
+            return;
+        }
+
+        // NOTE/TODO?: No dispatch here, PinsPanel subscribes to ccchange too
+        instrument.ccs[ev.detail.value] = ev.detail.data;
     };
 
     onDeleteInstrument = (ev: CustomEvent<InstrumentDocument>) => {
         const i = ev.detail;
 
         const instrument = this.instrumentMap.get(i);
+        instrument.removeEventListener("ccchange", this.onInstrumentCcChange);
 
         const ix = this.player.instruments.indexOf(instrument);
         this.player.instruments.splice(ix, 1);

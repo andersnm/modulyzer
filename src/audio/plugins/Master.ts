@@ -31,6 +31,6 @@ export class Master extends Instrument {
         this.inputNode = context.destination;
     }
 
-    sendMidi(time: any, command: any, value: any, data: any) {
+    processMidi(time: any, command: any, value: any, data: any) {
     }
 }

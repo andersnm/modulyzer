@@ -23,11 +23,14 @@ function decompressBase64ToFloat32Array(base64String: string): Float32Array {
     return new Float32Array(decompressed.buffer);
 }
 
+export type CcValueDictionary = {[key: number]: number};
+
 export class InstrumentDocument {
     name: string;
     instrumentId: string;
     x: number = 0;
     y: number = 0;
+    ccs: CcValueDictionary = {};
 }
 
 export class ConnectionDocument {
@@ -155,7 +158,7 @@ export class SongDocument extends EventTarget {
     constructor() {
         super();
 
-        this.createInstrument("@modulyzer/Master", "Master", 0, 0);
+        this.createInstrument("@modulyzer/Master", "Master", 0, 0, {});
         const sc = this.createSequenceColumn();
         const p = this.createPattern("00", 32);
         this.createSequenceEvent(sc, 0, p);
@@ -175,12 +178,13 @@ export class SongDocument extends EventTarget {
         this.dispatchEvent(new CustomEvent("updateDocument", { detail: this }));
     }
 
-    createInstrument(id: string, name: string, x, y) {
+    createInstrument(id: string, name: string, x: number, y: number, ccs: CcValueDictionary) {
         const instrument = new InstrumentDocument();
         instrument.instrumentId = id;
         instrument.name = name;
         instrument.x = x;
         instrument.y = y;
+        instrument.ccs = { ... ccs };
         this.instruments.push(instrument);
 
         this.dispatchEvent(new CustomEvent("createInstrument", { detail: instrument }));
@@ -457,6 +461,7 @@ export class SongDocument extends EventTarget {
                 ref: instrument.instrumentId,
                 x: instrument.x,
                 y: instrument.y,
+                ccs: instrument.ccs,
             })),
             connections: this.connections.map(connection => ({
                 from: this.instruments.indexOf(connection.from),
@@ -509,7 +514,7 @@ export class SongDocument extends EventTarget {
         }
 
         for (let jsonInstrument of json.instruments) {
-            const i = this.createInstrument(jsonInstrument.ref, jsonInstrument.name, jsonInstrument.x, jsonInstrument.y);
+            const i = this.createInstrument(jsonInstrument.ref, jsonInstrument.name, jsonInstrument.x, jsonInstrument.y, jsonInstrument.ccs || {});
         }
 
         for (let jsonConnection of json.connections) {

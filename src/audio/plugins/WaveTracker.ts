@@ -64,7 +64,7 @@ export class WaveTracker extends Instrument {
         return null;
     }
 
-    sendMidi(time: any, command: any, value: any, data: any) {
+    processMidi(time: any, command: any, value: any, data: any) {
         if (command === 0x90) {
             if (data !== 0) {
                 this.noteOn(value, data, time);

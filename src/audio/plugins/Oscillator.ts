@@ -32,6 +32,7 @@ export class OscillatorFactory extends InstrumentFactory {
                 name: "Type",
                 description: "0=sine, 1=square, 2=sawtooth, 3=triangle",
                 value: 0,
+                default: 64,
             },
         ];
     }
@@ -61,7 +62,7 @@ export class Oscillator extends Instrument {
         this.outputNode = this.gainNode;
     }
 
-    sendMidi(time: number, command: number, value: number, data: number): void {
+    processMidi(time: number, command: number, value: number, data: number): void {
         if (command === 0x90) {
             if (data !== 0) {
                 // note on

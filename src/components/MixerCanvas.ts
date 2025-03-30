@@ -2,6 +2,7 @@ import { DragTarget, IComponent, PointType, ptInRect, rectCenter, RectType } fro
 import { FlexCanvas } from "./FlexCanvas";
 import { Appl } from "../App";
 import { ConnectionDocument, InstrumentDocument } from "../audio/SongDocument";
+import { PinsPanel } from "./PinsPanel";
 
 const boxWidth = 100;
 const boxHeight = 61; // 1.618
@@ -92,6 +93,7 @@ export class MixerCanvas implements IComponent {
         this.canvas.addEventListener("pointerup", this.onMouseUp);
         this.canvas.addEventListener("pointermove", this.onMouseMove);
         this.canvas.addEventListener("contextmenu", this.onContextMenu);
+        this.canvas.addEventListener("dblclick", this.onDblClick);
 
         this.canvas.addEventListener("resize", this.onResize);
         // this.canvas.addEventListener("keydown", this.onKeyDown);
@@ -172,6 +174,25 @@ export class MixerCanvas implements IComponent {
 
     onContextMenu = (e: MouseEvent) => {
         console.log("onContextMenu")
+        e.preventDefault();
+    };
+
+    onDblClick = (e: MouseEvent) => {
+        const instrument = this.instrumentAtPoint(e.offsetX, e.offsetY);
+        if (!instrument) {
+            return;
+        }
+
+        // find pins view, bind to dblclicked instrument
+        const tabIndex = this.app.sidebarTabs.tabs.tabs.findIndex(t => t.label === "Pins");
+        if (tabIndex === -1) {
+            return;
+        }
+
+        const panel = this.app.sidebarTabs.tabContent[tabIndex] as PinsPanel;
+        panel.bindInstrument(instrument);
+        this.app.sidebarTabs.setCurrentTab(tabIndex);
+
         e.preventDefault();
     };
 

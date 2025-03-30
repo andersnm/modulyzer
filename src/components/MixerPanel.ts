@@ -1,4 +1,5 @@
 import { Appl } from "../App";
+import { CcValueDictionary } from "../audio/SongDocument";
 import { ButtonToolbar, IComponent } from "../nutz";
 import { InstrumentFactoryPicker } from "./InstrumentFactoryPicker";
 import { MixerCanvas } from "./MixerCanvas";
@@ -43,7 +44,7 @@ export class MixerPanel implements IComponent {
         }
 
         const factory = this.app.instrumentFactories[instrumentFactoryPicker.instrumentFactoryIndex];
-        const instrument = this.app.song.createInstrument(factory.getIdentifier(), "NewInstrument", 0, 0);
+        const instrument = this.app.song.createInstrument(factory.getIdentifier(), "NewInstrument", 0, 0, {});
     }
 
     deleteSelection() {

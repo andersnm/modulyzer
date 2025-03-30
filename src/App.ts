@@ -20,6 +20,7 @@ import { WAVDecoder } from "./wavefile/WAVDecoder";
 import { WAVEncoder, WAVFormat } from "./wavefile/WAVEncoder";
 import { PlayerSongAdapter } from "./audio/PlayerSongAdapter";
 import { WavePlayer } from "./audio/WavePlayer"; 
+import { PinsPanel } from "./components/PinsPanel";
 
 class ElementComponent implements IComponent {
     constructor(private container: HTMLElement) {
@@ -203,6 +204,9 @@ export class Appl extends ApplicationBase implements IComponent {
 
         const mq = new MixerPanel(this);
         this.mainTabs.addTab("Mixer", mq);
+
+        const pq = new PinsPanel(this);
+        this.sidebarTabs.addTab("Pins", pq);
 
         // re-focus
         this.executeCommand("show-patterns");
