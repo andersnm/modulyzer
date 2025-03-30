@@ -17,23 +17,19 @@ export class DataTable implements IComponent {
     parent: INotify;
     columns: {label: string, propertyNameOrIndex: string|number}[] = [];
 
-    container: HTMLDivElement;
     table: HTMLElement;
     headerRow: HTMLTableRowElement;
     selectedIndex: number = -1;
 
     constructor(parent: INotify) {
         this.parent = parent;
-        this.container = document.createElement("div");
-        this.container.classList.add("relative", "w-full", "h-full", "overflow-auto");
 
         this.table = document.createElement("table");
-        this.table.classList.add("absolute", "w-full");
+        this.table.classList.add("w-full");
 
         this.headerRow = document.createElement("tr");
 
         this.table.appendChild(this.headerRow);
-        this.container.appendChild(this.table);
     }
 
     addColumn(label: string, propertyNameOrIndex: string|number) {
@@ -114,6 +110,6 @@ export class DataTable implements IComponent {
     }
 
     getDomNode(): Node {
-        return this.container;
+        return this.table;
     }
 }

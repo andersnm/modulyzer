@@ -1,6 +1,6 @@
 import { Appl } from "../App";
 import { readClipboardWave } from "../Clipboard";
-import { Button, ButtonToolbar, DataTable, IComponent } from "../nutz";
+import { Button, ButtonToolbar, DataTable, IComponent, ScrollableFlexContainer } from "../nutz";
 import { formatNote } from "./PatternEditorHelper";
 
 function formatTime(sec: number): string {
@@ -47,8 +47,10 @@ export class RecordingsPanel implements IComponent {
         this.list.addColumn("Duration", "duration")
         this.list.addColumn("Note", "note")
 
+        const scrollDiv = new ScrollableFlexContainer(this.list.getDomNode())
+
         this.container.appendChild(this.buttonBar);
-        this.container.appendChild(this.list.getDomNode());
+        this.container.appendChild(scrollDiv.getDomNode());
 
         this.container.addEventListener("nutz:mounted", this.onMounted);
         this.container.addEventListener("nutz:unmounted", this.onUnmounted);

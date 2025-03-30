@@ -1,5 +1,5 @@
 import { Appl } from "../App";
-import { ButtonToolbar, DataTable, IApplication, IComponent } from "../nutz";
+import { ButtonToolbar, DataTable, IApplication, IComponent, ScrollableFlexContainer } from "../nutz";
 
 export class PatternsPanel implements IComponent {
     app: Appl;
@@ -32,8 +32,10 @@ export class PatternsPanel implements IComponent {
         this.list.addColumn("Name", "name")
         this.list.addColumn("Duration", "duration")
 
+        const scrollArea = new ScrollableFlexContainer(this.list.getDomNode());
+
         this.container.appendChild(this.buttonBar);
-        this.container.appendChild(this.list.getDomNode());
+        this.container.appendChild(scrollArea.getDomNode());
 
         this.app.song.addEventListener("createPattern", () => this.bind())
 
