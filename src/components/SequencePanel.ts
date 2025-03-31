@@ -16,6 +16,7 @@ export class SequencePanel implements IComponent {
         this.app = app;
         this.container = document.createElement("div");
         this.container.className = "flex flex-col flex-1";
+        this.container.tabIndex = -1; // elements that should not be navigated to directly
         // flex div w/toolbar, wave, scroll stacked vertically
         this.sequenceEditor = new SequenceEditorCanvas(app);
 
@@ -32,9 +33,14 @@ export class SequencePanel implements IComponent {
         this.container.appendChild(this.toolbar);
         this.container.appendChild(this.sequenceEditor.getDomNode());
 
+        this.container.addEventListener("focus", this.onFocus);
     }
 
     getDomNode(): Node {
         return this.container;
+    }
+
+    onFocus = () => {
+        this.sequenceEditor.canvas.focus();
     }
 }

@@ -14,7 +14,8 @@ export class PatternPanel implements IComponent {
         this.app = app;
         this.container = document.createElement("div");
         this.container.className = "flex flex-col flex-1";
-        // flex div w/toolbar, wave, scroll stacked vertically
+        this.container.tabIndex = -1; // elements that should not be navigated to directly
+
         this.patternEditor = new PatternEditorCanvas(app);
 
         this.toolbar = ButtonToolbar([
@@ -31,6 +32,8 @@ export class PatternPanel implements IComponent {
         ]);
         this.container.appendChild(this.toolbar);
         this.container.appendChild(this.patternEditor.getDomNode());
+
+        this.container.addEventListener("focus", this.onFocus);
     }
 
     async addColumn() {
@@ -63,5 +66,9 @@ export class PatternPanel implements IComponent {
 
     getDomNode(): Node {
         return this.container;
+    }
+
+    onFocus = () => {
+        this.patternEditor.canvas.focus();
     }
 }

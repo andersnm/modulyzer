@@ -44,12 +44,6 @@ export class SequenceEditorCanvas implements IComponent {
         this.app.song.addEventListener("createSequenceEvent", this.onResize);
         this.app.song.addEventListener("updateSequenceEvent", this.onResize);
         this.app.song.addEventListener("deleteSequenceEvent", this.onResize);
-
-        setTimeout(() => {
-            console.log(this.canvas, this.canvas.tabIndex)
-            this.canvas.focus(); // !!!!! WHY DOES IT NOT WORK! IT WORKS WITH VERY LONG DELAY (100ms)
-        }, 5)
-        // ev.preventDefault();
     };
 
     onUnmounted = async () => {

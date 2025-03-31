@@ -102,6 +102,7 @@ export function ButtonToolbar(buttonToolbarButtons: (ButtonToolbarButton|ButtonT
             const t = document.createTextNode(toolbarButton.label)
             button.appendChild(t);
 
+            button.addEventListener("mousedown", e => event.preventDefault() ); // prevent taking focus
             button.addEventListener("click", toolbarButton.click);
 
             container.appendChild(button);

@@ -56,6 +56,9 @@ export class TabFrameContainer implements IComponent {
 
         // invalidate to redraw, unmount currnt tb contnt, mount new
         this.bind();
+
+        const element = this.tabContent[index].getDomNode() as HTMLElement;
+        element.focus();
     }
 
     notify(source: IComponent, eventName: string, ...args: any): void {

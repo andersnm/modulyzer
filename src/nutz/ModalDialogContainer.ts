@@ -9,12 +9,17 @@ interface IModal {
 
 export class ModalDialogContainer {
 
+    focusElement: HTMLElement;
     modalStack: IModal[] = [];
 
     constructor() {
     }
 
     async showModal(title: string, content: IComponent) {
+
+        if (this.modalStack.length === 0) {
+            this.focusElement = document.activeElement as HTMLElement;
+        }
 
         // insert wrapper in body, render topmost modal
         //             new NutzElement("div", { className: "relative z-10",
@@ -66,6 +71,11 @@ export class ModalDialogContainer {
 
         document.body.removeChild(modal.element);
         modal.resolve(value);
+
+        if (this.modalStack.length === 0 && this.focusElement) {
+            this.focusElement.focus();
+            this.focusElement = null;
+        }
     }
 
 }
