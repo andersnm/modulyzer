@@ -55,6 +55,6 @@ export class Reverb extends Instrument {
         this.outputNode = this.reverbNode;
     }
 
-    sendMidi(time: any, command: any, value: any, data: any) {
+    processMidi(time: any, command: any, value: any, data: any) {
     }
 }

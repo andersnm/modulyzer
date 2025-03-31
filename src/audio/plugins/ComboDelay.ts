@@ -68,7 +68,7 @@ export class ComboDelay extends Instrument {
         this.dryGainNode.connect(this.outputNode);
     }
 
-    sendMidi(time: number, command: number, value: number, data: number) {
+    processMidi(time: number, command: number, value: number, data: number) {
         // controller 0-3 mapped per pins
         if (command === 0xB0) {
             switch (value) {

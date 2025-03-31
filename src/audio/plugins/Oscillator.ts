@@ -8,6 +8,11 @@ function noteToFreq(note) {
 
 const oscTypeTable: OscillatorType[] = [ "sine", "square", "sawtooth", "triangle" ];
 
+function getOscType(value: number) {
+    const index = (value / 127) * (oscTypeTable.length - 1);
+    return oscTypeTable[Math.floor(index)];
+}
+
 export class OscillatorFactory extends InstrumentFactory {
     getIdentifier(): string {
         return "@modulyzer/Oscillator";
@@ -30,7 +35,7 @@ export class OscillatorFactory extends InstrumentFactory {
             {
                 type: "controller",
                 name: "Type",
-                description: "0=sine, 1=square, 2=sawtooth, 3=triangle",
+                description: "sine, square, sawtooth, triangle",
                 value: 0,
                 default: 64,
             },
@@ -39,6 +44,15 @@ export class OscillatorFactory extends InstrumentFactory {
 
     createInstrument(context: AudioContext, player: Player): Instrument {
         return new Oscillator(context, this);
+    }
+
+    describeCcValue(pinIndex: number, value: number): string {
+        switch (pinIndex) {
+            case 0: // typ
+                return getOscType(value);
+        }
+
+        return super.describeCcValue(pinIndex, value);
     }
 }
 
