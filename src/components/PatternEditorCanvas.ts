@@ -22,7 +22,7 @@ export class PatternEditorCanvas implements IComponent {
         
         this.canvas = FlexCanvas();
         this.canvas.classList.add("rounded-lg");
-        this.canvas.tabIndex = 0;
+        // this.canvas.tabIndex = 0;
 
         this.canvas.addEventListener("pointerdown", this.onMouseDown);
         this.canvas.addEventListener("pointerup", this.onMouseUp);
@@ -30,8 +30,8 @@ export class PatternEditorCanvas implements IComponent {
         this.canvas.addEventListener("contextmenu", this.onContextMenu);
 
         this.canvas.addEventListener("resize", this.onResize);
-        this.canvas.addEventListener("keydown", this.onKeyDown);
-        this.canvas.addEventListener("keyup", this.onKeyUp);
+        // this.canvas.addEventListener("keydown", this.onKeyDown);
+        // this.canvas.addEventListener("keyup", this.onKeyUp);
         
         this.container.appendChild(this.canvas);
 
@@ -92,121 +92,79 @@ export class PatternEditorCanvas implements IComponent {
         e.preventDefault();
     };
 
-    onKeyDown = (e: KeyboardEvent) => {
-        // console.log("KEYPP", e.key)
+    editKeyDown(e: KeyboardEvent) {
         switch (e.key) {
             case "ArrowUp":
-                if (this.cursorTime> 0) {
-                    this.cursorTime--;
-                    this.scrollIntoView();
-                    this.redrawCanvas();
-                    e.stopPropagation(); // dont run global handler
-                    e.preventDefault(); // dont do canvas default
-                }
-                break;
+                this.moveCursor(0, -1);
+                return true;
             case "ArrowDown":
-                if (this.cursorTime < this.pattern.duration) {
-                    this.cursorTime++;
-                    this.scrollIntoView();
-                    this.redrawCanvas();
-                    e.stopPropagation(); // dont run global handler
-                    e.preventDefault(); // dont do canvas default
-                }
-                break;
+                this.moveCursor(0, 1);
+                return true;
             case "ArrowLeft":
-                // TODO: max sequencer length
-                if (this.cursorColumn > 0) {
-                    this.cursorColumn--;
-                    this.redrawCanvas();
-                    e.stopPropagation(); // dont run global handler
-                    e.preventDefault(); // dont do canvas default
-                }
-                break;
+                this.moveCursor(-1, 0);
+                return true;
             case "ArrowRight":
-                // TODO: max sequencer length
-                if (this.cursorColumn < 8192) {
-                    this.cursorColumn++;
-                    this.redrawCanvas();
-                    e.stopPropagation(); // dont run global handler
-                    e.preventDefault(); // dont do canvas default
-                }
-                break;
-            case "Enter":
-                // console.log("Enter pattern if event here")
-                e.stopPropagation(); // dont run global handler
-                e.preventDefault(); // dont do canvas default
-                break;
-            // TODO; entry of note vs digits depends on current column type
+                this.moveCursor(1, 0);
+                return true;
             case "Delete":
                 this.deleteAtCursor();
-                break;
-            case "Backspace":
-                break;
+                return true;
             case "Tab":
                 if (e.shiftKey) {
                     this.movePreviousColumn();
                 } else {
                     this.moveNextColumn();
                 }
-                this.scrollIntoView();
-                this.redrawCanvas();
-                e.stopPropagation(); // dont run global handler
-                e.preventDefault(); // dont do canvas default
-                break;
+                return true;
             case "Home":
-                this.cursorColumn = 0;
-                this.scrollIntoView();
-                this.redrawCanvas();
-                e.stopPropagation(); // dont run global handler
-                e.preventDefault(); // dont do canvas default
-                break;
+                this.moveHome();
+                return true;
             case "End":
-                const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
-                const cursorColumns = getCursorColumns(renderColumns);
-                this.cursorColumn = cursorColumns.length - 1;
-                this.scrollIntoView();
-                this.redrawCanvas();
-                e.stopPropagation(); // dont run global handler
-                e.preventDefault(); // dont do canvas default
-                break;
+                this.moveEnd();
+                return true;
             case "PageUp":
-                this.cursorTime = Math.max(this.cursorTime - 16, 0);
-                this.scrollIntoView();
-                this.redrawCanvas();
-                e.stopPropagation(); // dont run global handler
-                e.preventDefault(); // dont do canvas default
-                break;
-
+                this.moveCursor(0, -16);
+                return true;
             case "PageDown":
-                this.cursorTime = Math.min(this.cursorTime + 16, this.pattern.duration);
-                this.scrollIntoView();
-                this.redrawCanvas();
-                e.stopPropagation(); // dont run global handler
-                e.preventDefault(); // dont do canvas default
-                break;
+                this.moveCursor(0, 16);
+                return true;
             default:
                 console.log(e);
                 break;
         }
 
-        // is it note, octae, velo, u4 ->
-        // const pattern = this.app.song.patterns[0];
         const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
+        if (renderColumns.length === 0) return;
         const cursorColumn = getCursorColumnAt(renderColumns, this.cursorColumn);
         if (cursorColumn.type === "u4-basenote") {
-            this.onNoteKeyDown(e, cursorColumn);
+            return this.editNoteKeyDown(e, cursorColumn);
         } else {
-            this.onNumberKeyDown(e);
+            return this.editNumberKeyDown(e);
+        }
+
+        return false;
+    }
+
+    editKeyUp(e: KeyboardEvent) {
+        const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
+        if (renderColumns.length === 0) return;
+
+        const cursorColumn = getCursorColumnAt(renderColumns, this.cursorColumn);
+        if (cursorColumn.type === "u4-basenote") {
+            this.editNoteKeyUp(e, cursorColumn);
         }
     };
 
-    onKeyUp = (e: KeyboardEvent) => {
+    moveCursor(dx, dy) {
         const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
-        const cursorColumn = getCursorColumnAt(renderColumns, this.cursorColumn);
-        if (cursorColumn.type === "u4-basenote") {
-            this.onNoteKeyUp(e, cursorColumn);
-        }
-    };
+        const cursorColumns = getCursorColumns(renderColumns);
+
+        this.cursorTime = Math.max(Math.min(this.cursorTime + dy, this.pattern.duration - 1), 0);
+        this.cursorColumn = Math.max(Math.min(this.cursorColumn + dx, cursorColumns.length - 1), 0);
+        
+        this.scrollIntoView();
+        this.redrawCanvas();
+    }
 
     moveNextColumn() {
         const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
@@ -220,6 +178,9 @@ export class PatternEditorCanvas implements IComponent {
                 break;
             }
         }
+
+        this.scrollIntoView();
+        this.redrawCanvas();
     }
 
     movePreviousColumn() {
@@ -248,6 +209,23 @@ export class PatternEditorCanvas implements IComponent {
         }
 
         this.cursorColumn = i + 1;
+
+        this.scrollIntoView();
+        this.redrawCanvas();
+    }
+
+    moveHome() {
+        this.cursorColumn = 0;
+        this.scrollIntoView();
+        this.redrawCanvas();
+    }
+
+    moveEnd() {
+        const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
+        const cursorColumns = getCursorColumns(renderColumns);
+        this.cursorColumn = cursorColumns.length - 1;
+        this.scrollIntoView();
+        this.redrawCanvas();
     }
 
     scrollIntoView() {
@@ -292,10 +270,10 @@ export class PatternEditorCanvas implements IComponent {
         return -1;
     }
 
-    onNoteKeyDown(ev: KeyboardEvent, cursorColumn: CursorColumnInfo) {
+    private editNoteKeyDown(ev: KeyboardEvent, cursorColumn: CursorColumnInfo) {
 
         if (ev.repeat) {
-            return;
+            return false;
         }
 
         const note = this.getNoteForKey(ev.code);
@@ -307,17 +285,19 @@ export class PatternEditorCanvas implements IComponent {
             const instrument = cursorColumn.renderColumn.patternColumn.instrument;
             const playerInstrument = this.app.playerSongAdapter.instrumentMap.get(instrument);
             playerInstrument.sendMidi(0, 0x90, note, 127);
-            return;
+            return true;
         }
 
         switch (ev.key) {
             case "1":
                 this.editNoteOff();
-                break;
+                return true;
         }
+
+        return false;
     }
 
-    onNoteKeyUp(ev: KeyboardEvent, cursorColumn: CursorColumnInfo) {
+    editNoteKeyUp(ev: KeyboardEvent, cursorColumn: CursorColumnInfo) {
         const note = this.getNoteForKey(ev.code);
         if (note !== -1) {
             const instrument = cursorColumn.renderColumn.patternColumn.instrument;
@@ -326,7 +306,7 @@ export class PatternEditorCanvas implements IComponent {
         }
     }
 
-    onNumberKeyDown(e: KeyboardEvent) {
+    private editNumberKeyDown(e: KeyboardEvent) {
         switch (e.key) {
             case "0":
             case "1":
@@ -341,7 +321,7 @@ export class PatternEditorCanvas implements IComponent {
                 this.editDigit(e.key.charCodeAt(0) - 48);
                 e.stopPropagation(); // dont run global handler
                 e.preventDefault(); // dont do canvas default
-                break;
+                return true;
             case "A":
             case "B":
             case "C":
@@ -351,7 +331,7 @@ export class PatternEditorCanvas implements IComponent {
                 this.editDigit(e.key.charCodeAt(0) - 65 + 10);
                 e.stopPropagation(); // dont run global handler
                 e.preventDefault(); // dont do canvas default
-                break;
+                return true;
             case "a":
             case "b":
             case "c":
@@ -361,7 +341,7 @@ export class PatternEditorCanvas implements IComponent {
                 this.editDigit(e.key.charCodeAt(0) - 97 + 10);
                 e.stopPropagation(); // dont run global handler
                 e.preventDefault(); // dont do canvas default
-                break;
+                return true;
         }
     }
 

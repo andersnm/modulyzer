@@ -1,10 +1,10 @@
 import { MenuItem } from "../menu/menu";
-import { IApplication } from "./IApplication";
+import { ICommandHost } from "./CommandHost";
 import { IComponent, INotify } from "./IComponent";
 import { Menu } from "./Menu";
 
 export class MenuBar implements IComponent {
-    app: IApplication;
+    app: ICommandHost;
     menuContainer: HTMLElement;
     menu: Menu;
     selectedIndex: number = -1;
@@ -12,7 +12,7 @@ export class MenuBar implements IComponent {
     hovering: boolean = false;
     menuItems: MenuItem[] = null;
 
-    constructor(app: IApplication) {
+    constructor(app: ICommandHost) {
         this.app = app;
         this.menuContainer = document.createElement("div");
         this.menuContainer.className = "flex flex-row nutz-menubar";

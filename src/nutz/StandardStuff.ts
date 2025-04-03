@@ -1,5 +1,4 @@
 import { domAppendNodes } from "./DomUtil";
-import { IApplication } from "./IApplication";
 import { IComponent } from "./IComponent";
 
 export function FormGroup(label: string, content: Node|Node[]): HTMLElement {

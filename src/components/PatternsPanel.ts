@@ -1,5 +1,5 @@
 import { Appl } from "../App";
-import { ButtonToolbar, DataTable, IApplication, IComponent, ScrollableFlexContainer } from "../nutz";
+import { ButtonToolbar, DataTable, IComponent, ScrollableFlexContainer } from "../nutz";
 
 export class PatternsPanel implements IComponent {
     app: Appl;

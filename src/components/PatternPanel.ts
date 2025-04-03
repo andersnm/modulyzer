@@ -1,20 +1,22 @@
 import { Appl } from "../App";
 import { PatternDocument } from "../audio/SongDocument";
-import { ButtonToolbar, IComponent } from "../nutz";
+import { registerPatternEditorCommands } from "../commands/PatternEditor/Register";
+import { ButtonToolbar, CommandHost, formatHotkey, IComponent } from "../nutz";
 import { InstrumentPinPicker } from "./InstrumentPinPicker";
 import { PatternEditorCanvas } from "./PatternEditorCanvas";
 
-export class PatternPanel implements IComponent {
+export class PatternPanel extends CommandHost implements IComponent {
     app: Appl;
     container: HTMLElement;
     toolbar: HTMLElement;
     patternEditor: PatternEditorCanvas;
 
     constructor(app: Appl) {
+        super(app);
         this.app = app;
         this.container = document.createElement("div");
         this.container.className = "flex flex-col flex-1";
-        this.container.tabIndex = -1; // elements that should not be navigated to directly
+        this.container.tabIndex = 0;
 
         this.patternEditor = new PatternEditorCanvas(app);
 
@@ -24,9 +26,7 @@ export class PatternPanel implements IComponent {
                 label: "Add Column",
                 icon: "",
                 click: () => {
-                    // modal select instrument + pin(s)
-                    // app.song.createPatternColumn()
-                    this.addColumn();
+                    this.executeCommand("add-column");
                 },
             }
         ]);
@@ -34,17 +34,10 @@ export class PatternPanel implements IComponent {
         this.container.appendChild(this.patternEditor.getDomNode());
 
         this.container.addEventListener("focus", this.onFocus);
-    }
+        this.container.addEventListener("keydown", this.onKeyDown);
+        this.container.addEventListener("keyup", this.onKeyUp);
 
-    async addColumn() {
-        const instrumentPinPicker = new InstrumentPinPicker(this.app, this);
-        const result = await this.app.modalDialogContainer.showModal("Select Instrument and Pin", instrumentPinPicker)
-        if (!result) {
-            return;
-        }
-
-        const instrument = this.app.song.instruments[instrumentPinPicker.instrumentIndex];
-        this.app.song.createPatternColumn(this.patternEditor.pattern, instrument, instrumentPinPicker.pinIndex);
+        registerPatternEditorCommands(this)
     }
 
     setPattern(pattern: PatternDocument) {
@@ -69,6 +62,27 @@ export class PatternPanel implements IComponent {
     }
 
     onFocus = () => {
-        this.patternEditor.canvas.focus();
+        // this.patternEditor.canvas.focus();
     }
+
+    onKeyDown = (e: KeyboardEvent) => {
+        if (this.patternEditor.editKeyDown(e)) {
+            e.stopPropagation(); // dont run global handler
+            e.preventDefault(); // dont do canvas default
+            return;
+        }
+
+        const keyName = formatHotkey(e);
+        const hotkeyCommand = this.hotkeys[keyName];
+        // console.log(keyName)
+        if (hotkeyCommand) {
+            this.executeCommand(hotkeyCommand);
+            e.stopPropagation();
+            e.preventDefault();
+        }
+    };
+
+    onKeyUp = (e: KeyboardEvent) => {
+        this.patternEditor.editKeyUp(e);
+    };
 }
