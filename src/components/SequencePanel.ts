@@ -1,23 +1,21 @@
 import { Appl } from "../App";
 import { SequenceEditorCanvas } from "./SequenceEditorCanvas";
-import { ButtonToolbar, IComponent } from "../nutz";
+import { ButtonToolbar, CommandHost, formatHotkey, IComponent } from "../nutz";
+import { registerSequenceEditorCommands } from "../commands/SequenceEditor/Register";
 
-export interface SequencePanelProps {
-    playPosition?: number;
-}
-
-export class SequencePanel implements IComponent {
+export class SequencePanel extends CommandHost implements IComponent {
     app: Appl;
     container: HTMLElement;
     toolbar: HTMLElement;
     sequenceEditor: SequenceEditorCanvas;
 
     constructor(app: Appl) {
+        super(app);
         this.app = app;
         this.container = document.createElement("div");
         this.container.className = "flex flex-col flex-1";
         this.container.tabIndex = -1; // elements that should not be navigated to directly
-        // flex div w/toolbar, wave, scroll stacked vertically
+
         this.sequenceEditor = new SequenceEditorCanvas(app);
 
         this.toolbar = ButtonToolbar([
@@ -26,21 +24,36 @@ export class SequencePanel implements IComponent {
                 label: "Add Column",
                 icon: "",
                 click: () => {
-                    app.song.createSequenceColumn()
+                    this.executeCommand("add-column")
                 },
             }
         ]);
         this.container.appendChild(this.toolbar);
         this.container.appendChild(this.sequenceEditor.getDomNode());
 
-        this.container.addEventListener("focus", this.onFocus);
+        this.container.addEventListener("keydown", this.onKeyDown);
+
+        registerSequenceEditorCommands(this);
     }
 
     getDomNode(): Node {
         return this.container;
     }
 
-    onFocus = () => {
-        this.sequenceEditor.canvas.focus();
-    }
+    onKeyDown = (e: KeyboardEvent) => {
+        if (this.sequenceEditor.editKeyDown(e)) {
+            e.stopPropagation(); // dont run global handler
+            e.preventDefault(); // dont do canvas default
+            return;
+        }
+
+        const keyName = formatHotkey(e);
+        const hotkeyCommand = this.hotkeys[keyName];
+        // console.log(keyName)
+        if (hotkeyCommand) {
+            this.executeCommand(hotkeyCommand);
+            e.stopPropagation();
+            e.preventDefault();
+        }
+    };
 }

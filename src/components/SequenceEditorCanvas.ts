@@ -1,6 +1,3 @@
-// panel -> table w/recordings
-
-// import { ComputableModel, NutzComponent, NutzElement } from "nutzui";
 import { Appl } from "../App";
 import { IComponent } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
@@ -24,13 +21,11 @@ export class SequenceEditorCanvas implements IComponent {
         
         this.canvas = FlexCanvas();
         this.canvas.classList.add("rounded-lg");
-        this.canvas.tabIndex = 0;
 
         this.canvas.addEventListener("pointerdown", this.onMouseDown);
         this.canvas.addEventListener("pointerup", this.onMouseUp);
         this.canvas.addEventListener("pointermove", this.onMouseMove);
         this.canvas.addEventListener("contextmenu", this.onContextMenu);
-        this.canvas.addEventListener("keydown", this.onKeyDown);
         this.canvas.addEventListener("resize", this.onResize);
 
         this.container.appendChild(this.canvas);
@@ -100,7 +95,7 @@ export class SequenceEditorCanvas implements IComponent {
         ev.preventDefault();
     };
 
-    onKeyDown = (e: KeyboardEvent) => {
+    editKeyDown(e: KeyboardEvent) {
         // console.log("KEYPP", e.key)
         switch (e.key) {
             case "ArrowUp":
@@ -108,8 +103,7 @@ export class SequenceEditorCanvas implements IComponent {
                 if (this.cursorTime> 0) {
                     this.cursorTime--;
                     this.redrawCanvas();
-                    e.stopPropagation(); // dont run global handler
-                    e.preventDefault(); // dont do canvas default
+                    return true;
                 }
                 break;
             case "ArrowDown":
@@ -117,39 +111,30 @@ export class SequenceEditorCanvas implements IComponent {
                 if (this.cursorTime < 8192) {
                     this.cursorTime++;
                     this.redrawCanvas();
-                    e.stopPropagation(); // dont run global handler
-                    e.preventDefault(); // dont do canvas default
+                    return true;
                 }
                 break;
             case "ArrowRight":
                 this.cursorColumn++;
                 this.redrawCanvas();
-                e.stopPropagation(); // dont run global handler
-                e.preventDefault(); // dont do canvas default
-                break;
+                return true;
             case "ArrowLeft":
                 this.cursorColumn--;
                 this.redrawCanvas();
-                e.stopPropagation(); // dont run global handler
-                e.preventDefault(); // dont do canvas default
-                break;
+                return true;
             case "Enter":
                 // console.log("Enter pattern if event here")
                 this.gotoPattern();
-                e.stopPropagation(); // dont run global handler
-                e.preventDefault(); // dont do canvas default
-                    // executeCommand("show-pattern-editor://patternid")
-                // eller "open editor" "of type; pattern"
-                break;
+                return true;
             case "Delete":
                 this.deleteAtCursor();
-                break;
+                return true;
             case "0": case "1": case "2": case "3": case "4":
             case "5": case "6": case "7": case "8": case "9":
                 this.editPatternIndex(e.key.charCodeAt(0) - 48);
-                break;
+                return true;
         }
-    };
+    }
 
     deleteAtCursor() {
         const sequenceColumn = this.app.song.sequenceColumns[this.cursorColumn];

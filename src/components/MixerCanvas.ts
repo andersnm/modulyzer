@@ -87,7 +87,6 @@ export class MixerCanvas implements IComponent {
         
         this.canvas = FlexCanvas();
         this.canvas.classList.add("rounded-lg");
-        this.canvas.tabIndex = 0;
 
         this.canvas.addEventListener("pointerdown", this.onMouseDown);
         this.canvas.addEventListener("pointerup", this.onMouseUp);
