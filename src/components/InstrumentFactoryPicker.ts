@@ -17,6 +17,7 @@ export class InstrumentFactoryPicker implements IComponent {
         this.parent = parent;
         this.container = document.createElement("div");
         this.container.className = "flex flex-col flex-1";
+        this.container.tabIndex = -1;
 
         this.instrumentSelect = document.createElement("select");
         this.instrumentSelect.className = "w-full rounded-lg p-1 bg-neutral-800";

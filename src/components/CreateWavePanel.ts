@@ -17,6 +17,7 @@ export class CreateWavePanel implements IComponent {
         this.parent = parent;
 
         this.container = document.createElement("div");
+        this.container.tabIndex = -1;
 
         this.nameInput = document.createElement("input");
         this.nameInput.className = "w-full rounded-lg p-1 bg-neutral-800";

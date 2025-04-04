@@ -12,18 +12,18 @@ import { RecordWaveCommand } from '../RecordWaveCommand';
 import { PlayWaveCommand } from '../PlayWaveCommand';
 
 export function registerApplicationCommands(app: Appl) {
-    app.registerCommand("show-audio-configuration", new ShowAudioConfigurationCommand(app));
-    app.registerCommand("show-waves", new ShowWavesCommand(app));
-    app.registerCommand("show-patterns", new ShowPatternsCommand(app));
-    app.registerCommand("show-pattern-editor", new ShowPatternEditorCommand(app));
-    app.registerCommand("show-wave-editor", new ShowWaveEditorCommand(app));
-    app.registerCommand("show-sequence-editor", new ShowSequenceEditorCommand(app));
-    app.registerCommand("save-song", new SaveSongCommand(app));
+    app.registerCommand("show-audio-configuration", null, null, new ShowAudioConfigurationCommand(app));
+    app.registerCommand("show-waves", null, null, new ShowWavesCommand(app));
+    app.registerCommand("show-patterns", null, null, new ShowPatternsCommand(app));
+    app.registerCommand("show-pattern-editor", null, null, new ShowPatternEditorCommand(app));
+    app.registerCommand("show-wave-editor", null, null, new ShowWaveEditorCommand(app));
+    app.registerCommand("show-sequence-editor", null, null, new ShowSequenceEditorCommand(app));
+    app.registerCommand("save-song", "hgi-download-04", null, new SaveSongCommand(app));
     
-    app.registerCommand("create-wave", new CreateWaveCommand(app));
-    app.registerCommand("open-wave", new OpenWaveCommand(app));
-    app.registerCommand("record-wave", new RecordWaveCommand(app));
-    app.registerCommand("play-wave", new PlayWaveCommand(app));
+    app.registerCommand("create-wave", "hgi-plus-sign-square", null, new CreateWaveCommand(app));
+    app.registerCommand("open-wave", "hgi-folder-02", null, new OpenWaveCommand(app));
+    app.registerCommand("record-wave", "hgi-record", null, new RecordWaveCommand(app));
+    app.registerCommand("play-wave", "hgi-next", null, new PlayWaveCommand(app));
 
     app.registerHotkey("F2", "show-pattern-editor");
     app.registerHotkey("SHIFT+F2", "show-patterns");

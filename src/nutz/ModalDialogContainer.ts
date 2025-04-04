@@ -5,6 +5,7 @@ import { Panel } from "./Panel";
 interface IModal {
     resolve: (value) => void;
     element: HTMLElement;
+    content: HTMLElement;
 }
 
 export class ModalDialogContainer {
@@ -19,6 +20,7 @@ export class ModalDialogContainer {
 
         if (this.modalStack.length === 0) {
             this.focusElement = document.activeElement as HTMLElement;
+            window.addEventListener("keydown", this.onKeyDown);
         }
 
         // insert wrapper in body, render topmost modal
@@ -53,12 +55,15 @@ export class ModalDialogContainer {
 
         document.body.appendChild(wrapperNode);
 
+        (content.getDomNode() as HTMLElement).focus();
+
         // return promise tat resulves when dialog is closed
         // and the content must be able to endDialog too
         return new Promise((resolve) => {
             this.modalStack.push({
                 resolve,
-                element: wrapperNode
+                element: wrapperNode,
+                content: content.getDomNode() as HTMLElement,
             });
         });
     }
@@ -72,10 +77,26 @@ export class ModalDialogContainer {
         document.body.removeChild(modal.element);
         modal.resolve(value);
 
-        if (this.modalStack.length === 0 && this.focusElement) {
-            this.focusElement.focus();
-            this.focusElement = null;
+        if (this.modalStack.length === 0) {
+            if (this.focusElement) {
+                this.focusElement.focus();
+                this.focusElement = null;
+            }
+
+            window.removeEventListener("keydown", this.onKeyDown);
+        } else {
+            const nextModal = this.modalStack[this.modalStack.length - 1];
+            nextModal.content.focus();
         }
     }
+
+    onKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+            this.endModal(false);
+        } else
+        if (e.key === "Enter") {
+            this.endModal(true);
+        }
+    };
 
 }

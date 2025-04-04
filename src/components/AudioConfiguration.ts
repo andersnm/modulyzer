@@ -37,6 +37,7 @@ export class AudioConfiguration implements IComponent {
     constructor(parent: INotify) {
         this.parent = parent;
         this.containerElement = document.createElement("div");
+        this.containerElement.tabIndex = -1;
 
         this.deniedForm = this.renderDenied();
         this.promptForm = this.renderPrompt();

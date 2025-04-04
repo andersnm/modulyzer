@@ -74,7 +74,7 @@ export class Appl extends CommandHost implements IComponent {
         this.fullscreen = new FullScreen(this.frame);
 
         this.menuBar = new MenuBar(this);
-        this.menuBar.bindMenu(mainMenu);
+        this.menuBar.bindMenubarMenu(mainMenu);
 
         // NOTE: toolbar input button assigns to bpmInput
         this.toolbar = ButtonToolbar([

@@ -1,7 +1,20 @@
 import { MenuItem } from "../menu/menu";
+import { MenuItem as NutzMenuItem } from "./Menu";
 import { ICommandHost } from "./CommandHost";
 import { IComponent, INotify } from "./IComponent";
 import { Menu } from "./Menu";
+
+function convertNutzMenu(app: ICommandHost, menu: MenuItem[]): NutzMenuItem[] {
+    const nutzMenu: NutzMenuItem[] = menu.map(m => ({
+        label: m.label,
+        action: m.action,
+        icon: app.getCommand(m.action)?.icon,
+        shortcut: app.getCommand(m.action)?.hotkey,
+        items: m.items ? convertNutzMenu(app, m.items) : null,
+    }));
+
+    return nutzMenu;
+}
 
 export class MenuBar implements IComponent {
     app: ICommandHost;
@@ -31,7 +44,7 @@ export class MenuBar implements IComponent {
         // itemNode.className = "bg-neutral-800 text-neutral-300 hover:bg-neutral-700 hover:text-neutral-100 px-1 rounded";
     }
 
-    bindMenu(menu: MenuItem[]) {
+    bindMenubarMenu(menu: MenuItem[]) {
 
         this.menuItems = menu;
         while (this.menuContainer.childNodes.length > 0) this.menuContainer.removeChild(this.menuContainer.lastChild);
@@ -115,7 +128,9 @@ export class MenuBar implements IComponent {
     }
 
     showMenu(x: number, y: number, menu: MenuItem[]) {
-        this.menu.bindMenu(menu);
+        // translate to menu component's menuitem with shortcut, icon etc from the command
+        const nutzMenu = convertNutzMenu(this.app, menu)
+        this.menu.bindMenu(nutzMenu);
         this.menu.setPosition(x, y);
         this.menu.show();
     }

@@ -1,19 +1,20 @@
-import { MenuItem } from "../menu/menu";
-// import { IApplication } from "./IApplication";
 import { IComponent } from "./IComponent";
+
+export interface MenuItem {
+    label: string;
+    action?: string;
+    icon?: string;
+    shortcut?: string; //
+    items?: MenuItem[]; 
+}
 
 export class Menu implements IComponent {
     private parent: IComponent;
-    // app: IApplication;
-
     menuContainer: HTMLElement;
     inner: HTMLElement;
     submenu: Menu = null;
     submenuItemIndex: number = -1;
-    // submenuNode: HTMLElement = null;
     selectedIndex: number = -1;
-    // selectedItem: MenuItem = null;
-    // selectedNode: HTMLElement = null;
     items: MenuItem[] = [];
 
     constructor(parent: IComponent) {
@@ -28,7 +29,7 @@ export class Menu implements IComponent {
         this.menuContainer.appendChild(this.inner);
 
         this.menuContainer.addEventListener("keydown", ev => {
-            console.log("mkdown", this, ev)
+            // console.log("mkdown", this, ev)
             // right -> open flyout if exist, or menubar next (from flyout too)
             const oldIndex = this.selectedIndex;
 
@@ -114,18 +115,11 @@ export class Menu implements IComponent {
     }
 
     bindMenuItem(itemOuterNode: HTMLElement, itemIndex: number) {
-
-        // 
-
         const item = this.items[itemIndex];
 
         while (itemOuterNode.childNodes.length > 0) itemOuterNode.removeChild(itemOuterNode.lastChild);
 
         this.bindMenuItemStyle(itemOuterNode, itemIndex);
-        // const open = this.selectedIndex == itemIndex || this.submenuItemIndex == itemIndex; // === item; // !!item.open; // if the flyout; hover
-
-        // itemOuterNode.className = "flex flex-row " + (open ? "bg-neutral-200 text-neutral-700" : "");
-        // itemOuterNode.className = "flex flex-row " + (open ? "bg-neutral-200 text-neutral-700" : "hover:bg-neutral-200 hover:text-neutral-700");
 
         const iconNode = document.createElement("div");
         iconNode.className = "w-6";
@@ -141,7 +135,10 @@ export class Menu implements IComponent {
 
         const hotkeyNode = document.createElement("div");
         hotkeyNode.className = "flex-0";
-        hotkeyNode.innerText = "Ctrl+F4";
+
+        if (item.shortcut) {
+            hotkeyNode.innerText = item.shortcut;
+        }
 
         const arrowNode = document.createElement("div");
         arrowNode.className = "w-6 text-right";
@@ -217,10 +214,8 @@ export class Menu implements IComponent {
             });
 
             itemOuterNode.addEventListener("click", () => {
-                console.log("CLICK MITM", item)
                 // this.app.executeCommand(item.action);
                 this.notify(this, "action", item.action);
-                // notify parent? close on the way
             });
 
             this.bindMenuItem(itemOuterNode, itemIndex);
@@ -239,7 +234,6 @@ export class Menu implements IComponent {
                 this.closeSubmenu();
                 this.menuContainer.focus();
             } else if (args[0].key === "ArrowRight") {
-                console.log("RIRIRI")
                 // if item has child items, open it, else send to parent
             }
         }

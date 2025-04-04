@@ -1,25 +1,30 @@
+/*
+    crop: "hgi-crop",
+    open: hgi-folder-02
+    undo: "hgi-arrow-left-double",
+    redo: "hgi-arrow-right-double",
+    cut: "hgi-scissor-01",
+    copy: "hgi-copy-01",
+    paste: "hgi-column-insert",
+*/
 export interface MenuItem {
     label: string;
     action?: string;
-    icon?: string; // ?? ref for icon manager w/sized icons
     items?: MenuItem[];
-    // open?: boolean; // is actually state?? can use index stuff??? or 
 }
 
 export const fileMenu: MenuItem[] = [
     {
         label: "New...",
-        action: "create-wave"
+        action: "clear-song"
     },
     {
-        icon: "hgi-stroke hgi-folder-02",
         label: "Open...",
-        action: "create-wave"
+        action: "open-song"
     },
     {
-        icon: "hgi-stroke hgi-download-04",
-        label: "Export...",
-        action: "show-export-recording"
+        label: "Save As...",
+        action: "save-song"
     },
 ];
 
@@ -28,34 +33,28 @@ export const waveMenu: MenuItem[] = [
 
 export const editMenu: MenuItem[] = [
     {
-        icon: "hgi-arrow-left-double",
         label: "Undo",
         action: "YYY"
     },
     {
-        icon: "hgi-arrow-right-double",
         label: "Redo",
         action: "YYY"
     },
 
     {
-        icon: "hgi-scissor-01",
         label: "Cut",
         action: "cut-selection"
     },
     {
-        icon: "hgi-copy-01",
         label: "Copy",
         action: "copy-selection"
     },
     {
-        icon: "hgi-column-insert",
         label: "Paste",
         action: "paste-selection"
     },
 
     {
-        icon: "hgi-crop",
         label: "Crop",
         action: "YYY"
     },
