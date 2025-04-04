@@ -27,6 +27,11 @@ export class PatternPanel extends CommandHost implements IComponent {
                 type: "button",
                 label: "Add Column",
                 action: "add-column",
+            },
+            {
+                type: "button",
+                label: "Edit...",
+                action: "edit-pattern",
             }
         ]);
         this.container.appendChild(this.toolbar);

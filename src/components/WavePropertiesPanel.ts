@@ -21,6 +21,7 @@ export class WavePropertiesPanel implements IComponent {
         this.note = note;
 
         this.container = document.createElement("div");
+        this.container.tabIndex = -1;
 
         this.nameInput = document.createElement("input");
         this.nameInput.className = "w-full rounded-lg p-1 bg-neutral-800";

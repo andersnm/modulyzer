@@ -84,11 +84,23 @@ export function ButtonToolbar(app: ICommandHost, buttonToolbarButtons: (ButtonTo
             const button = Button();
 
             const cmd = app.getCommand(toolbarButton.action);
-            console.log("COMMAND", cmd, toolbarButton.action, new Error())
-            if (cmd && cmd.icon) {
-                const iconSpan = document.createElement("span");
-                iconSpan.className = cmd.icon;
-                button.appendChild(iconSpan);
+
+            if (cmd) {
+                if (cmd.icon) {
+                    const iconSpan = document.createElement("span");
+                    iconSpan.className = cmd.icon;
+                    button.appendChild(iconSpan);
+                }
+
+                if (cmd.description) {
+                    button.title = cmd.description;
+                    if (cmd.hotkey) {
+                        button.title += " (" + cmd.hotkey + ")";
+                    }
+                } else
+                if (cmd.hotkey) {
+                    button.title = cmd.hotkey;
+                }
             }
 
             const t = document.createTextNode(toolbarButton.label)

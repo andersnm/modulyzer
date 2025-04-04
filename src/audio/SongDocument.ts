@@ -247,6 +247,13 @@ export class SongDocument extends EventTarget {
         return pattern;
     }
 
+    updatePattern(pattern: PatternDocument, name: string, length: number) {
+        pattern.name = name;
+        pattern.duration = length;
+
+        this.dispatchEvent(new CustomEvent("updatePattern", { detail: pattern }));
+    }
+
     deletePattern(pattern: PatternDocument) {
 
         while (pattern.columns.length > 0) {

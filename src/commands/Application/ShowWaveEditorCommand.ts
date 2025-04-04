@@ -30,7 +30,7 @@ export class ShowWaveEditorCommand {
             pq.setWave(dummy);
         }
 
-        this.app.mainTabs.addTab("Pattern", pq);
+        this.app.mainTabs.addTab("Wave", pq);
 
         this.app.mainTabs.setCurrentTab(this.app.mainTabs.tabs.tabs.length - 1);
     }

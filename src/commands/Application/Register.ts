@@ -15,6 +15,8 @@ import { PlaySongCommand } from './PlaySongCommand';
 import { StopSongCommand } from './StopSongCommand';
 import { PasteNewWaveCommand } from './PasteNewWaveCommand';
 import { CreatePatternCommand } from './CreatePatternCommand';
+import { ShowMixerCommand } from './ShowMixerCommand';
+import { ShowPinsCommand } from './ShowPinsCommand';
 
 export function registerApplicationCommands(app: Appl) {
     app.registerCommand("show-audio-configuration", null, null, new ShowAudioConfigurationCommand(app));
@@ -23,23 +25,25 @@ export function registerApplicationCommands(app: Appl) {
     app.registerCommand("show-pattern-editor", null, null, new ShowPatternEditorCommand(app));
     app.registerCommand("show-wave-editor", null, null, new ShowWaveEditorCommand(app));
     app.registerCommand("show-sequence-editor", null, null, new ShowSequenceEditorCommand(app));
-    app.registerCommand("save-song", "hgi-stroke hgi-download-04", null, new SaveSongCommand(app));
-    app.registerCommand("open-song", "hgi-stroke hgi-folder-02", null, new OpenSongCommand(app));
-    app.registerCommand("play-song", "hgi-stroke hgi-next", null, new PlaySongCommand(app));
-    app.registerCommand("stop-song", "hgi-stroke hgi-record", null, new StopSongCommand(app));
+    app.registerCommand("show-mixer", null, null, new ShowMixerCommand(app));
+    app.registerCommand("show-pins", null, null, new ShowPinsCommand(app));
+    app.registerCommand("save-song", "hgi-stroke hgi-download-04", "Save Song", new SaveSongCommand(app));
+    app.registerCommand("open-song", "hgi-stroke hgi-folder-02", "Load Song", new OpenSongCommand(app));
+    app.registerCommand("play-song", "hgi-stroke hgi-next", "Play Song", new PlaySongCommand(app));
+    app.registerCommand("stop-song", "hgi-stroke hgi-record", "Stop Playing Song", new StopSongCommand(app));
 
-    app.registerCommand("create-wave", "hgi-stroke hgi-plus-sign-square", null, new CreateWaveCommand(app));
-    app.registerCommand("open-wave", "hgi-stroke hgi-folder-02", null, new OpenWaveCommand(app));
-    app.registerCommand("record-wave", "hgi-stroke hgi-record", null, new RecordWaveCommand(app));
-    app.registerCommand("play-wave", "hgi-stroke hgi-next", null, new PlayWaveCommand(app));
-    app.registerCommand("paste-new-wave", "hgi-stroke hgi-next", null, new PasteNewWaveCommand(app));
+    app.registerCommand("create-wave", "hgi-stroke hgi-plus-sign-square", "Create New Wave", new CreateWaveCommand(app));
+    app.registerCommand("open-wave", "hgi-stroke hgi-folder-02", "Load Wave", new OpenWaveCommand(app));
+    app.registerCommand("record-wave", "hgi-stroke hgi-record", "Start/Stop Recording", new RecordWaveCommand(app));
+    app.registerCommand("play-wave", "hgi-stroke hgi-next", "Play Wave", new PlayWaveCommand(app));
+    app.registerCommand("paste-new-wave", "hgi-stroke hgi-next", "Import New Wave from Clipboard", new PasteNewWaveCommand(app));
 
-    app.registerCommand("create-pattern", "hgi-stroke hgi-plus-sign-square", null, new CreatePatternCommand(app));
+    app.registerCommand("create-pattern", "hgi-stroke hgi-plus-sign-square", "Create New Pattern", new CreatePatternCommand(app));
 
     app.registerHotkey("F2", "show-pattern-editor");
     app.registerHotkey("SHIFT+F2", "show-patterns");
-    // app.registerHotkey("F3", "show-mixer");
-    // app.registerHotkey("SHIFT+F3", "show-pins");
+    app.registerHotkey("F3", "show-mixer");
+    app.registerHotkey("SHIFT+F3", "show-pins");
     app.registerHotkey("F4", "show-sequence-editor");
     app.registerHotkey("F5", "play-song");
     app.registerHotkey("F8", "stop-song");

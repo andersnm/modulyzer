@@ -40,6 +40,8 @@ export class PatternEditorCanvas implements IComponent {
     }
 
     onMounted = () => {
+        this.app.song.addEventListener("updateInstrument", this.onResize);
+        this.app.song.addEventListener("updatePattern", this.onResize);
         this.app.song.addEventListener("createPatternColumn", this.onResize);
         this.app.song.addEventListener("updatePatternColumn", this.onResize);
         this.app.song.addEventListener("createPatternEvent", this.onResize);
@@ -48,6 +50,8 @@ export class PatternEditorCanvas implements IComponent {
     };
 
     onUnmounted = () => {
+        this.app.song.removeEventListener("updateInstrument", this.onResize);
+        this.app.song.removeEventListener("updatePattern", this.onResize);
         this.app.song.removeEventListener("createPatternColumn", this.onResize);
         this.app.song.removeEventListener("updatePatternColumn", this.onResize);
         this.app.song.removeEventListener("createPatternEvent", this.onResize);

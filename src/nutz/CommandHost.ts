@@ -21,7 +21,8 @@ export function formatHotkey(e: KeyboardEvent) {
 
 export interface ICommandHost {
     executeCommand(command: string): void;
-    getCommand(command: string): { hotkey: string, icon: string};
+    getCommand(command: string): { hotkey: string, icon: string, description: string };
+    getHotkeyForCommand(command: string): string | null;
 }
 
 interface ICommandInfo {

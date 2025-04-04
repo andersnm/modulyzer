@@ -208,29 +208,26 @@ export class Appl extends CommandHost implements IComponent {
         // this.domObserver.observe(this.fullscreen.getDomNode(), config);
 
         window.addEventListener("keydown", this.onKeyDown);
+        window.addEventListener("beforeunload", (e) => {
+            // set a truthy value to property returnValue
+            e.returnValue = true;
+            e.preventDefault();
+          });
     }
 
     async init() {
 
-        // await this.storage.open();
+        // Default sidebars
         this.executeCommand("show-patterns");
         this.executeCommand("show-waves");
+        this.executeCommand("show-pins");
 
-        const permission = await tryGetMicrophonePermission();
-
+        // Default main views
         this.executeCommand("show-audio-configuration");
         this.executeCommand("show-sequence-editor");
         this.executeCommand("show-pattern-editor");
-
-        // recording panel = waveeditorpanel - redigerer én wave i prosjekte.
-        const wq = new WavePanel(this);
-        this.mainTabs.addTab("Wave", wq);
-
-        const mq = new MixerPanel(this);
-        this.mainTabs.addTab("Mixer", mq);
-
-        const pq = new PinsPanel(this);
-        this.sidebarTabs.addTab("Pins", pq);
+        this.executeCommand("show-wave-editor");
+        this.executeCommand("show-mixer");
 
         // re-focus
         this.executeCommand("show-patterns");

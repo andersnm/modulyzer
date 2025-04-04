@@ -30,6 +30,7 @@ export class PatternsPanel implements IComponent {
         this.container.appendChild(scrollArea.getDomNode());
 
         this.app.song.addEventListener("createPattern", () => this.bind())
+        this.app.song.addEventListener("updatePattern", () => this.bind())
 
         this.bind();
     }
@@ -42,7 +43,7 @@ export class PatternsPanel implements IComponent {
         for (let item of this.app.song.patterns) {
             this.list.addRow({
                 name: item.name,
-                duration: "smell"
+                duration: item.duration.toString()
             });
         }
     }

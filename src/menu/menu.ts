@@ -100,6 +100,10 @@ const sidebarMenu: MenuItem[] = [
         label: "Patterns",
         action: "show-patterns",
     },
+    {
+        label: "Pins",
+        action: "show-pins",
+    },
 ];
 
 export const viewMenu: MenuItem[] = [
@@ -114,6 +118,10 @@ export const viewMenu: MenuItem[] = [
     {
         label: "Mixer",
         action: "show-mixer"
+    },
+    {
+        label: "Wave",
+        action: "show-wave-editor"
     },
     {
         label: "Audio Configuration",
