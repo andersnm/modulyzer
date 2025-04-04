@@ -1,12 +1,11 @@
 import { WaveEditorCanvas } from "./WaveEditorCanvas";
 import { WaveScrollCanvas } from "./WaveScrollCanvas";
 import { Appl } from "../App";
-import { ButtonToolbar, IComponent } from "../nutz";
+import { ButtonToolbar, CommandHost, formatHotkey, IComponent } from "../nutz";
 import { WaveDocumentEx } from "../audio/SongDocument";
-import { WavePropertiesPanel } from "./WavePropertiesPanel";
-import { readClipboardWave, writeClipboardWave } from "../Clipboard";
+import { registerWaveEditorCommands } from "../commands/WaveEditor/Register";
 
-export class WavePanel implements IComponent {
+export class WavePanel extends CommandHost implements IComponent {
     app: Appl;
     document: WaveDocumentEx;
     container: HTMLElement;
@@ -15,6 +14,7 @@ export class WavePanel implements IComponent {
     waveScroll: WaveScrollCanvas;
 
     constructor(app: Appl) {
+        super(app);
         this.app = app;
 
         this.container = document.createElement("div");
@@ -28,67 +28,69 @@ export class WavePanel implements IComponent {
                 type: "button",
                 label: "Cut",
                 icon: "hgi-stroke hgi-scissor-01",
-                click: () => this.cut(),
+                click: () => this.executeCommand("cut"),
             },
             {
                 type: "button",
                 label: "Copy",
                 icon: "hgi-stroke hgi-copy-01",
-                click: () => this.copy(),
+                click: () => this.executeCommand("copy"),
             },
             {
                 type: "button",
                 label: "Paste",
                 icon: "hgi-stroke hgi-column-insert",
-                click: () => this.paste(),
+                click: () => this.executeCommand("paste"),
             },
             {
                 type: "button",
                 label: "Crop",
                 icon: "hgi-stroke hgi-crop",
-                click: () => this.crop(),
+                click: () => this.executeCommand("crop"),
             },
             {
                 type: "button",
                 label: "Zoom",
                 icon: "hgi-stroke hgi-zoom-in-area",
-                click: () => this.zoomSelection(),
+                click: () => this.executeCommand("zoom"),
             },
             {
                 type: "button",
                 label: "+",
                 icon: "hgi-stroke hgi-zoom-in-area",
-                click: () => this.zoomRelative(0.9),
+                click: () => this.executeCommand("zoom-in"),
             },
             {
                 type: "button",
                 label: "-",
                 icon: "hgi-stroke hgi-zoom-in-area",
-                click: () =>  this.zoomRelative(1.1),
+                click: () => this.executeCommand("zoom-out"),
             },
             {
                 type: "button",
                 label: "Play",
                 icon: "hgi-stroke hgi-next",
-                click: () => app.executeCommand("play-wave", this.document),
+                click: () => this.executeCommand("play-wave", this.document),
             },
             {
                 type: "button",
                 label: "Record",
                 icon: "hgi-stroke hgi-record",
-                click: () => app.executeCommand("record-wave"),
+                click: () => this.executeCommand("record-wave"),
             },
             {
                 type: "button",
                 icon: "hgi-stroke hgi-folder",
                 label: "Save",
-                click: () => app.downloadWave(this.document),
+                // click: () => app.downloadWave(this.document),
+                click: () => this.executeCommand("save-wave")
             },
             {
                 type: "button",
                 icon: "hgi-stroke hgi-folder",
                 label: "Edit...",
-                click: () => this.showWaveProperties(),
+                // click: () => this.showWaveProperties(),
+                click: () => this.executeCommand("edit-wave")
             },
 
         ]);
@@ -99,22 +101,9 @@ export class WavePanel implements IComponent {
 
         this.container.addEventListener("nutz:mounted", this.onMounted);
         this.container.addEventListener("nutz:unmounted", this.onUnmounted);
-    }
+        this.container.addEventListener("keydown", this.onKeyDown);
 
-    async showWaveProperties() {
-        if (!this.document) {
-            console.error("Not editing wave");
-            return;
-        }
-
-        const wavePanel = new WavePropertiesPanel(this.app, this, this.document.name, this.document.note);
-        const result = await this.app.modalDialogContainer.showModal("Wave Properties", wavePanel);
-
-        if (!result) {
-            return;
-        }
-
-        this.app.song.updateWave(this.document, wavePanel.name, wavePanel.note, this.document.selection, this.document.zoom);
+        registerWaveEditorCommands(this);
     }
 
     onMounted = () => {
@@ -143,88 +132,18 @@ export class WavePanel implements IComponent {
         this.waveEditor.clear();
         this.waveScroll.clear();
         this.document = null;
-    }
+    };
 
-    crop() {
-        if (!this.waveEditor.selection) {
-            return;
+    onKeyDown = (e: KeyboardEvent) => {
+        const keyName = formatHotkey(e);
+        const hotkeyCommand = this.hotkeys[keyName];
+        // console.log(keyName)
+        if (hotkeyCommand) {
+            this.executeCommand(hotkeyCommand);
+            e.stopPropagation();
+            e.preventDefault();
         }
-        const start = Math.min(this.waveEditor.selection.start, this.waveEditor.selection.end);
-        const end = Math.max(this.waveEditor.selection.start, this.waveEditor.selection.end);
-
-        this.document.deleteRange(end, this.document.sampleCount);
-        this.document.deleteRange(0, start);
-
-        this.waveEditor.clearSelection();
-        this.waveEditor.clearZoom();
-
-        this.app.song.updateWave(this.document, this.document.name, this.document.note, null, null);
-    }
-
-    async cut() {
-        if (!this.waveEditor.selection) {
-            return;
-        }
-
-        const start = Math.min(this.waveEditor.selection.start, this.waveEditor.selection.end);
-        const end = Math.max(this.waveEditor.selection.start, this.waveEditor.selection.end);
-
-        const rangeBuffers = this.document.copyRange(start, end);
-        await writeClipboardWave(this.document.name, this.document.sampleRate, rangeBuffers);
-
-        this.document.deleteRange(start, end);
-        this.waveEditor.clearSelection();
-        this.app.song.updateWave(this.document, this.document.name, this.document.note, null, this.document.zoom);
-    }
-
-    async copy() {
-        if (!this.waveEditor.selection) {
-            return;
-        }
-
-        const start = Math.min(this.waveEditor.selection.start, this.waveEditor.selection.end);
-        const end = Math.max(this.waveEditor.selection.start, this.waveEditor.selection.end);
-
-        const rangeBuffers = this.document.copyRange(start, end);
-        await writeClipboardWave(this.document.name, this.document.sampleRate, rangeBuffers);
-    }
-
-    async paste() {
-        const wavFile = await readClipboardWave();
-
-        if (!wavFile) {
-            return;
-        }
-
-        let offset = 0;
-        if (this.waveEditor.selection) {
-            offset = this.waveEditor.selection.end;
-        }
-
-        this.document.insertRange(offset, wavFile.channels);
-        this.app.song.updateWave(this.document, this.document.name, this.document.note, this.document.selection, this.document.zoom);
-    }
-
-
-    zoomRelative(ratio: number) {
-        if (!this.waveEditor.zoom) {
-            return;
-        }
-
-        const zoomLength = this.waveEditor.zoom.end - this.waveEditor.zoom.start;
-        const center = this.waveEditor.zoom.start + zoomLength / 2;
-
-        const documentLength = this.document.buffers[0].length;
-        console.log("zoomeling ratio", ratio, this.waveEditor.zoom);
-
-        this.waveEditor.setZoom(
-            Math.max(0, center - (zoomLength / 2 * ratio)),
-            Math.min(documentLength - 1, center + (zoomLength / 2 * ratio))
-        );
-
-        console.log("zoomeling after", ratio, this.waveEditor.zoom);
-
-    }
+    };
 
     notify(source: IComponent, eventName: string, ...args: any): void {
         if (source === this.waveEditor) {
@@ -262,13 +181,11 @@ export class WavePanel implements IComponent {
                     this.waveEditor.setZoom(start, end);
                 }
             }
-        } else if (source instanceof WavePropertiesPanel) {
-            if (eventName === "ok") {
-                this.app.modalDialogContainer.endModal(true);
-            } else if (eventName === "cancel") {
-                this.app.modalDialogContainer.endModal(false);
-            }
         }
+    }
+
+    getDomNode(): Node {
+        return this.container;
     }
 
     setWave(wave: WaveDocumentEx) {
@@ -289,10 +206,6 @@ export class WavePanel implements IComponent {
         }
     }
 
-    getDomNode(): Node {
-        return this.container;
-    }
-
     zoomSelection() {
         if (!this.waveEditor.selection) {
             return;
@@ -303,5 +216,25 @@ export class WavePanel implements IComponent {
 
         this.waveEditor.setZoom(start, end);
         this.waveEditor.redrawCanvas();
+    }
+
+    zoomRelative(ratio: number) {
+        if (!this.waveEditor.zoom) {
+            return;
+        }
+
+        const zoomLength = this.waveEditor.zoom.end - this.waveEditor.zoom.start;
+        const center = this.waveEditor.zoom.start + zoomLength / 2;
+
+        const documentLength = this.document.buffers[0].length;
+        console.log("zoomeling ratio", ratio, this.waveEditor.zoom);
+
+        this.waveEditor.setZoom(
+            Math.max(0, center - (zoomLength / 2 * ratio)),
+            Math.min(documentLength - 1, center + (zoomLength / 2 * ratio))
+        );
+
+        console.log("zoomeling after", ratio, this.waveEditor.zoom);
+
     }
 }
