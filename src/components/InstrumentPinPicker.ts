@@ -1,5 +1,5 @@
 import { Appl } from "../App";
-import { ButtonToolbar, FormGroup, IComponent, INotify } from "../nutz";
+import { FormGroup, IComponent, INotify, ModalButtonBar } from "../nutz";
 
 export class InstrumentPinPicker implements IComponent {
     app: Appl;
@@ -40,24 +40,11 @@ export class InstrumentPinPicker implements IComponent {
 
         const pinGroup = FormGroup("Pin", this.pinSelect);
 
-        const buttonContainer = ButtonToolbar([
-            {
-                type: "button",
-                label: "OK",
-                click: () => this.parent.notify(this, "ok"),
-                icon: null,
-            },
-            {
-                type: "button",
-                label: "Cancel",
-                click: () => this.parent.notify(this, "cancel"),
-                icon: null,
-            },
-        ]);
+        const modalButtonBar = new ModalButtonBar(this, this.parent);
 
         this.container.appendChild(instrumentGroup);
         this.container.appendChild(pinGroup);
-        this.container.appendChild(buttonContainer);
+        this.container.appendChild(modalButtonBar.getDomNode());
 
         this.container.addEventListener("nutz:mounted", this.onMounted);
         this.container.addEventListener("nutz:unmounted", this.onUnmounted);

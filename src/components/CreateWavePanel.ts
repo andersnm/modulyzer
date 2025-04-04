@@ -1,4 +1,4 @@
-import { ButtonToolbar, FormGroup, FormGroupRadio, IComponent, INotify } from "../nutz";
+import { FormGroup, FormGroupRadio, IComponent, INotify, ModalButtonBar } from "../nutz";
 import { bindNoteDropdown } from "./PatternEditorHelper";
 
 export class CreateWavePanel implements IComponent {
@@ -61,26 +61,13 @@ export class CreateWavePanel implements IComponent {
 
         const modeGroup = FormGroup("Mode", [ monoRadio.getDomNode(), stereoRadio.getDomNode() ]);
 
-        const buttonContainer = ButtonToolbar([
-            {
-                type: "button",
-                label: "OK",
-                click: () => this.parent.notify(this, "ok"),
-                icon: null,
-            },
-            {
-                type: "button",
-                label: "Cancel",
-                click: () => this.parent.notify(this, "cancel"),
-                icon: null,
-            },
-        ]);
+        const modalButtonBar = new ModalButtonBar(this, this.parent);
 
         this.container.appendChild(nameGroup);
         this.container.appendChild(durationGroup);
         this.container.appendChild(noteGroup);
         this.container.appendChild(modeGroup);
-        this.container.appendChild(buttonContainer);
+        this.container.appendChild(modalButtonBar.getDomNode());
     }
 
     getDomNode(): Node {

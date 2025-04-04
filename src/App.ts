@@ -23,6 +23,63 @@ import { WavePlayer } from "./audio/WavePlayer";
 import { PinsPanel } from "./components/PinsPanel";
 import { registerApplicationCommands } from "./commands/Application/Register";
 
+class BpmInput implements IComponent {
+
+    app: Appl;
+    container: HTMLDivElement;
+    input: HTMLInputElement;
+
+    constructor(app: Appl) {
+        this.app = app;
+        this.container = document.createElement("div");
+        this.container.classList.add("flex", "gap-1", "items-center");
+    
+        const label = document.createElement("span");
+        label.classList.add("text-white");
+        label.innerText = "BPM:";
+
+        this.input = document.createElement("input");
+        this.input.type = "number";
+        this.input.min = "16";
+        this.input.max = "280";
+        this.input.value = this.app.song.bpm.toString();
+        this.input.classList.add("rounded-lg", "p-1", "bg-neutral-600", "text-white", "text-center");
+
+        this.input.addEventListener("change", () => {
+            const i = parseInt(this.input.value);
+            if (!isNaN(i)) {
+                this.app.song.setBpm(i);
+            }
+        })
+
+        this.container.appendChild(label);
+        this.container.appendChild(this.input);
+    }
+
+    getDomNode(): Node {
+        return this.container;
+    }
+}
+
+class ToolbarContainer implements IComponent {
+    container: HTMLDivElement;
+
+    constructor() {
+        // horizontally aligned, break if overflow
+        this.container = document.createElement("div");
+        this.container.className = "flex flex-row gap-1";
+
+    }
+
+    addToolbar(toolbar: Node) {
+        this.container.appendChild(toolbar);
+    }
+
+    getDomNode(): Node {
+        return this.container;
+    }
+}
+
 class ElementComponent implements IComponent {
     constructor(private container: HTMLElement) {
 
@@ -35,7 +92,7 @@ class ElementComponent implements IComponent {
 export class Appl extends CommandHost implements IComponent {
     fullscreen: FullScreen;
     menuBar: MenuBar;
-    bpmInput: HTMLInputElement;
+    bpmInput: BpmInput;
     toolbar: HTMLElement;
     frame: GridFrameContainer;
     sidebarTabs: TabFrameContainer;
@@ -63,6 +120,7 @@ export class Appl extends CommandHost implements IComponent {
 
     constructor() {
         super(null);
+        registerApplicationCommands(this);
 
         this.song = new SongDocument();
 
@@ -77,70 +135,33 @@ export class Appl extends CommandHost implements IComponent {
         this.menuBar.bindMenubarMenu(mainMenu);
 
         // NOTE: toolbar input button assigns to bpmInput
-        this.toolbar = ButtonToolbar([
+        const toolbar = ButtonToolbar(this, [
             {
                 type: "button",
                 label: "",
-                icon: "hgi-stroke hgi-folder-02",
-                click: () => this.uploadProject(),
+                action: "open-song",
             },
             {
                 type: "button",
                 label: "",
-                icon: "hgi-stroke hgi-download-04",
-                click: () => this.executeCommand("save-song"),
+                action: "save-song",
             },
-            // 
             {
                 type: "button",
                 label: "Play",
-                icon: "hgi-stroke hgi-next",
-                click: () => this.player.play(),
+                action: "play-song",
             },
             {
                 type: "button",
                 label: "Stop",
-                icon: "hgi-stroke hgi-record",
-                click: () => this.player.stop(),
-            },
-            {
-                type: "separator",
-            },
-            {
-                type: "button",
-                label: "BPM -",
-                icon: "",
-                click: () => {
-                    this.song.setBpm(this.song.bpm - 1);
-                },
-            },
-            {
-                type: "input",
-                // label: "BPM",
-                init: (el: HTMLInputElement) => {
-                    el.type = "number";
-                    el.min = "16";
-                    el.max = "280";
-                    el.value = this.song.bpm.toString();
-                    el.className = "rounded-lg p-1 bg-neutral-600 text-white text-center";
-                    this.bpmInput = el;
-                },
-                change: (el) => {
-                    const i = parseInt(this.bpmInput.value);
-                    if (!isNaN(i)) {
-                        this.song.setBpm(i);
-                    }
-                },
-            },
-            {
-                type: "button",
-                label: "BPM +",
-                icon: "",
-                click: () => {
-                    this.song.setBpm(this.song.bpm + 1);
-                },
+                action: "stop-song",
             },
         ]);
+
+        this.bpmInput = new BpmInput(this);
+        const toolbarContainer = new ToolbarContainer();
+        toolbarContainer.addToolbar(toolbar);
+        toolbarContainer.addToolbar(this.bpmInput.getDomNode());
 
         this.sidebarTabs = new TabFrameContainer(true);
         this.sidebarTabs.setTabsPosition("bottom");
@@ -150,14 +171,14 @@ export class Appl extends CommandHost implements IComponent {
         this.frame.addFrame("top", 100, this.menuBar);
         
         // TODO; buttons and bpm+slider \ vu on same row
-        this.frame.addFrame("top", 100, new ElementComponent(this.toolbar));
+        this.frame.addFrame("top", 100, toolbarContainer);
         this.frame.addFrame("left", 100, this.sidebarTabs);
         this.frame.addFrame("main", 100, this.mainTabs);
 
         this.modalDialogContainer = new ModalDialogContainer();
 
         this.song.addEventListener("updateDocument", (ev: CustomEvent<SongDocument>) => {
-            this.bpmInput.value = this.song.bpm.toString();
+            this.bpmInput.input.value = this.song.bpm.toString();
         });
 
         // Emit events for mounts and unmounts
@@ -187,8 +208,6 @@ export class Appl extends CommandHost implements IComponent {
         // this.domObserver.observe(this.fullscreen.getDomNode(), config);
 
         window.addEventListener("keydown", this.onKeyDown);
-
-        registerApplicationCommands(this);
     }
 
     async init() {

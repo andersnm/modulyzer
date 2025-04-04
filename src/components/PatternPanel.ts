@@ -2,7 +2,6 @@ import { Appl } from "../App";
 import { PatternDocument } from "../audio/SongDocument";
 import { registerPatternEditorCommands } from "../commands/PatternEditor/Register";
 import { ButtonToolbar, CommandHost, formatHotkey, IComponent } from "../nutz";
-import { InstrumentPinPicker } from "./InstrumentPinPicker";
 import { PatternEditorCanvas } from "./PatternEditorCanvas";
 
 export class PatternPanel extends CommandHost implements IComponent {
@@ -14,20 +13,20 @@ export class PatternPanel extends CommandHost implements IComponent {
     constructor(app: Appl) {
         super(app);
         this.app = app;
+
+        registerPatternEditorCommands(this)
+
         this.container = document.createElement("div");
         this.container.className = "flex flex-col flex-1";
         this.container.tabIndex = 0;
 
         this.patternEditor = new PatternEditorCanvas(app);
 
-        this.toolbar = ButtonToolbar([
+        this.toolbar = ButtonToolbar(this, [
             {
                 type: "button",
                 label: "Add Column",
-                icon: "",
-                click: () => {
-                    this.executeCommand("add-column");
-                },
+                action: "add-column",
             }
         ]);
         this.container.appendChild(this.toolbar);
@@ -36,25 +35,10 @@ export class PatternPanel extends CommandHost implements IComponent {
         this.container.addEventListener("focus", this.onFocus);
         this.container.addEventListener("keydown", this.onKeyDown);
         this.container.addEventListener("keyup", this.onKeyUp);
-
-        registerPatternEditorCommands(this)
     }
 
     setPattern(pattern: PatternDocument) {
         this.patternEditor.setPattern(pattern);
-    }
-
-    notify(source: IComponent, eventName: string, ...args: any): void {
-        if (source instanceof InstrumentPinPicker) {
-            console.log("NOTIFY FROM MODAL")
-            if (eventName === "ok") {
-                // this resolves await showModal
-                this.app.modalDialogContainer.endModal(true);
-            } else if (eventName === "cancel") {
-                // this resolves await showModal
-                this.app.modalDialogContainer.endModal(false);
-            }
-        }
     }
 
     getDomNode(): Node {

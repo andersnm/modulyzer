@@ -12,24 +12,25 @@ export class MixerPanel extends CommandHost implements IComponent {
     constructor(app: Appl) {
         super(app);
         this.app = app;
+        
+        registerMixerCommands(this);
+
         this.container = document.createElement("div");
         this.container.className = "flex flex-col flex-1";
         this.container.tabIndex = -1; // elements that should not be navigated to directly
 
         this.mixerCanvas = new MixerCanvas(app);
 
-        this.toolbar = ButtonToolbar([
+        this.toolbar = ButtonToolbar(this, [
             {
                 type: "button",
                 label: "Add Instrument",
-                icon: "",
-                click: () => this.executeCommand("add-instrument"),
+                action: "add-instrument",
             },
             {
                 type: "button",
                 label: "Delete",
-                icon: "",
-                click: () => this.executeCommand("delete-selection"),
+                action: "delete-selection",
             }
 
         ]);
@@ -37,8 +38,6 @@ export class MixerPanel extends CommandHost implements IComponent {
         this.container.appendChild(this.mixerCanvas.getDomNode());
 
         this.container.addEventListener("keydown", this.onKeyDown);
-
-        registerMixerCommands(this);
     }
 
     onKeyDown = (e: KeyboardEvent) => {

@@ -12,20 +12,12 @@ export class PatternsPanel implements IComponent {
         this.container = document.createElement("div");
         this.container.classList.add("flex", "flex-col", "w-full", "h-full");
 
-        this.buttonBar = ButtonToolbar([
+        this.buttonBar = ButtonToolbar(this.app, [
             {
                 type: "button",
-                icon: "hgi-stroke hgi-plus-sign-square",
                 label: "New...",
-                click: () => app.song.createPattern("Untitled", 16) //app.executeCommand("show-create-new-pattern"),
+                action: "create-pattern",
             },
-            // {
-            //     type: "button",
-            //     icon: "hgi-stroke hgi-refresh",
-            //     label: "Refresh...",
-            //     click: () => this.bind(),
-            //     // action: "refresh-recordings",
-            // },
         ]);
 
         this.list = new DataTable(this);

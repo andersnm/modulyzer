@@ -20,14 +20,14 @@ export class PinsPanel implements IComponent {
         this.container = document.createElement("div");
         this.container.classList.add("flex", "flex-col", "w-full", "h-full");
 
-        this.buttonBar = ButtonToolbar([]);
+        // this.buttonBar = ButtonToolbar([]);
 
         this.listDiv  = document.createElement("div");
         this.listDiv.classList.add("flex", "flex-col");
 
         this.scrollDiv = new ScrollableFlexContainer(this.listDiv);
 
-        this.container.appendChild(this.buttonBar);
+        // this.container.appendChild(this.buttonBar);
         this.container.appendChild(this.scrollDiv.getDomNode());
     }
 

@@ -1,5 +1,5 @@
 import { Appl } from "../App";
-import { ButtonToolbar, FormGroup, IComponent, INotify } from "../nutz";
+import { FormGroup, IComponent, INotify, ModalButtonBar } from "../nutz";
 
 export class SaveAsPanel implements IComponent {
     app: Appl;
@@ -27,23 +27,10 @@ export class SaveAsPanel implements IComponent {
 
         const nameGroup = FormGroup("Filename", this.nameInput);
 
-        const buttonContainer = ButtonToolbar([
-            {
-                type: "button",
-                label: "OK",
-                click: () => this.parent.notify(this, "ok"),
-                icon: null,
-            },
-            {
-                type: "button",
-                label: "Cancel",
-                click: () => this.parent.notify(this, "cancel"),
-                icon: null,
-            },
-        ]);
+        const modalButtonBar = new ModalButtonBar(this, this.parent);
 
         this.container.appendChild(nameGroup);
-        this.container.appendChild(buttonContainer);
+        this.container.appendChild(modalButtonBar.getDomNode());
     }
 
     getDomNode(): Node {

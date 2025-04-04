@@ -11,15 +11,15 @@ import { ZoomInCommand } from "./ZoomInCommand";
 import { ZoomOutCommand } from "./ZoomOutCommand";
 
 export function registerWaveEditorCommands(component: WavePanel) {
-    component.registerCommand("save-wave", "hgi-folder", null, new SaveWaveCommand(component));
-    component.registerCommand("edit-wave", "hgi-folder", null, new EditWaveCommand(component));
-    component.registerCommand("cut", "hgi-scissor-01", null, new CutCommand(component));
-    component.registerCommand("copy", "hgi-hgi-copy-01", null, new CopyCommand(component));
-    component.registerCommand("paste", "hgi-column-insert", null, new PasteCommand(component));
-    component.registerCommand("crop", "hgi-crop", null, new CropCommand(component));
-    component.registerCommand("zoom", "hgi-zoom-in-area", null, new ZoomCommand(component));
-    component.registerCommand("zoom-in", "hgi-zoom-in-area", null, new ZoomInCommand(component));
-    component.registerCommand("zoom-out", "hgi-zoom-in-area", null, new ZoomOutCommand(component));
+    component.registerCommand("save-wave", "hgi-stroke hgi-folder", null, new SaveWaveCommand(component));
+    component.registerCommand("edit-wave", "hgi-stroke hgi-folder", null, new EditWaveCommand(component));
+    component.registerCommand("cut", "hgi-stroke hgi-scissor-01", null, new CutCommand(component));
+    component.registerCommand("copy", "hgi-stroke hgi-hgi-copy-01", null, new CopyCommand(component));
+    component.registerCommand("paste", "hgi-stroke hgi-column-insert", null, new PasteCommand(component));
+    component.registerCommand("crop", "hgi-stroke hgi-crop", null, new CropCommand(component));
+    component.registerCommand("zoom", "hgi-stroke hgi-zoom-in-area", null, new ZoomCommand(component));
+    component.registerCommand("zoom-in", "hgi-stroke hgi-zoom-in-area", null, new ZoomInCommand(component));
+    component.registerCommand("zoom-out", "hgi-stroke hgi-zoom-in-area", null, new ZoomOutCommand(component));
 
     component.registerCommand("select-all", null, null, new SelectAllCommand(component));
 

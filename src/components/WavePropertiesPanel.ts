@@ -1,5 +1,5 @@
 import { Appl } from "../App";
-import { ButtonToolbar, FormGroup, IComponent, INotify } from "../nutz";
+import { FormGroup, IComponent, INotify, ModalButtonBar } from "../nutz";
 import { bindNoteDropdown } from "./PatternEditorHelper";
 
 export class WavePropertiesPanel implements IComponent {
@@ -41,24 +41,11 @@ export class WavePropertiesPanel implements IComponent {
 
         const noteGroup = FormGroup("Note", this.noteSelect);
 
-        const buttonContainer = ButtonToolbar([
-            {
-                type: "button",
-                label: "OK",
-                click: () => this.parent.notify(this, "ok"),
-                icon: null,
-            },
-            {
-                type: "button",
-                label: "Cancel",
-                click: () => this.parent.notify(this, "cancel"),
-                icon: null,
-            },
-        ]);
+        const modalButtonBar = new ModalButtonBar(this, this.parent);
 
         this.container.appendChild(nameGroup);
         this.container.appendChild(noteGroup);
-        this.container.appendChild(buttonContainer);
+        this.container.appendChild(modalButtonBar.getDomNode());
     }
 
     getDomNode(): Node {

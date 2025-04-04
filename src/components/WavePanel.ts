@@ -17,80 +17,69 @@ export class WavePanel extends CommandHost implements IComponent {
         super(app);
         this.app = app;
 
+        registerWaveEditorCommands(this);
+
         this.container = document.createElement("div");
         this.container.className = "flex flex-col flex-1";
         // flex div w/toolbar, wave, scroll stacked vertically
         this.waveEditor = new WaveEditorCanvas(this);
         this.waveScroll = new WaveScrollCanvas(this);
 
-        this.toolbar = ButtonToolbar([
+        this.toolbar = ButtonToolbar(this, [
             {
                 type: "button",
                 label: "Cut",
-                icon: "hgi-stroke hgi-scissor-01",
-                click: () => this.executeCommand("cut"),
+                action: "cut",
             },
             {
                 type: "button",
                 label: "Copy",
-                icon: "hgi-stroke hgi-copy-01",
-                click: () => this.executeCommand("copy"),
+                action: "copy",
             },
             {
                 type: "button",
                 label: "Paste",
-                icon: "hgi-stroke hgi-column-insert",
-                click: () => this.executeCommand("paste"),
+                action: "paste",
             },
             {
                 type: "button",
                 label: "Crop",
-                icon: "hgi-stroke hgi-crop",
-                click: () => this.executeCommand("crop"),
+                action: "crop",
             },
             {
                 type: "button",
                 label: "Zoom",
-                icon: "hgi-stroke hgi-zoom-in-area",
-                click: () => this.executeCommand("zoom"),
+                action: "zoom",
             },
             {
                 type: "button",
                 label: "+",
-                icon: "hgi-stroke hgi-zoom-in-area",
-                click: () => this.executeCommand("zoom-in"),
+                action: "zoom-in",
             },
             {
                 type: "button",
                 label: "-",
-                icon: "hgi-stroke hgi-zoom-in-area",
-                click: () => this.executeCommand("zoom-out"),
+                action: "zoom-out",
             },
             {
                 type: "button",
                 label: "Play",
-                icon: "hgi-stroke hgi-next",
-                click: () => this.executeCommand("play-wave", this.document),
+                action: "play-wave",
             },
             {
                 type: "button",
                 label: "Record",
-                icon: "hgi-stroke hgi-record",
-                click: () => this.executeCommand("record-wave"),
+                action: "record-wave",
             },
             {
                 type: "button",
-                icon: "hgi-stroke hgi-folder",
                 label: "Save",
-                // click: () => app.downloadWave(this.document),
-                click: () => this.executeCommand("save-wave")
+                action: "save-wave",
             },
             {
                 type: "button",
-                icon: "hgi-stroke hgi-folder",
                 label: "Edit...",
-                // click: () => this.showWaveProperties(),
-                click: () => this.executeCommand("edit-wave")
+                action: "edit-wave",
             },
 
         ]);
@@ -102,8 +91,6 @@ export class WavePanel extends CommandHost implements IComponent {
         this.container.addEventListener("nutz:mounted", this.onMounted);
         this.container.addEventListener("nutz:unmounted", this.onUnmounted);
         this.container.addEventListener("keydown", this.onKeyDown);
-
-        registerWaveEditorCommands(this);
     }
 
     onMounted = () => {

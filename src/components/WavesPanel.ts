@@ -20,24 +20,21 @@ export class RecordingsPanel implements IComponent {
         this.container = document.createElement("div");
         this.container.classList.add("flex", "flex-col", "w-full", "h-full");
 
-        this.buttonBar = ButtonToolbar([
+        this.buttonBar = ButtonToolbar(this.app, [
             {
                 type: "button",
-                icon: "hgi-stroke hgi-plus-sign-square",
                 label: "New...",
-                click: () => app.executeCommand("create-wave"),
+                action: "create-wave",
             },
             {
                 type: "button",
-                icon: "hgi-stroke hgi-folder",
                 label: "Open...",
-                click: () => app.executeCommand("open-wave"),
+                action: "open-wave",
             },
             {
                 type: "button",
-                icon: "hgi-stroke hgi-folder",
                 label: "Paste New",
-                click: () => this.pasteNew(),
+                action: "paste-new-wave",
             },
         ]);
 
@@ -128,13 +125,13 @@ export class RecordingsPanel implements IComponent {
         return this.container;
     }
 
-    async pasteNew() {
-        const wavFile = await readClipboardWave();
+    // async pasteNew() {
+    //     const wavFile = await readClipboardWave();
 
-        if (!wavFile) {
-            return;
-        }
+    //     if (!wavFile) {
+    //         return;
+    //     }
         
-        this.app.song.createWave(wavFile.name || "Clipboard", 60, wavFile.channels[0].length, wavFile.sampleRate, wavFile.channels);
-    }
+    //     this.app.song.createWave(wavFile.name || "Clipboard", 60, wavFile.channels[0].length, wavFile.sampleRate, wavFile.channels);
+    // }
 }

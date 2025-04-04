@@ -12,28 +12,26 @@ export class SequencePanel extends CommandHost implements IComponent {
     constructor(app: Appl) {
         super(app);
         this.app = app;
+
+        registerSequenceEditorCommands(this);
+
         this.container = document.createElement("div");
         this.container.className = "flex flex-col flex-1";
         this.container.tabIndex = -1; // elements that should not be navigated to directly
 
         this.sequenceEditor = new SequenceEditorCanvas(app);
 
-        this.toolbar = ButtonToolbar([
+        this.toolbar = ButtonToolbar(this, [
             {
                 type: "button",
                 label: "Add Column",
-                icon: "",
-                click: () => {
-                    this.executeCommand("add-column")
-                },
+                action: "add-column",
             }
         ]);
         this.container.appendChild(this.toolbar);
         this.container.appendChild(this.sequenceEditor.getDomNode());
 
         this.container.addEventListener("keydown", this.onKeyDown);
-
-        registerSequenceEditorCommands(this);
     }
 
     getDomNode(): Node {

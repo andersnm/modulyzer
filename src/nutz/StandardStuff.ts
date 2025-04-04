@@ -1,5 +1,6 @@
+import { ICommandHost } from "./CommandHost";
 import { domAppendNodes } from "./DomUtil";
-import { IComponent } from "./IComponent";
+import { IComponent, INotify } from "./IComponent";
 
 export function FormGroup(label: string, content: Node|Node[]): HTMLElement {
     const containerElement = document.createElement("div");
@@ -62,29 +63,19 @@ export interface ButtonToolbarSeparator {
     type: "separator";
 }
 
-export interface ButtonToolbarInput {
-    type: "input";
-    // label: string;
-    init: (el: HTMLInputElement) => void;
-    change: (el: HTMLInputElement) => void;
-}
-
 export interface ButtonToolbarButton {
     type: "button";
-    icon: string;
+    // icon: string;
     label: string;
-    click: () => void;
+    action: string;
+    // click: () => void;
 }
 
 function isButtonToolbarButton(b): b is ButtonToolbarButton {
     return b.type === "button";
 }
 
-function isButtonToolbarInput(b): b is ButtonToolbarInput {
-    return b.type === "input";
-}
-
-export function ButtonToolbar(buttonToolbarButtons: (ButtonToolbarButton|ButtonToolbarSeparator|ButtonToolbarInput)[]) {
+export function ButtonToolbar(app: ICommandHost, buttonToolbarButtons: (ButtonToolbarButton|ButtonToolbarSeparator)[]) {
     const container = document.createElement("div");
     container.className = "flex gap-1";
 
@@ -92,27 +83,21 @@ export function ButtonToolbar(buttonToolbarButtons: (ButtonToolbarButton|ButtonT
         if (isButtonToolbarButton(toolbarButton)) {
             const button = Button();
 
-            if (toolbarButton.icon) {
+            const cmd = app.getCommand(toolbarButton.action);
+            console.log("COMMAND", cmd, toolbarButton.action, new Error())
+            if (cmd && cmd.icon) {
                 const iconSpan = document.createElement("span");
-                iconSpan.className = toolbarButton.icon; // "hgi-stroke hgi-plus-sign-square";
+                iconSpan.className = cmd.icon;
                 button.appendChild(iconSpan);
             }
 
             const t = document.createTextNode(toolbarButton.label)
             button.appendChild(t);
 
-            button.addEventListener("mousedown", e => event.preventDefault() ); // prevent taking focus
-            button.addEventListener("click", toolbarButton.click);
+            button.addEventListener("mousedown", e => e.preventDefault() ); // prevent taking focus
+            button.addEventListener("click", () => app.executeCommand(toolbarButton.action));
 
             container.appendChild(button);
-        } else if (isButtonToolbarInput(toolbarButton)) {
-            const input = document.createElement("input");
-            toolbarButton.init(input);
-            input.addEventListener("change", () => {
-                toolbarButton.change(input);
-            })
-
-            container.appendChild(input);
         } else {
             const spacer = document.createElement("div");
             spacer.className = "w-0";
@@ -121,4 +106,31 @@ export function ButtonToolbar(buttonToolbarButtons: (ButtonToolbarButton|ButtonT
     }
 
     return container;
+}
+
+export class ModalButtonBar implements IComponent {
+    container: HTMLDivElement;
+    okButton: HTMLButtonElement;
+    cancelButton: HTMLButtonElement;
+
+    constructor(sender: IComponent, parent: INotify) {
+
+        this.container = document.createElement("div");
+        this.container.className = "flex gap-1";
+    
+        this.okButton = Button();
+        this.okButton.innerText = "OK";
+        this.okButton.addEventListener("click", () => parent.notify(sender, "ok"));
+
+        this.cancelButton = Button();
+        this.cancelButton.innerText = "Cancel";
+        this.cancelButton.addEventListener("click", () => parent.notify(sender, "cancel"));
+
+        this.container.appendChild(this.okButton);
+        this.container.appendChild(this.cancelButton);
+    }
+
+    getDomNode(): Node {
+        return this.container;
+    }
 }

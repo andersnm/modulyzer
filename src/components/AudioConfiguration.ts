@@ -1,4 +1,4 @@
-import { ButtonToolbar, DomElement, DomText, FormGroup, IComponent, INotify } from '../nutz';
+import { FormGroup, IComponent, INotify, ModalButtonBar } from '../nutz';
 
 export type DomElementCallbackType = (el: HTMLElement) => void;
 
@@ -183,25 +183,12 @@ export class AudioConfiguration implements IComponent {
 
         const inputGroup = FormGroup("Input Device", this.inputDevicesSelect);
 
-        const buttonContainer = ButtonToolbar([
-            {
-                type: "button",
-                label: "OK",
-                click: () => this.parent.notify(this, "ok"),
-                icon: null,
-            },
-            {
-                type: "button",
-                label: "Cancel",
-                click: () => this.parent.notify(this, "cancel"),
-                icon: null,
-            },
-        ]);
+        const modalButtonBar = new ModalButtonBar(this, this.parent);
 
         this.configForm.appendChild(outputGroup);
         this.configForm.appendChild(inputGroup);
 
-        this.configForm.appendChild(buttonContainer);
+        this.configForm.appendChild(modalButtonBar.getDomNode());
     }
 
     getDomNode(): Node {
