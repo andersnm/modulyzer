@@ -1,5 +1,5 @@
-import { Appl } from "../App";
-import { WavePanel } from "../components/WavePanel";
+import { Appl } from "../../App";
+import { WavePanel } from "../../components/WavePanel";
 
 export class RecordWaveCommand {
     constructor(private app: Appl) {

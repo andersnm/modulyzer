@@ -1,15 +1,15 @@
 import { Appl } from '../../App';
-import { ShowAudioConfigurationCommand } from '../ShowAudioConfigurationCommand';
-import { CreateWaveCommand } from '../CreateWaveCommand';
-import { ShowSequenceEditorCommand } from '../ShowSequenceEditorCommand';
-import { ShowWavesCommand } from '../ShowWavesCommand';
-import { ShowPatternsCommand } from '../ShowPatternsCommand';
-import { OpenWaveCommand } from '../OpenWaveCommand';
-import { ShowPatternEditorCommand } from '../ShowPatternEditorCommand';
-import { ShowWaveEditorCommand } from '../ShowWaveEditorCommand';
-import { SaveSongCommand } from '../SaveSongCommand';
-import { RecordWaveCommand } from '../RecordWaveCommand';
-import { PlayWaveCommand } from '../PlayWaveCommand';
+import { ShowAudioConfigurationCommand } from './ShowAudioConfigurationCommand';
+import { CreateWaveCommand } from './CreateWaveCommand';
+import { ShowSequenceEditorCommand } from './ShowSequenceEditorCommand';
+import { ShowWavesCommand } from './ShowWavesCommand';
+import { ShowPatternsCommand } from './ShowPatternsCommand';
+import { OpenWaveCommand } from './OpenWaveCommand';
+import { ShowPatternEditorCommand } from './ShowPatternEditorCommand';
+import { ShowWaveEditorCommand } from './ShowWaveEditorCommand';
+import { SaveSongCommand } from './SaveSongCommand';
+import { RecordWaveCommand } from './RecordWaveCommand';
+import { PlayWaveCommand } from './PlayWaveCommand';
 
 export function registerApplicationCommands(app: Appl) {
     app.registerCommand("show-audio-configuration", null, null, new ShowAudioConfigurationCommand(app));

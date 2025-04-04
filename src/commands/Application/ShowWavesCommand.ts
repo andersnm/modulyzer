@@ -1,5 +1,5 @@
-import { Appl } from "../App";
-import { RecordingsPanel } from "../components/WavesPanel";
+import { Appl } from "../../App";
+import { RecordingsPanel } from "../../components/WavesPanel";
 
 export class ShowWavesCommand {
     constructor(private app: Appl) {

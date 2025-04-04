@@ -1,5 +1,5 @@
-import { Appl } from "../App";
-import { PatternsPanel } from "../components/PatternsPanel";
+import { Appl } from "../../App";
+import { PatternsPanel } from "../../components/PatternsPanel";
 
 export class ShowPatternsCommand {
     constructor(private app: Appl) {

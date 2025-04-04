@@ -1,5 +1,5 @@
-import { Appl } from "../App";
-import { SequencePanel } from "../components/SequencePanel";
+import { Appl } from "../../App";
+import { SequencePanel } from "../../components/SequencePanel";
 
 export class ShowSequenceEditorCommand {
     constructor(private app: Appl) {

@@ -1,6 +1,6 @@
-import { Appl } from "../App";
-import { WaveDocumentEx } from "../audio/SongDocument";
-import { WavePanel } from "../components/WavePanel";
+import { Appl } from "../../App";
+import { WaveDocumentEx } from "../../audio/SongDocument";
+import { WavePanel } from "../../components/WavePanel";
 
 export class ShowWaveEditorCommand {
     constructor(private app: Appl) {

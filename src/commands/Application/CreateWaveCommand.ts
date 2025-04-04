@@ -1,6 +1,6 @@
-import { Appl } from "../App";
-import { CreateWavePanel } from "../components/CreateWavePanel";
-import { IComponent, INotify } from "../nutz";
+import { Appl } from "../../App";
+import { CreateWavePanel } from "../../components/CreateWavePanel";
+import { IComponent, INotify } from "../../nutz";
 
 export class CreateWaveCommand implements INotify {
     constructor(private app: Appl) {

@@ -1,5 +1,5 @@
-import { Appl } from "../App";
-import { WAVDecoder } from "../wavefile/WAVDecoder";
+import { Appl } from "../../App";
+import { WAVDecoder } from "../../wavefile/WAVDecoder";
 
 export class OpenWaveCommand {
     constructor(private app: Appl) {

@@ -1,6 +1,6 @@
-import { Appl } from "../App";
-import { PatternDocument } from "../audio/SongDocument";
-import { PatternPanel } from "../components/PatternPanel";
+import { Appl } from "../../App";
+import { PatternDocument } from "../../audio/SongDocument";
+import { PatternPanel } from "../../components/PatternPanel";
 
 export class ShowPatternEditorCommand {
     constructor(private app: Appl) {

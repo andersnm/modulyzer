@@ -1,8 +1,7 @@
-import { Appl } from "../App";
-import { AudioDevice } from "../audio/AudioDevice";
-import { tryGetMicrophonePermission } from "../audio/AudioUtil";
-import { AudioConfiguration } from "../components/AudioConfiguration";
-import { IComponent, INotify } from "../nutz";
+import { Appl } from "../../App";
+import { tryGetMicrophonePermission } from "../../audio/AudioUtil";
+import { AudioConfiguration } from "../../components/AudioConfiguration";
+import { IComponent, INotify } from "../../nutz";
 
 export class ShowAudioConfigurationCommand implements INotify {
     constructor(private app: Appl) {

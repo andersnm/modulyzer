@@ -1,6 +1,6 @@
-import { Appl } from "../App";
-import { SaveAsPanel } from "../components/SaveAsPanel";
-import { IComponent, INotify } from "../nutz";
+import { Appl } from "../../App";
+import { SaveAsPanel } from "../../components/SaveAsPanel";
+import { IComponent, INotify } from "../../nutz";
 
 export class SaveSongCommand implements INotify {
     constructor(private app: Appl) {

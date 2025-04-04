@@ -1,7 +1,6 @@
-import { Appl } from "../App";
-import { Wave } from "../audio/Player";
-import { WaveDocumentEx } from "../audio/SongDocument";
-import { WavePanel } from "../components/WavePanel";
+import { Appl } from "../../App";
+import { WaveDocumentEx } from "../../audio/SongDocument";
+import { WavePanel } from "../../components/WavePanel";
 
 export class PlayWaveCommand {
 
