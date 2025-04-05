@@ -269,8 +269,31 @@ export class PlayerSongAdapter {
         pe.data0 = patternEvent.data0;
         pe.data1 = patternEvent.data1;
 
-        // TODO; insert at time
-        pc.events.push(pe);
+        // Insert sorted by time, events at the same time are sorted by
+        // ascending velocity/cc value - note offs before notes
+        let ti = pc.events.findIndex(e => e.time >= pe.time);
+        if (ti !== -1) {
+            const te = pc.events[ti];
+            if (te.time > pe.time) {
+                pc.events.splice(ti, 0, pe);
+            } else {
+                // Scan events at same timestamp
+                let se = te;
+                while (se.time === pe.time && se.data0 < pe.data0) {
+                    ti++;
+                    if (ti >= pc.events.length) {
+                        break;
+                    }
+
+                    se = pc.events[ti];
+                }
+
+                pc.events.splice(ti, 0, pe);
+            }
+        } else {
+            pc.events.push(pe);
+        }
+
         this.patternEventMap.set(patternEvent, pe);
     };
 

@@ -1,10 +1,18 @@
 import { IComponent } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 import { Appl } from "../App";
-import { InstrumentDocument, PatternDocument } from "../audio/SongDocument";
+import { InstrumentDocument, PatternColumnDocument, PatternDocument } from "../audio/SongDocument";
 import { CursorColumnInfo, formatNote, formatU8, getCursorColumnAt, getCursorColumnAtPosition, getCursorColumnIndex, getCursorColumns, getPatternRenderColumns, getRenderColumnWidth } from "./PatternEditorHelper";
 
 const maxPolyphonic = 8;
+
+function getPreviousPatternEvent(patternColumn: PatternColumnDocument, time: number, channel: number) {
+    return patternColumn.events.reduce((prev, e) => (e.channel === channel && (e.time < time)) ? e : prev, null);
+}
+
+function getNextPatternEvent(patternColumn: PatternColumnDocument, time: number, channel: number, note?: number) {
+    return patternColumn.events.find(e => e.channel === channel && e.time > time && (note === undefined || e.value === note));
+}
 
 export class PatternEditorCanvas implements IComponent {
     app: Appl;
@@ -250,11 +258,45 @@ export class PatternEditorCanvas implements IComponent {
     }
 
     deleteAtCursor() {
+        // can be note and noteoff on same time/channel: if both = delete note
         const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
         const cursorColumn = getCursorColumnAt(renderColumns, this.cursorColumn);
         const patternColumn = cursorColumn.renderColumn.patternColumn;
-        const patternEvent = patternColumn.events.find(e => e.time === this.cursorTime && e.channel === cursorColumn.channel);
-        this.app.song.deletePatternEvent(patternColumn, patternEvent);
+
+        if (cursorColumn.type === "u4-basenote" || cursorColumn.type === "u4-octave") {
+            // Delete in a note column
+            const editNoteEvent = patternColumn.events.find(e => e.time === this.cursorTime && e.channel === cursorColumn.channel && e.data0 !== 0);
+            const editNoteOffEvent = patternColumn.events.find(e => e.time === this.cursorTime && e.channel === cursorColumn.channel && e.data0 === 0);
+
+            if (editNoteEvent) {
+                const noteOffEvent = getNextPatternEvent(patternColumn, this.cursorTime, cursorColumn.channel, editNoteEvent.value);
+                if (noteOffEvent && noteOffEvent.data0 === 0) {
+                    // Delete note and its note-off - if there is a noteoff at the same time, leave the noteoff
+                    this.app.song.deletePatternEvent(patternColumn, editNoteEvent);
+                    this.app.song.deletePatternEvent(patternColumn, noteOffEvent);
+                } else {
+                    console.warn("Missing note-off, invalid pattern event, not deleting anything")
+                }
+            } else if (editNoteOffEvent) {
+                // Delete noteoff = extend noteoff until next note or end of pattern
+                const nextNoteEvent = getNextPatternEvent(patternColumn, this.cursorTime, cursorColumn.channel);
+
+                if (nextNoteEvent) {
+                    if (nextNoteEvent.data0 !== 0) {
+                        this.app.song.deletePatternEvent(patternColumn, editNoteOffEvent);
+                        this.app.song.createPatternEvent(patternColumn, nextNoteEvent.time, editNoteOffEvent.value, 0, 0, cursorColumn.channel);
+                    } else {
+                        console.warn("Next note is a noteoff, expected note, not extending the noteoff.", nextNoteEvent)
+                    }
+                } else {
+                    console.error("TODO: the case where noteoff extends to EOP")
+                }
+            }
+        } else {
+            // Delete in a non-note column, i.e cc/u8 value
+            const patternEvent = patternColumn.events.find(e => e.time === this.cursorTime && e.channel === cursorColumn.channel);
+            this.app.song.deletePatternEvent(patternColumn, patternEvent);
+        }
     }
 
     getNoteForKey(code: string) {
@@ -350,54 +392,84 @@ export class PatternEditorCanvas implements IComponent {
     }
 
     editNoteOff() {
-        // find previous note in same channel
         const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
         const cursorColumn = getCursorColumnAt(renderColumns, this.cursorColumn);
         const patternColumn = cursorColumn.renderColumn.patternColumn;
 
-        const previousPatternEvent = patternColumn.events.reduce((prev, e) => (e.channel === cursorColumn.channel && (e.time < this.cursorTime)) ? e : prev, null);
+        // - already noteoff, exit
+        // - TODO: already note = set note-off for previous note here
+        // - else shorten or extend noteoff
+
+        const patternEvent = patternColumn.events.find(e => e.channel === cursorColumn.channel && e.time == this.cursorTime);
+        if (patternEvent) {
+            console.log("Already note or noteoff here, not inserting noteoff")
+            return;
+        }
+
+        const previousPatternEvent = getPreviousPatternEvent(patternColumn, this.cursorTime, cursorColumn.channel); // patternColumn.events.reduce((prev, e) => (e.channel === cursorColumn.channel && (e.time < this.cursorTime)) ? e : prev, null);
         if (!previousPatternEvent) {
             console.log("Cannot set note off here, no previous note in channel", patternColumn.events);
             return;
         }
 
-        // if previous note is a noteoff, delete it before inserting a new noteoff after it
         if (previousPatternEvent.data0 == 0) {
+            // if previous note is a noteoff: extend duration, delete old noteoff before new noteoff
             this.app.song.deletePatternEvent(patternColumn, previousPatternEvent);
-        }
-
-        // if next note is a noteoff, delete it before inserting a new noteoff before it
-        const nextPatternEvent = patternColumn.events.find(e => e.channel === cursorColumn.channel && e.time > this.cursorTime);
-        if (nextPatternEvent && nextPatternEvent.data0 === 0) {
-            this.app.song.deletePatternEvent(patternColumn, nextPatternEvent);
-        }
-
-        const patternEvent = patternColumn.events.find(e => e.channel === cursorColumn.channel && e.time == this.cursorTime);
-
-        if (patternEvent) {
-            this.app.song.updatePatternEvent(patternEvent, previousPatternEvent.value, 0, patternEvent.data1);
         } else {
-            this.app.song.createPatternEvent(patternColumn, this.cursorTime, previousPatternEvent.value, 0, 0, cursorColumn.channel);
+            // previous note is a note: shorten duration, find and delete its noteoff before new noteoff
+            const nextPatternEvent = getNextPatternEvent(patternColumn, previousPatternEvent.time, cursorColumn.channel, previousPatternEvent.value);
+            if (nextPatternEvent && nextPatternEvent.data0 === 0) {
+                this.app.song.deletePatternEvent(patternColumn, nextPatternEvent);
+            } else {
+                console.warn("Could not find noteoff for previous note. Not shortening")
+            }
         }
 
+        this.app.song.createPatternEvent(patternColumn, this.cursorTime, previousPatternEvent.value, 0, 0, cursorColumn.channel);
     }
 
     editNote(note: number) {
         const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
         const cursorColumn = getCursorColumnAt(renderColumns, this.cursorColumn);
         const patternColumn = cursorColumn.renderColumn.patternColumn;
-        const patternEvent = patternColumn.events.find(e => e.channel === cursorColumn.channel && e.time == this.cursorTime);
 
-        if (patternEvent) {
-            this.app.song.updatePatternEvent(patternEvent, note, patternEvent.data0, patternEvent.data1);
+        // Get note at cursor position - velo!=0, no noteoff
+        const editNoteEvent = patternColumn.events.find(e => e.channel === cursorColumn.channel && e.time == this.cursorTime && e.data0 !== 0);
+
+        // cases:
+        // update note / octave -> also update note off
+        // update noteoff = insert new note over it
+        // insert note before noteoff of another note
+        // insert note outside any other notes
+
+        if (editNoteEvent) {
+
+            // find noteoff and update its value
+            const nextPatternEvent = getNextPatternEvent(patternColumn, this.cursorTime, cursorColumn.channel, editNoteEvent.value);
+            if (nextPatternEvent) {
+                // not validating velo==0 before updating, _should_ be the noteoff
+                this.app.song.updatePatternEvent(editNoteEvent, note, editNoteEvent.data0, editNoteEvent.data1);
+                this.app.song.updatePatternEvent(nextPatternEvent, note, 0, cursorColumn.channel);                    
+            } else {
+                console.warn("Not updating note off, missing note off, invalid pattern event")
+            }
         } else {
-            this.app.song.createPatternEvent(patternColumn, this.cursorTime, note, 127, 0, cursorColumn.channel);
-        }
+            // if previous note is a note -> split, find noteend and move it to here
+            // if previous note is a noteoff or none -> insert plain
+            const previousPatternEvent = getPreviousPatternEvent(patternColumn, this.cursorTime, cursorColumn.channel);
+            if (previousPatternEvent && previousPatternEvent.data0 !== 0) {
+                // Insert in duration of another note: shorten previous note
+                const noteoffForPrevious = getNextPatternEvent(patternColumn, previousPatternEvent.time, cursorColumn.channel, previousPatternEvent.value);
+                if (noteoffForPrevious.data0 === 0) {
+                    this.app.song.deletePatternEvent(patternColumn, noteoffForPrevious);
+                    this.app.song.createPatternEvent(patternColumn, this.cursorTime, previousPatternEvent.value, 0, 0, cursorColumn.channel);
+                } else {
+                    console.warn("Not shortening previous note, missing note off, invalid pattern event")
+                }
+            }
 
-        // TODO; if next note is noteoff, update its note value
-        const nextPatternEvent = patternColumn.events.find(e => e.channel === cursorColumn.channel && e.time > this.cursorTime);
-        if (nextPatternEvent && nextPatternEvent.data0 === 0) {
-            this.app.song.updatePatternEvent(nextPatternEvent, note, 0, cursorColumn.channel);
+            this.app.song.createPatternEvent(patternColumn, this.cursorTime, note, 127, 0, cursorColumn.channel);
+            this.app.song.createPatternEvent(patternColumn, this.cursorTime + 1, note, 0, 0, cursorColumn.channel);
         }
     }
 
