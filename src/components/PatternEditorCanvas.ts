@@ -2,7 +2,7 @@ import { IComponent } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 import { Appl } from "../App";
 import { InstrumentDocument, PatternColumnDocument, PatternDocument } from "../audio/SongDocument";
-import { CursorColumnInfo, formatNote, formatU8, getCursorColumnAt, getCursorColumnAtPosition, getCursorColumnIndex, getCursorColumns, getPatternRenderColumns, getRenderColumnWidth } from "./PatternEditorHelper";
+import { CursorColumnInfo, formatNote, formatU8, getCursorColumnAt, getCursorColumnAtPosition, getCursorColumnIndex, getCursorColumns, getPatternRenderColumns, getRenderColumnWidth, RenderColumnInfo } from "./PatternEditorHelper";
 
 const maxPolyphonic = 8;
 
@@ -80,7 +80,8 @@ export class PatternEditorCanvas implements IComponent {
         const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
         const fontHeight = em.fontBoundingBoxAscent + em.fontBoundingBoxDescent; // emHeightAscent 16;
 
-        const c = Math.floor(e.offsetX / em.width);
+        const rowNumberWidth = em.width * 5;
+        const c = Math.floor((e.offsetX - rowNumberWidth) / em.width);
 
         const cursorColumn = getCursorColumnAtPosition(renderColumns, c);
         if (!cursorColumn) {
@@ -120,6 +121,13 @@ export class PatternEditorCanvas implements IComponent {
                 return true;
             case "Delete":
                 this.deleteAtCursor();
+                this.shiftEventsAfterCursor(-1);
+                return true;
+            case "Backspace":
+                this.deleteAtCursor();
+                return true;
+            case "Insert":
+                this.shiftEventsAfterCursor(1);
                 return true;
             case "Tab":
                 if (e.shiftKey) {
@@ -257,6 +265,20 @@ export class PatternEditorCanvas implements IComponent {
         }
     }
 
+    shiftEventsAfterCursor(delta: number) {
+        // add +1 to all events time at cursor and below, delete events outside pattern, leave noteoffs at end
+        const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
+        const cursorColumn = getCursorColumnAt(renderColumns, this.cursorColumn);
+        const patternColumn = cursorColumn.renderColumn.patternColumn;
+
+        const events = patternColumn.events.filter(e => e.channel === cursorColumn.channel && e.time >= this.cursorTime);
+        for (let patternEvent of events) {
+            this.app.song.deletePatternEvent(patternColumn, patternEvent);
+
+            this.app.song.createPatternEvent(patternColumn, patternEvent.time + delta, patternEvent.value, patternEvent.data0, patternEvent.data1, patternEvent.channel);
+        }
+    }
+
     deleteAtCursor() {
         // can be note and noteoff on same time/channel: if both = delete note
         const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
@@ -274,6 +296,7 @@ export class PatternEditorCanvas implements IComponent {
                     // Delete note and its note-off - if there is a noteoff at the same time, leave the noteoff
                     this.app.song.deletePatternEvent(patternColumn, editNoteEvent);
                     this.app.song.deletePatternEvent(patternColumn, noteOffEvent);
+                    return true;
                 } else {
                     console.warn("Missing note-off, invalid pattern event, not deleting anything")
                 }
@@ -285,18 +308,23 @@ export class PatternEditorCanvas implements IComponent {
                     if (nextNoteEvent.data0 !== 0) {
                         this.app.song.deletePatternEvent(patternColumn, editNoteOffEvent);
                         this.app.song.createPatternEvent(patternColumn, nextNoteEvent.time, editNoteOffEvent.value, 0, 0, cursorColumn.channel);
+                        return true;
                     } else {
                         console.warn("Next note is a noteoff, expected note, not extending the noteoff.", nextNoteEvent)
                     }
                 } else {
-                    console.error("TODO: the case where noteoff extends to EOP")
+                    // throwing here to prevent possible shifting afterwards, which could result in wrong noteoffS
+                    throw new Error("TODO: the case where noteoff extends to EOP")
                 }
             }
         } else {
             // Delete in a non-note column, i.e cc/u8 value
             const patternEvent = patternColumn.events.find(e => e.time === this.cursorTime && e.channel === cursorColumn.channel);
             this.app.song.deletePatternEvent(patternColumn, patternEvent);
+            return true;
         }
+
+        return false;
     }
 
     getNoteForKey(code: string) {
@@ -533,6 +561,38 @@ export class PatternEditorCanvas implements IComponent {
         let x = 0;
         let lastInstrument: InstrumentDocument;
 
+        const visibleRows = Math.floor(this.canvas.height / fontHeight) - 1;
+        const totalRows = this.pattern.duration;
+
+        const rowNumberWidth = em.width * 5;
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#FFF";
+        for (let i = 0; i < Math.min(visibleRows, totalRows); i++) {
+            // TODO; color the whole row with row color vs beat vs subdivision etc
+            // 
+            const rowNumber = (this.scrollRow + i);
+            let rowColor: string;
+            if ((rowNumber % 16) === 0) {
+                rowColor = "#201820";
+            } else if ((rowNumber % 4) === 0) {
+                rowColor = "#101010";
+            } else {
+                rowColor = null;
+            }
+
+            if (rowColor) {
+                ctx.fillStyle = rowColor
+                ctx.fillRect(x, (i + 1) * fontHeight, this.canvas.width - x, fontHeight)
+            }
+
+            ctx.fillStyle = "#FFF";
+            ctx.fillText((rowNumber + 1).toString(), x + rowNumberWidth - em.width, (i + 1) * fontHeight + em.fontBoundingBoxAscent);
+        }
+
+        ctx.textAlign = "left";
+
+        x += rowNumberWidth;
+
         for (let renderColumn of renderColumns) {
             const patternColumn = renderColumn.patternColumn;
 
@@ -588,7 +648,7 @@ export class PatternEditorCanvas implements IComponent {
         const currentCursorColumn = getCursorColumnAt(renderColumns, this.cursorColumn);
         if (currentCursorColumn) {
             ctx.save();
-            const cursorX = currentCursorColumn.position * em.width;
+            const cursorX = rowNumberWidth + currentCursorColumn.position * em.width;
             const cursorWidth = currentCursorColumn.size * em.width;
             ctx.fillStyle = "#FFF";
             ctx.globalCompositeOperation = "difference";
@@ -597,9 +657,6 @@ export class PatternEditorCanvas implements IComponent {
         }
 
         // scroll
-        const visibleRows = Math.floor(this.canvas.height / fontHeight) - 1;
-        const totalRows = this.pattern.duration;
-
         ctx.strokeStyle = "#FFF";
         ctx.strokeRect(this.canvas.width - 20, 0, 20, this.canvas.height)
 
