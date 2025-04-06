@@ -29,6 +29,7 @@ export class Pattern {
     name: string;
     columns: PatternColumn[] = [];
     duration: number;
+    subdivision: number = 4;
 }
 
 export class SequenceEvent {
@@ -58,11 +59,62 @@ export class Wave {
     audioBuffer: AudioBuffer;
 }
 
-export class Player {
+interface PatternPlayerEvent {
+    instrument: Instrument;
+    time: number;
+    command: number;
+    value: number;
+    data0: number;
+}
+
+class PatternPlayer {
+    pattern: Pattern;
+    currentBeat: number = 0;
+
+    constructor(pattern: Pattern) {
+        this.pattern = pattern;
+    }
+
+    process(durationBeats: number, result: PatternPlayerEvent[]) {
+        for (let column of this.pattern.columns) {
+            const instrument = column.instrument;
+            const pins = instrument.factory.getPins();
+            const pin = pins[column.pin];
+
+            for (let event of column.events) {
+                const eventTime = event.time / this.pattern.subdivision;
+
+                if (eventTime >= this.currentBeat && eventTime < this.currentBeat + durationBeats) {
+                    const deltaBeats = eventTime - this.currentBeat;
+                    if (pin.type === "controller") {
+                        // console.log("Sending controller", column, eventTime, pin.value, event.value, 0);
+                        result.push({
+                            instrument, time: deltaBeats, command: 0xB0, value: pin.value, data0: event.value,
+                        });
+                    } else if (pin.type === "note") {
+                        // console.log("Sending note", column, eventTime, event.value, event.data0);
+                        result.push({
+                            instrument, time: deltaBeats, command: 0x90, value: event.value, data0: event.data0,
+                        });
+                    } else {
+                        console.error("Unknown pin type" + pin.type);
+                    }
+                }
+            }
+        }
+
+        this.currentBeat += durationBeats;
+
+        return result;
+    }
+}
+
+export class Player extends EventTarget {
     context: AudioContext;
     playing: boolean = false;
     startTime: number;
     currentTime: number;
+    currentBeat: number;
     instrumentFactories: InstrumentFactory[];
     patterns: Pattern[] = [];
     instruments: Instrument[] = [];
@@ -71,9 +123,12 @@ export class Player {
 
     sequence: Sequence = new Sequence();
     bpm: number = 125;
+    loopStart: number = 0;
+    loopEnd: number = 8;
+    playingPatterns: PatternPlayer[] = [];
 
     constructor(instrumentFactories: InstrumentFactory[], context: AudioContext) {
-        console.log("INITING PLAYER", instrumentFactories)
+        super();
         this.instrumentFactories = instrumentFactories;
         this.context = context;
     }
@@ -97,26 +152,22 @@ export class Player {
         this.playing = true;
 
         this.currentTime = 0;
+        this.currentBeat = 0;
         this.startTime = this.context.currentTime;
 
         // schedule 1 second first, then reschedule after 500ms to fill so we remain 1 second ahead
-        this.scheduleSequence(this.startTime, this.currentTime, SCHEDULE_INTERVAL);
-        this.currentTime = SCHEDULE_INTERVAL;
+        this.scheduleSequence(SCHEDULE_INTERVAL);
 
         this.playInterval = setInterval(() => {
 
             const until = this.context.currentTime + SCHEDULE_INTERVAL;
             const duration = until - (this.startTime + this.currentTime);
 
-            // from startTime until 
-            console.log("Playr time", this.currentTime, "Duration", duration, "Dvic time", this.context.currentTime, "relative to", this.startTime )
-            // schedule events in the next second window
-            // correlate with main time
-            this.scheduleSequence(this.startTime, this.currentTime, duration);
-            
-            this.currentTime = until - this.startTime;
-
+            // console.log("Player time", this.currentTime, "Duration", duration, "Dvic time", this.context.currentTime, "relative to", this.startTime, " compute beat", this.currentBeat);
+            this.scheduleSequence(duration);
         }, SCHEDULE_INTERVAL * 1000 / 2);
+
+        this.dispatchEvent(new CustomEvent("playing"))
     }
 
     stop() {
@@ -131,60 +182,69 @@ export class Player {
         for (let instrument of this.instruments) {
             instrument.sendMidi(0, 0xB0, 0x7b, 0);
         }
+
+        this.playingPatterns.length = 0;
+
+        this.dispatchEvent(new CustomEvent("stopped"))
     }
 
-    schedulePattern(pattern: Pattern, deviceTime: number, fromTime: number, duration: number) {
-        // schedule events within local pattern time fromTime, 
-        // fromtime can be negative, just means we want to skip non-existent notes 2 seconds before
-        // notes in range are offset by the sequenceTime
-        for (let column of pattern.columns) {
-            const instrument = column.instrument; // this.instruments[column.instrument];
-            const pins = instrument.factory.getPins();
-            const pin = pins[column.pin];
+    scheduleSequence(durationSec: number) {
+        const beatsPerSecond = this.bpm / 60;
 
-            for (let event of column.events) {
-                const eventTime = this.toSeconds(event.time);
-                if (eventTime >= fromTime && eventTime < fromTime + duration) {
-                    if (pin.type === "controller") {
-                        console.log("Sending controller", column, deviceTime, eventTime, pin.value, event.value, 0);
-                        instrument.sendMidi(deviceTime + eventTime, 0xB0, pin.value, event.value);
-                    } else if (pin.type === "note") {
-                        console.log("Sending note", column, deviceTime, eventTime, event.value, event.data0);
-                        instrument.sendMidi(deviceTime + eventTime, 0x90, event.value, event.data0);
-                    } else {
-                        console.error("Unknown pin type" + pin.type);
-                    }
-                }
+        const epsilon = 1e-10;
+        let durationBeats = durationSec * beatsPerSecond;
+
+        while (durationBeats > epsilon) {
+            // Chunk at tempo changes and end loop
+            const chunkBeats = Math.min(durationBeats, this.loopEnd - this.currentBeat);
+
+            this.scheduleSequenceChunk(chunkBeats);
+
+            durationBeats -= chunkBeats;
+
+            // console.log("Loop check", this.currentBeat, this.loopEnd, durationBeats, chunkBeats)
+            if (this.currentBeat >= this.loopEnd) {
+                // console.log("Looping")
+                this.currentBeat = this.loopStart;
             }
         }
     }
 
-    toSeconds(rowIndex: number) {
-        const rowsPerBeat = 4; // pr-pattern
-        const beatsPerSecond = this.bpm / 60;
-        const rowsPerSecond = beatsPerSecond * rowsPerBeat;
-        return rowIndex / rowsPerSecond;
-    }
-
-    scheduleSequence(deviceTime: number, fromTime: number, duration: number) {
-
+    scheduleSequenceChunk(durationBeats: number) {
         for (let column of this.sequence.columns) {
             for (let ev of column.events) {
                 const p = ev.pattern;
 
-                // do ev.time .. p.duration overlap with fromTime + duration
+                // convert sequence time to beats
+                const evTime = ev.time / 1; // this.tpb;
 
-                const evTime = this.toSeconds(ev.time);
-                const patternDuration = this.toSeconds(p.duration);
-
-                if (areOverlapping(evTime, evTime + patternDuration, fromTime, duration)) {
-                    // this pattern is playing at this time
-                    // pattern starts at 60 , is 16 long, ev.time = 60
-                    // fromTim = 58, duration 4, is -2 ahead
-                    // fromTim = 61, duration 4, is 1 into
-                    this.schedulePattern(p, deviceTime + evTime, fromTime - evTime, duration);
+                if (areOverlapping(evTime, evTime + durationBeats, this.currentBeat, this.currentBeat + durationBeats)) {
+                    const pp = new PatternPlayer(ev.pattern);
+                    this.playingPatterns.push(pp);
                 }
             }
         }
+
+        const beatsPerSecond = this.bpm / 60;
+        const durationSec = durationBeats / beatsPerSecond;
+        const patternEvents: PatternPlayerEvent[] = [];
+        for (let i = 0; i < this.playingPatterns.length; ) {
+            const pp = this.playingPatterns[i];
+            pp.process(durationBeats, patternEvents);
+            if (pp.currentBeat >= (pp.pattern.duration / pp.pattern.subdivision)) {
+                // console.log("Reached end of pattern")
+                this.playingPatterns.splice(i, 1);
+            } else {
+                i++;
+            }
+        }
+
+        for (let ev of patternEvents) {
+            const evTime = ev.time * (durationSec / durationBeats);
+            ev.instrument.sendMidi(this.startTime + this.currentTime + evTime, ev.command, ev.value, ev.data0);
+        }
+
+        this.currentTime += durationSec;
+        this.currentBeat += durationBeats;
     }
 }

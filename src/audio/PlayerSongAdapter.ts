@@ -48,12 +48,25 @@ export class PlayerSongAdapter {
         this.song.addEventListener("updateSequenceEvent", this.onUpdateSequenceEvent);
         this.song.addEventListener("deleteSequenceEvent", this.onDeleteSequenceEvent);
 
+        this.player.addEventListener("playing", this.onPlaying);
+        this.player.addEventListener("stopped", this.onStopped);
+
         this.attachDocument();
     }
+
+    onPlaying = () => {
+        this.song.dispatchEvent(new CustomEvent("playing"));
+    };
+
+    onStopped = () => {
+        this.song.dispatchEvent(new CustomEvent("stopped"));
+    };
 
     attachDocument() {
 
         this.player.bpm = this.song.bpm;
+        this.player.loopStart = this.song.loopStart;
+        this.player.loopEnd = this.song.loopEnd;
 
         for (let i of this.song.instruments) {
             this.onCreateInstrument(new CustomEvent("createInstrument", { detail: i }));
@@ -87,6 +100,8 @@ export class PlayerSongAdapter {
 
     onUpdateDocument = (ev: CustomEvent<SongDocument>) => {
         this.player.bpm = ev.detail.bpm;
+        this.player.loopStart = ev.detail.loopStart;
+        this.player.loopEnd = ev.detail.loopEnd;
     };
 
     onCreateInstrument = (ev: CustomEvent<InstrumentDocument>) => {

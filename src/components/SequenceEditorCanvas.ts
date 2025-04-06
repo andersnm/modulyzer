@@ -10,6 +10,7 @@ export class SequenceEditorCanvas implements IComponent {
     selectionEnd: number = 0;
     cursorColumn: number = 0;
     cursorTime: number = 0;
+    redrawTimer: number = null;
 
     app: Appl;
 
@@ -35,6 +36,9 @@ export class SequenceEditorCanvas implements IComponent {
     }
 
     onMounted = async (ev) => {
+        this.app.song.addEventListener("playing", this.onPlaying);
+        this.app.song.addEventListener("stopped", this.onStopped);
+        this.app.song.addEventListener("updateDocument", this.onResize);
         this.app.song.addEventListener("createSequenceColumn", this.onResize);
         this.app.song.addEventListener("createSequenceEvent", this.onResize);
         this.app.song.addEventListener("updateSequenceEvent", this.onResize);
@@ -42,10 +46,25 @@ export class SequenceEditorCanvas implements IComponent {
     };
 
     onUnmounted = async () => {
+        this.app.song.removeEventListener("playing", this.onPlaying);
+        this.app.song.removeEventListener("stopped", this.onStopped);
+        this.app.song.removeEventListener("updateDocument", this.onResize);
         this.app.song.removeEventListener("createSequenceColumn", this.onResize);
         this.app.song.removeEventListener("createSequenceEvent", this.onResize);
         this.app.song.removeEventListener("updateSequenceEvent", this.onResize);
         this.app.song.removeEventListener("deleteSequenceEvent", this.onResize);
+    };
+
+    onPlaying = () => {
+        // Redraw every 100 msec during playback
+        this.redrawTimer = setInterval(() => {
+            this.redrawCanvas();
+        }, 100);
+    };
+
+    onStopped = () => {
+        clearInterval(this.redrawTimer);
+        this.redrawTimer = null;
     };
 
     onResize = async () => {
@@ -194,8 +213,10 @@ export class SequenceEditorCanvas implements IComponent {
                 pattern.name; pattern.duration;
                 sequenceEvent.time;
 
+                const patternBeats = pattern.duration / pattern.subdivision;
+
                 ctx.fillStyle = "#444";
-                ctx.fillRect(sequenceX, sequenceEvent.time * fontHeight, 150 - 1, fontHeight);
+                ctx.fillRect(sequenceX, sequenceEvent.time * fontHeight, 150 - 1, patternBeats * fontHeight);
                 ctx.fillStyle = "#FFF";
                 ctx.fillText(pattern.name, sequenceX, sequenceEvent.time * fontHeight + em.fontBoundingBoxAscent)
             }
@@ -207,14 +228,34 @@ export class SequenceEditorCanvas implements IComponent {
         ctx.fillRect(this.cursorColumn * 150, this.cursorTime * fontHeight, 150 - 1, fontHeight)
         ctx.globalCompositeOperation = ori;
 
-        const playPos = this.app?.player?.currentTime??0;
-        console.log("TIME", playPos, this.canvas.width)
+        // play position
+        const playPos = this.app.player?. currentBeat??0;
 
         ctx.strokeStyle = "#FFF";
         ctx.beginPath();
         ctx.moveTo(0, playPos * fontHeight);
         ctx.lineTo(this.canvas.width, playPos * fontHeight);
         ctx.stroke();
+
+        // loop start
+        const loopStartPos = this.app.song.loopStart;
+        ctx.strokeStyle = "#F44";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, loopStartPos * fontHeight);
+        ctx.lineTo(this.canvas.width, loopStartPos * fontHeight);
+        ctx.stroke();
+
+        // loop end
+        const loopEndPos = this.app.song.loopEnd;
+        ctx.strokeStyle = "#F44 3px";
+        ctx.beginPath();
+        ctx.moveTo(0, loopEndPos * fontHeight);
+        ctx.lineTo(this.canvas.width, loopEndPos * fontHeight);
+        ctx.stroke();
+
+        ctx.lineWidth = 1;
+
     }
 
     getDomNode() {

@@ -21,7 +21,7 @@ export class CreatePatternCommand implements ICommand {
             name = formatPatternName(counter)
         }
 
-        this.app.song.createPattern(name, 32);
+        this.app.song.createPattern(name, 32, 4);
     }
 
     patternNameExists(name: string) {

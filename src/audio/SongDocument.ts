@@ -65,6 +65,7 @@ export class PatternColumnDocument {
 export class PatternDocument {
     name: string = "";
     duration: number = 1;
+    subdivision: number = 4;
     columns: PatternColumnDocument[] = [];
 }
 
@@ -160,12 +161,14 @@ export class SongDocument extends EventTarget {
 
         this.createInstrument("@modulyzer/Master", "Master", 0, 0, {});
         const sc = this.createSequenceColumn();
-        const p = this.createPattern("00", 32);
+        const p = this.createPattern("00", 32, 4);
         this.createSequenceEvent(sc, 0, p);
     }
 
     name: string = "Untitled";
     bpm: number = 125;
+    loopStart: number = 0;
+    loopEnd: number = 8;
 
     instruments: InstrumentDocument[] = [];
     connections: ConnectionDocument[] = [];
@@ -175,6 +178,12 @@ export class SongDocument extends EventTarget {
 
     setBpm(bpm: number) {
         this.bpm = bpm;
+        this.dispatchEvent(new CustomEvent("updateDocument", { detail: this }));
+    }
+
+    setLoop(start: number, end: number) {
+        this.loopStart = start;
+        this.loopEnd = end;
         this.dispatchEvent(new CustomEvent("updateDocument", { detail: this }));
     }
 
@@ -236,10 +245,11 @@ export class SongDocument extends EventTarget {
         this.dispatchEvent(new CustomEvent("deleteConnection", { detail: connection }));
     }
 
-    createPattern(name: string, duration: number) {
+    createPattern(name: string, duration: number, subdivision: number) {
         const pattern = new PatternDocument();
         pattern.name = name;
         pattern.duration = duration;
+        pattern.subdivision = subdivision;
         this.patterns.push(pattern);
 
         this.dispatchEvent(new CustomEvent("createPattern", { detail: pattern }));
@@ -247,9 +257,10 @@ export class SongDocument extends EventTarget {
         return pattern;
     }
 
-    updatePattern(pattern: PatternDocument, name: string, length: number) {
+    updatePattern(pattern: PatternDocument, name: string, length: number, subdivision: number) {
         pattern.name = name;
         pattern.duration = length;
+        pattern.subdivision = subdivision;
 
         this.dispatchEvent(new CustomEvent("updatePattern", { detail: pattern }));
     }
@@ -477,6 +488,7 @@ export class SongDocument extends EventTarget {
             patterns: this.patterns.map(pattern => ({
                 name: pattern.name,
                 duration: pattern.duration,
+                subdivision: pattern.subdivision,
                 columns: pattern.columns.map(column => ({
                     instrument: this.instruments.indexOf(column.instrument),
                     pin: column.pin,
@@ -536,7 +548,7 @@ export class SongDocument extends EventTarget {
         }
 
         for (let jsonPattern of json.patterns) {
-            const p = this.createPattern(jsonPattern.name, jsonPattern.duration);
+            const p = this.createPattern(jsonPattern.name, jsonPattern.duration, jsonPattern.subdivision ?? 4);
 
             for (let jsonColumn of jsonPattern.columns) {
                 const instrument = this.instruments[jsonColumn.instrument];
