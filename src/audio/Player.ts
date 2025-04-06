@@ -2,15 +2,6 @@ import { Instrument, InstrumentFactory } from "./plugins/InstrumentFactory";
 
 const SCHEDULE_INTERVAL = 0.5;
 
-function areOverlapping(startA, endA, startB, endB) {
-    if(startB < startA) {
-        return endB > startA;
-    }
-    else {
-        return startB < endA;
-    }
-}
-
 export class PatternColumn {
     instrument: Instrument;
     pin: number;
@@ -218,7 +209,7 @@ export class Player extends EventTarget {
                 // convert sequence time to beats
                 const evTime = ev.time / 1; // this.tpb;
 
-                if (areOverlapping(evTime, evTime + durationBeats, this.currentBeat, this.currentBeat + durationBeats)) {
+                if (evTime >= this.currentBeat && evTime < this.currentBeat + durationBeats) {
                     const pp = new PatternPlayer(ev.pattern);
                     this.playingPatterns.push(pp);
                 }

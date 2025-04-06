@@ -43,12 +43,18 @@ export class Open303Factory extends InstrumentFactory {
                 value: 81,
                 default: 64
             },
-            // {
-            //     type: "controller",
-            //     name: "Decay",
-            //     value: 81,
-            //     default: 400,
-            // },
+            {
+                type: "controller",
+                name: "Decay",
+                value: 101,
+                default: 32, // ~400
+            },
+            {
+                type: "controller",
+                name: "Accent",
+                value: 102,
+                default: 0,
+            },
         ];
     }
 
@@ -63,6 +69,10 @@ export class Open303Factory extends InstrumentFactory {
             case 71: // reso
             case 81: // env mod
                 return linToLin(value, 0.0, 127.0, 0.0, 100.0).toFixed(0) + "%";
+            case 101: // decay
+                return linToExp(value, 0.0, 127.0, 200.0, 2000.0).toFixed(1);
+            case 102: // accent
+                return linToLin(value, 0.0, 127.0, 0.0, 100).toFixed(0) + "%";
         }
 
         return super.describeCcValue(pinIndex, value);

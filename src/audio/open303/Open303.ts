@@ -177,6 +177,10 @@ export class Open303 {
     this.normalDecay = newDecay;
   }
 
+  setAccentDecay(newDecay) { 
+    this.accentDecay = newDecay;
+  }
+
   setMainEnvDecay(newDecay: number)
   {
     this.mainEnv.setDecayTimeConstant(newDecay);

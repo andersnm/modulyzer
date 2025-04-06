@@ -36,6 +36,7 @@ export class PlayerSongAdapter {
         this.song.addEventListener("createWave", this.onCreateWave);
         this.song.addEventListener("updateWave", this.onUpdateWave);
         this.song.addEventListener("createPattern", this.onCreatePattern);
+        this.song.addEventListener("updatePattern", this.onUpdatePattern);
         this.song.addEventListener("deletePattern", this.onDeletePattern);
         this.song.addEventListener("createPatternColumn", this.onCreatePatternColumn);
         this.song.addEventListener("deletePatternColumn", this.onDeletePatternColumn);
@@ -121,7 +122,7 @@ export class PlayerSongAdapter {
         // Set CCs for all controller pins to initial or default
         const pins = factory.getPins();
         for (let pin of pins) {
-            if (pin.type !== "controller" || pin.value === undefined || pin.default === undefined) {
+            if (pin.type !== "controller" || pin.value === undefined) {
                 continue;
             }
 
@@ -129,7 +130,8 @@ export class PlayerSongAdapter {
             if (ccValue !== undefined) {
                 instrument.sendMidi(0, 0xB0, pin.value, ccValue);
             } else {
-                instrument.sendMidi(0, 0xB0, pin.value, pin.default);
+                const pinDefault = pin.default ?? 64;
+                instrument.sendMidi(0, 0xB0, pin.value, pinDefault);
             }
         }
     };
@@ -235,9 +237,19 @@ export class PlayerSongAdapter {
         const p = new Pattern();
         p.name = pattern.name;
         p.duration = pattern.duration;
+        p.subdivision = pattern.subdivision;
         this.player.patterns.push(p);
 
         this.patternMap.set(pattern, p);
+    };
+
+    onUpdatePattern = (ev: CustomEvent<PatternDocument>) => {
+        const pattern = ev.detail;
+        const p = this.patternMap.get(pattern);
+
+        p.name = pattern.name;
+        p.duration = pattern.duration;
+        p.subdivision = pattern.subdivision;
     };
 
     onDeletePattern = (ev: CustomEvent<PatternDocument>) => {

@@ -100,6 +100,7 @@ class Open303Processor extends AudioWorkletProcessor {
             break;
           case 101:
             this.synthUnit.setDecay(linToExp(midiMessage.data, 0.0, 127.0, 200.0, 2000.0));
+            this.synthUnit.setAccentDecay(linToExp(midiMessage.data, 0.0, 127.0, 200.0, 2000.0));
             break;
           case 102:
             this.synthUnit.setAccent(linToLin(midiMessage.data, 0.0, 127.0, 0.0, 100.0));
