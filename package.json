@@ -12,11 +12,7 @@
     "pako": "^2.1.0"
   },
   "devDependencies": {
-    "@types/gapi": "^0.0.47",
-    "@types/google.accounts": "^0.0.14",
-    "@types/google.picker": "^0.0.42",
     "@types/pako": "^2.0.3",
-    "@vitejs/plugin-vue": "^4.5.2",
     "typescript": "^5.5.2",
     "vite": "^5.0.8"
   }

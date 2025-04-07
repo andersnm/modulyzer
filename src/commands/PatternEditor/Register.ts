@@ -1,7 +1,6 @@
 import { PatternPanel } from "../../components/PatternPanel";
 import { AddColumnCommand } from "./AddColumnCommand";
 import { EditPatternCommand } from "./EditPatternCommand";
-import { OctaveUpCommand } from "./OctaveUpCommand";
 
 export function registerPatternEditorCommands(component: PatternPanel) {
     component.registerCommand("add-column", "hgi-stroke hgi-plus-sign", "Add a Column", new AddColumnCommand(component));
