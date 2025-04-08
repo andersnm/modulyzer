@@ -25,7 +25,6 @@ export class WavePanel extends CommandHost implements IComponent {
 
         this.waveEditor = new WaveEditorCanvas(this);
         this.waveScroll = new WaveScrollCanvas(this);
-        (this.waveScroll.getDomNode() as HTMLElement).classList.add("h-32");
 
         this.toolbar = ButtonToolbar(this, [
             {

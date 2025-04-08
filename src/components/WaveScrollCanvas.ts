@@ -174,7 +174,7 @@ export class WaveScrollCanvas implements IComponent {
     constructor(parent: INotify) {
         this.parent = parent;
         this.container = document.createElement("div");
-        this.container.className = "flex-1 w-full pb-1";
+        this.container.className = "h-32 w-full pb-1";
         
         this.canvas = FlexCanvas();
         this.canvas.classList.add("rounded-lg");
