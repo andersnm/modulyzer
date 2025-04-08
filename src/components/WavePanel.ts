@@ -21,9 +21,11 @@ export class WavePanel extends CommandHost implements IComponent {
 
         this.container = document.createElement("div");
         this.container.className = "flex flex-col flex-1";
-        // flex div w/toolbar, wave, scroll stacked vertically
+        this.container.tabIndex = 0;
+
         this.waveEditor = new WaveEditorCanvas(this);
         this.waveScroll = new WaveScrollCanvas(this);
+        (this.waveScroll.getDomNode() as HTMLElement).classList.add("h-32");
 
         this.toolbar = ButtonToolbar(this, [
             {
@@ -139,7 +141,6 @@ export class WavePanel extends CommandHost implements IComponent {
                     const start = this.waveEditor.selection.start;
                     const end = this.waveEditor.selection.end;
                     this.waveScroll.setSelection(start, end);
-
                     this.document.selection = { ... this.waveEditor.selection };
                 } else {
                     this.waveScroll.clearSelection();
@@ -150,6 +151,10 @@ export class WavePanel extends CommandHost implements IComponent {
                     const start = this.waveEditor.zoom.start;
                     const end = this.waveEditor.zoom.end;
                     this.waveScroll.setZoom(start, end);
+                    this.document.zoom = { ... this.waveEditor.zoom };
+                } else {
+                    this.waveScroll.clearZoom();
+                    this.document.zoom = null;
                 }
             }
         } else if (source === this.waveScroll) {
@@ -158,14 +163,20 @@ export class WavePanel extends CommandHost implements IComponent {
                     const start = this.waveScroll.selection.start;
                     const end = this.waveScroll.selection.end;
                     this.waveEditor.setSelection(start, end);
+                    this.document.selection = { ... this.waveScroll.selection };
                 } else {
                     this.waveEditor.clearSelection();
+                    this.document.selection = null;
                 }
             } else if (eventName === "zoomchange") {
                 if (this.waveScroll.zoom) {
                     const start = this.waveScroll.zoom.start;
                     const end = this.waveScroll.zoom.end;
                     this.waveEditor.setZoom(start, end);
+                    this.document.zoom = { ... this.waveScroll.zoom };
+                } else {
+                    this.waveEditor.clearZoom();
+                    this.document.zoom = null;
                 }
             }
         }
@@ -182,14 +193,18 @@ export class WavePanel extends CommandHost implements IComponent {
 
         if (wave.zoom) {
             this.waveEditor.setZoom(wave.zoom.start, wave.zoom.end);
+            this.waveScroll.setZoom(wave.zoom.start, wave.zoom.end);
         } else {
             this.waveEditor.clearZoom();
+            this.waveScroll.clearZoom();
         }
 
         if (wave.selection) {
             this.waveEditor.setSelection(wave.selection.start, wave.selection.end);
+            this.waveScroll.setSelection(wave.selection.start, wave.selection.end);
         } else {
             this.waveEditor.clearSelection();
+            this.waveScroll.clearSelection();
         }
     }
 
@@ -202,7 +217,7 @@ export class WavePanel extends CommandHost implements IComponent {
         const end = Math.max(this.waveEditor.selection.start, this.waveEditor.selection.end);
 
         this.waveEditor.setZoom(start, end);
-        this.waveEditor.redrawCanvas();
+        this.waveScroll.setZoom(start, end);
     }
 
     zoomRelative(ratio: number) {
@@ -216,12 +231,14 @@ export class WavePanel extends CommandHost implements IComponent {
         const documentLength = this.document.buffers[0].length;
         console.log("zoomeling ratio", ratio, this.waveEditor.zoom);
 
-        this.waveEditor.setZoom(
+        const zoom = [
             Math.max(0, center - (zoomLength / 2 * ratio)),
-            Math.min(documentLength - 1, center + (zoomLength / 2 * ratio))
-        );
+            Math.min(documentLength - 1, center + (zoomLength / 2 * ratio)) 
+        ];
+
+        this.waveEditor.setZoom(zoom[0], zoom[1]);
+        this.waveScroll.setZoom(zoom[0], zoom[1]);
 
         console.log("zoomeling after", ratio, this.waveEditor.zoom);
-
     }
 }

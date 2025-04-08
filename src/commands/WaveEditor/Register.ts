@@ -6,6 +6,7 @@ import { EditWaveCommand } from "./EditWaveCommand";
 import { PasteCommand } from "./PasteCommand";
 import { SaveWaveCommand } from "./SaveWaveCommand";
 import { SelectAllCommand } from "./SelectAllCommand";
+import { ZoomClearCommand } from "./ZoomClearCommand";
 import { ZoomCommand } from "./ZoomCommand";
 import { ZoomInCommand } from "./ZoomInCommand";
 import { ZoomOutCommand } from "./ZoomOutCommand";
@@ -20,6 +21,7 @@ export function registerWaveEditorCommands(component: WavePanel) {
     component.registerCommand("zoom", "hgi-stroke hgi-zoom-in-area", null, new ZoomCommand(component));
     component.registerCommand("zoom-in", "hgi-stroke hgi-zoom-in-area", null, new ZoomInCommand(component));
     component.registerCommand("zoom-out", "hgi-stroke hgi-zoom-in-area", null, new ZoomOutCommand(component));
+    component.registerCommand("zoom-clear", "hgi-stroke hgi-zoom-in-area", null, new ZoomClearCommand(component));
 
     component.registerCommand("select-all", null, null, new SelectAllCommand(component));
 
@@ -30,6 +32,7 @@ export function registerWaveEditorCommands(component: WavePanel) {
     component.registerHotkey("CTRL++", "zoom-in");
     component.registerHotkey("CTRL+-", "zoom-out");
     component.registerHotkey("SHIFT+S", "zoom");
+    component.registerHotkey("SHIFT+A", "zoom-clear");
     component.registerHotkey("CTRL+P", "crop");
     component.registerHotkey("CTRL+SHIFT+S", "save-wave");
     component.registerHotkey("CTRL+BACKSPACE", "edit-wave");

@@ -19,7 +19,7 @@ export class AudioDevice {
 
         // TODO; should destroy first
 
-        this.context = new AudioContext({ sinkId: outputDeviceId } as any);
+        this.context = new AudioContext({ sinkId: outputDeviceId, latencyHint: .5 } as any);
 
         await this.context.audioWorklet.addModule(recorderWorkletUrl);
         await this.context.audioWorklet.addModule(dx7WorkletUrl);

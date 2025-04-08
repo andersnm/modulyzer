@@ -21,6 +21,7 @@ export class Tabs implements IComponent {
         this.parent = parent;
         this.tabsContainer = document.createElement("div");
         this.tabsContainer.className = "flex gap-1 bg-neutral-800";
+        this.tabsContainer.addEventListener("mousedown", e => e.preventDefault() ); // prevent taking focus
     }
 
     addTab(label: string) {

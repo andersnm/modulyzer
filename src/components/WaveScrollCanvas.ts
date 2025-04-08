@@ -24,12 +24,12 @@ class DragSelect extends DragTarget {
 
         this.component = component;
         this.start = samplePositionFromPixel(this.component.canvas, e.offsetX, null, this.component.buffers[0].length);
-        // this.component.clearSelection();
     }
 
     move(e: PointerEvent) {
         this.end = samplePositionFromPixel(this.component.canvas, e.offsetX, null, this.component.buffers[0].length);
         this.component.setSelection(this.start, this.end)
+        this.component.parent.notify(this.component, "selchange");
     }
 
     up(e: PointerEvent) {
@@ -69,6 +69,7 @@ class DragZoomArea extends DragTarget {
         }
 
         this.component.setZoom(this.startZoom.start + dist, this.startZoom.end + dist);
+        this.component.parent.notify(this.component, "zoomchange");
     }
 
     up(e: PointerEvent) {
@@ -107,6 +108,7 @@ class DragZoomLeft extends DragTarget {
         }
 
         this.component.setZoom(this.startZoom.start + dist, this.startZoom.end);
+        this.component.parent.notify(this.component, "zoomchange");
     }
 
     up(e: PointerEvent) {
@@ -145,6 +147,7 @@ class DragZoomRight extends DragTarget {
         }
 
         this.component.setZoom(this.startZoom.start, this.startZoom.end + dist);
+        this.component.parent.notify(this.component, "zoomchange");
     }
 
     up(e: PointerEvent) {
@@ -307,7 +310,6 @@ export class WaveScrollCanvas implements IComponent {
         }
 
         this.selection = { start, end };
-        this.parent.notify(this, "selchange");
         this.redrawCanvas();
     }
 
@@ -317,7 +319,6 @@ export class WaveScrollCanvas implements IComponent {
         }
 
         this.selection = null;
-        this.parent.notify(this, "selchange");
         this.redrawCanvas();
     }
 
@@ -326,10 +327,18 @@ export class WaveScrollCanvas implements IComponent {
             return;
         }
 
-        console.log("scroll: zoom")
         this.zoom = { start, end };
         this.updateRects();
-        this.parent.notify(this, "zoomchange");
+        this.redrawCanvas();
+    }
+
+    clearZoom() {
+        if (!this.zoom) {
+            return;
+        }
+
+        this.zoom = null;
+        this.updateRects();
         this.redrawCanvas();
     }
 

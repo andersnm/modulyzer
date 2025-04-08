@@ -1,5 +1,5 @@
 import { WaveRange } from "../audio/SongDocument";
-import { convertRemToPixels, drawWaveBuffer, drawWaveRange, samplePositionFromPixel } from "../audio/WaveCanvasUtil";
+import { convertRemToPixels, drawWaveBuffer, drawWaveRange, samplePositionFromPixel  } from "../audio/WaveCanvasUtil";
 import { DragTarget, IComponent, INotify } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 
@@ -12,11 +12,11 @@ class DragSelect extends DragTarget {
         super();
 
         this.component = component;
-        this.start = samplePositionFromPixel(this.component.canvas, e.offsetX, null, this.component.buffers[0].length);
+        this.start = samplePositionFromPixel(this.component.canvas, e.offsetX, this.component.zoom, this.component.buffers[0].length);
     }
 
     move(e: PointerEvent) {
-        this.end = samplePositionFromPixel(this.component.canvas, e.offsetX, null, this.component.buffers[0].length);
+        this.end = samplePositionFromPixel(this.component.canvas, e.offsetX, this.component.zoom, this.component.buffers[0].length);
         this.component.setSelection(this.start, this.end)
     }
 
