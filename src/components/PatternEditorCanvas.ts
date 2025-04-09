@@ -1,4 +1,4 @@
-import { IComponent } from "../nutz";
+import { IComponent, INotify } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 import { Appl } from "../App";
 import { InstrumentDocument, PatternColumnDocument, PatternDocument } from "../audio/SongDocument";
@@ -16,6 +16,7 @@ function getNextPatternEvent(patternColumn: PatternColumnDocument, time: number,
 
 export class PatternEditorCanvas implements IComponent {
     app: Appl;
+    parent: INotify;
     container: HTMLElement;
     canvas: HTMLCanvasElement;
     cursorColumn: number = 0;
@@ -23,8 +24,9 @@ export class PatternEditorCanvas implements IComponent {
     pattern: PatternDocument;
     scrollRow: number = 0;
 
-    constructor(app: Appl) {
+    constructor(app: Appl, parent: INotify) {
         this.app = app;
+        this.parent = parent;
         this.container = document.createElement("div");
         this.container.className = "flex-1 w-full pb-1";
         
@@ -92,6 +94,7 @@ export class PatternEditorCanvas implements IComponent {
         this.cursorTime = Math.floor(e.offsetY / fontHeight) - 1 + this.scrollRow;
 
         this.redrawCanvas();
+        this.parent.notify(this, "cursormove")
     };
 
     onMouseUp = (e: MouseEvent) => {
@@ -106,6 +109,14 @@ export class PatternEditorCanvas implements IComponent {
     };
 
     editKeyDown(e: KeyboardEvent) {
+        // NOTE: There is an idea to emit "cursormove" events only in response to "internal actions",
+        // as opposed to not sending events due to "external actions" triggered in the parent component.
+        // This is how the wave editor syncronizes the two edit/scroll canvases to avoid event cycles.
+        // The way things are now, keyboard inputs are considered "external", whereas mouse is "internal":
+        // The parent has focus, handles keyboard events and forwards to the canvas.
+        // On the other hand, the canvas handles mouse events directly, and thus needs to notify the parent
+        // when the mouse moves the cursor.
+        // Thats why this doesn't emit "cursormove" events, while the onMouseDown handler does.
         switch (e.key) {
             case "ArrowUp":
                 this.moveCursor(0, -1);

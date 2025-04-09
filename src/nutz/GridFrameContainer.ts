@@ -92,6 +92,23 @@ export class GridFrameContainer implements IComponent {
             }
 
             return outer;
+        } else if (where === "bottom") {
+            const outer = document.createElement("div");
+            outer.className = "flex flex-col flex-1 frame-top";
+
+            const inner = document.createElement("div");
+            inner.className = "flex " + flexStacking + " border-b-2 border-transparent";
+
+            const frameContent = frame.content.getDomNode();
+            inner.appendChild(frameContent);
+
+            if (innerFrame) {
+                outer.appendChild(innerFrame); // render next frame here
+            }
+
+            outer.appendChild(inner);
+
+            return outer;
         } else if (where === "main") {
             // vi trenger en div run denne for å unngå at denne legger til flere items directe i forrige split
             const inner = document.createElement("div");
