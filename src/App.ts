@@ -1,4 +1,4 @@
-import { ButtonToolbar, CommandHost, formatHotkey, FullScreen, GridFrameContainer, ICommand, IComponent, TabFrameContainer, visitNodeAndChildNodesBreadth, visitNodeAndChildNodesDepth } from "./nutz";
+import { ButtonToolbar, CommandHost, formatHotkey, FullScreen, GridFrameContainer, ICommand, IComponent, StatusBar, TabFrameContainer, visitNodeAndChildNodesBreadth, visitNodeAndChildNodesDepth } from "./nutz";
 import { MenuBar } from "./nutz/Menubar";
 import { ModalDialogContainer } from "./nutz/ModalDialogContainer";
 import { mainMenu, MenuItem } from './menu/menu';
@@ -16,11 +16,9 @@ import { Dx7Factory } from "./audio/plugins/Dx7";
 import { Player } from "./audio/Player";
 import { WaveTrackerFactory } from "./audio/plugins/WaveTracker";
 import { Open303Factory } from "./audio/plugins/Open303";
-import { WAVDecoder } from "./wavefile/WAVDecoder";
 import { WAVEncoder, WAVFormat } from "./wavefile/WAVEncoder";
 import { PlayerSongAdapter } from "./audio/PlayerSongAdapter";
 import { WavePlayer } from "./audio/WavePlayer"; 
-import { PinsPanel } from "./components/PinsPanel";
 import { registerApplicationCommands } from "./commands/Application/Register";
 
 class BpmInput implements IComponent {
@@ -75,15 +73,6 @@ class ToolbarContainer implements IComponent {
         this.container.appendChild(toolbar);
     }
 
-    getDomNode(): Node {
-        return this.container;
-    }
-}
-
-class ElementComponent implements IComponent {
-    constructor(private container: HTMLElement) {
-
-    }
     getDomNode(): Node {
         return this.container;
     }
@@ -169,8 +158,6 @@ export class Appl extends CommandHost implements IComponent {
         this.mainTabs = new TabFrameContainer(false);
 
         this.frame.addFrame("top", 100, this.menuBar);
-        
-        // TODO; buttons and bpm+slider \ vu on same row
         this.frame.addFrame("top", 100, toolbarContainer);
         this.frame.addFrame("left", 100, this.sidebarTabs);
         this.frame.addFrame("main", 100, this.mainTabs);
@@ -274,22 +261,6 @@ export class Appl extends CommandHost implements IComponent {
         };
 
         input.click();
-    }
-
-    downloadWave(wave: WaveDocumentEx) {
-        const enc = new WAVEncoder();
-        const wav = enc.encode(wave.name, wave.sampleRate, WAVFormat.Int32, wave.buffers )
-        let blob = new Blob([wav], {type: "application/wav"});
-
-        var a = window.document.createElement("a");
-        window.document.body.appendChild(a);
-        a.style.display = "none";
-
-        var url = window.URL.createObjectURL(blob);
-        a.href = url;
-        a.download = "test.wav";
-        a.click();
-        window.URL.revokeObjectURL(url);
     }
 
     recordWave: WaveDocumentEx = null;

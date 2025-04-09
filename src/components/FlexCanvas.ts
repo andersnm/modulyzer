@@ -11,9 +11,16 @@ grow vertically! Thus a naive approach will not let the canvas shrink. To
 workaround, a global "resize" handler is installed to undefine the height/width
 properties of the canvas, which triggers a DOM re-layout, which triggers a
 ResizeObserver which re-assigns the correct width/height properties.
+
+These workarounds lead to more workarounds: fixedWidth/fixedHeight must be set
+to true if the canvas has fixed size in either direction. The canvas might not
+actually resize when the window resizes, and the canvas' internal size remains
+undefined because the ResizeObserver didn't trigger to restore it.
 */
 
-export function FlexCanvas() {
+export function FlexCanvas(fixedWidth: boolean = false, fixedHeight: boolean = false) {
+    let oldWidth = window.innerWidth;
+    let oldHeight = window.innerHeight;
     let mountedParentElement: HTMLElement = null;
 
     const canvas = document.createElement("canvas");
@@ -33,8 +40,13 @@ export function FlexCanvas() {
     const observer = new ResizeObserver(onResize);
 
     const onGlobalResize = () => {
-        canvas.height = undefined;
-        canvas.width = undefined;
+        if ((fixedWidth && oldHeight !== window.innerHeight) || (fixedHeight && oldWidth !== window.innerWidth) || (!fixedWidth && !fixedHeight)) {
+            canvas.height = undefined;
+            canvas.width = undefined;
+        }
+
+        oldHeight = window.innerHeight;
+        oldWidth = window.innerWidth;
     }
 
     const onMounted = () => {

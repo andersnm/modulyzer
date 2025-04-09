@@ -187,10 +187,14 @@ export class WavePanel extends CommandHost implements IComponent {
 
     setWave(wave: WaveDocumentEx) {
         this.document = wave;
-        this.waveEditor.buffers = this.document.buffers;
-        this.waveScroll.buffers = this.document.buffers;
+        if (wave) {
+            this.waveEditor.buffers = this.document.buffers;
+            this.waveScroll.buffers = this.document.buffers;
+        } else {
+            this.waveEditor.buffers = this.waveScroll.buffers = [ new Float32Array(0) ] ;
+        }
 
-        if (wave.zoom) {
+        if (wave?.zoom) {
             this.waveEditor.setZoom(wave.zoom.start, wave.zoom.end);
             this.waveScroll.setZoom(wave.zoom.start, wave.zoom.end);
         } else {
@@ -198,7 +202,7 @@ export class WavePanel extends CommandHost implements IComponent {
             this.waveScroll.clearZoom();
         }
 
-        if (wave.selection) {
+        if (wave?.selection) {
             this.waveEditor.setSelection(wave.selection.start, wave.selection.end);
             this.waveScroll.setSelection(wave.selection.start, wave.selection.end);
         } else {

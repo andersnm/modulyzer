@@ -26,8 +26,7 @@ export class ShowWaveEditorCommand {
         } else if (this.app.song.waves[0]) {
             pq.setWave(this.app.song.waves[0]);
         } else {
-            const dummy = new WaveDocumentEx();
-            pq.setWave(dummy);
+            pq.setWave(null);
         }
 
         this.app.mainTabs.addTab("Wave", pq);

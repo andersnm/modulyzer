@@ -26,8 +26,7 @@ export class ShowPatternEditorCommand {
         } else if (this.app.song.patterns[0]) {
             pq.setPattern(this.app.song.patterns[0]);
         } else {
-            const dummy = new PatternDocument();
-            pq.setPattern(dummy);
+            pq.setPattern(null);
         }
 
         this.app.mainTabs.addTab("Pattern", pq);
