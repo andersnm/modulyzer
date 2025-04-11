@@ -1,5 +1,6 @@
 import { InstrumentFactory } from "../audio/plugins/InstrumentFactory";
-import { InstrumentDocument, PatternColumnDocument, PatternDocument } from "../audio/SongDocument";
+import { InstrumentDocument, PatternColumnDocument, PatternDocument, PatternEventDocument, SongDocument } from "../audio/SongDocument";
+import { ClipboardMidiEvent, ClipboardPattern } from "../commands/PatternEditor/Clipboard";
 
 export function formatNote(note: number) {
     const octave = Math.floor(note / 12) - 1;
@@ -59,13 +60,31 @@ export function getCursorColumnAt(renderColumns: RenderColumnInfo[], index: numb
 }
 
 export function getCursorColumnAtPosition(renderColumns: RenderColumnInfo[], position: number) {
+    // NOTE: This must always match something
+    let lastColumn: CursorColumnInfo | null = null;
     for (let renderColumn of renderColumns) {
         for (let cursorColumn of renderColumn.cursorColumns) {
+
+            if (position < 0) {
+                return cursorColumn;
+            }
+
+            // Within bounds of column
             if (position >= cursorColumn.position && (position < cursorColumn.position + cursorColumn.size)) {
                 return cursorColumn;
             }
+
+            // Return the last column with the greatest lesser position if there is no exact match at the position
+            // I.e clicking in the space between columns returns the column to the left of the space
+            if (position < cursorColumn.position) {
+                return lastColumn;
+            }
+
+            lastColumn = cursorColumn;
         }
     }
+
+    return lastColumn;
 }
 
 export function getCursorColumnIndex(renderColumns: RenderColumnInfo[], column: CursorColumnInfo) {
@@ -193,4 +212,218 @@ export function getRenderColumnWidth(type: string) {
     }
 
     return columnWidth;
+}
+
+export function getRenderColumnIndex(renderColumns: RenderColumnInfo[], column: RenderColumnInfo) {
+    return renderColumns.indexOf(column);
+}
+
+export function getRenderColumnPosition(renderColumns: RenderColumnInfo[], column: RenderColumnInfo) {
+    let x = 0;
+    for (let renderColumn of renderColumns) {
+        if (renderColumn === column) {
+            return x;
+        }
+
+        x += getRenderColumnWidth(renderColumn.type);
+    }
+
+    return -1
+}
+
+function getPreviousPatternEvent(patternColumn: PatternColumnDocument, time: number, channel: number) {
+    return patternColumn.events.reduce((prev, e) => (e.channel === channel && (e.time < time)) ? e : prev, null);
+}
+
+function getNextPatternEvent(patternColumn: PatternColumnDocument, time: number, channel: number, note?: number, velocity?: number) {
+    return patternColumn.events.find(e => e.channel === channel && e.time > time && (note === undefined || e.value === note) && (velocity === undefined || e.data0 === velocity));
+}
+
+export function editNote(song: SongDocument, patternColumn: PatternColumnDocument, time: number, channel: number, note: number) {
+    const editNoteEvent = patternColumn.events.find(e => e.channel === channel && e.time == time && e.data0 !== 0);
+
+    // cases:
+    // update note / octave -> also update note off
+    // update noteoff = insert new note over it
+    // insert note before noteoff of another note
+    // insert note outside any other notes
+
+    if (editNoteEvent) {
+
+        // find noteoff and update its value
+        const nextPatternEvent = getNextPatternEvent(patternColumn, time, channel, editNoteEvent.value);
+        if (nextPatternEvent) {
+            // not validating velo==0 before updating, _should_ be the noteoff
+            song.updatePatternEvent(editNoteEvent, note, editNoteEvent.data0, editNoteEvent.data1);
+            song.updatePatternEvent(nextPatternEvent, note, 0, channel);
+        } else {
+            console.warn("Not updating note off, missing note off, invalid pattern event")
+        }
+    } else {
+        // if previous note is a note -> split, find noteend and move it to here
+        // if previous note is a noteoff or none -> insert plain
+        const previousPatternEvent = getPreviousPatternEvent(patternColumn, time, channel);
+        if (previousPatternEvent && previousPatternEvent.data0 !== 0) {
+            // Insert in duration of another note: shorten previous note
+            const noteoffForPrevious = getNextPatternEvent(patternColumn, previousPatternEvent.time, channel, previousPatternEvent.value);
+            if (noteoffForPrevious.data0 === 0) {
+                song.deletePatternEvent(patternColumn, noteoffForPrevious);
+                song.createPatternEvent(patternColumn, time, previousPatternEvent.value, 0, 0, channel);
+            } else {
+                console.warn("Not shortening previous note, missing note off, invalid pattern event")
+            }
+        }
+
+        song.createPatternEvent(patternColumn, time, note, 127, 0, channel);
+        song.createPatternEvent(patternColumn, time + 1, note, 0, 0, channel);
+    }
+}
+
+export function editNoteOff(song: SongDocument, patternColumn: PatternColumnDocument, time: number, channel: number) {
+    const patternEvent = patternColumn.events.find(e => e.channel === channel && e.time == time);
+    if (patternEvent) {
+        console.log("Already note or noteoff here, not inserting noteoff")
+        return;
+    }
+
+    const previousPatternEvent = getPreviousPatternEvent(patternColumn, time, channel); // patternColumn.events.reduce((prev, e) => (e.channel === cursorColumn.channel && (e.time < this.cursorTime)) ? e : prev, null);
+    if (!previousPatternEvent) {
+        console.log("Cannot set note off here, no previous note in channel", patternColumn.events);
+        return;
+    }
+
+    if (previousPatternEvent.data0 == 0) {
+        // if previous note is a noteoff: extend duration, delete old noteoff before new noteoff
+        song.deletePatternEvent(patternColumn, previousPatternEvent);
+    } else {
+        // previous note is a note: shorten duration, find and delete its noteoff before new noteoff
+        const nextPatternEvent = getNextPatternEvent(patternColumn, previousPatternEvent.time, channel, previousPatternEvent.value);
+        if (nextPatternEvent && nextPatternEvent.data0 === 0) {
+            song.deletePatternEvent(patternColumn, nextPatternEvent);
+        } else {
+            console.warn("Could not find noteoff for previous note. Not shortening")
+        }
+    }
+
+    song.createPatternEvent(patternColumn, time, previousPatternEvent.value, 0, 0, channel);
+}
+
+export function editValue(song: SongDocument, patternColumn: PatternColumnDocument, time: number, channel: number, value: number) {
+    const patternEvent = patternColumn.events.find(e => e.channel === channel && e.time === time);
+    if (patternEvent) {
+        song.updatePatternEvent(patternEvent, value, patternEvent.data0, 0);
+    } else {
+        song.createPatternEvent(patternColumn, time, value, 0, 0, channel);
+    }
+}
+
+export function editVelocity(song: SongDocument, patternEvent: PatternEventDocument, velocity: number) {
+    if (velocity === 0) {
+        throw new Error("Cannot edit velocity 0");
+    }
+
+    if (patternEvent) {
+        song.updatePatternEvent(patternEvent, patternEvent.value, velocity, 0);
+    } else {
+        console.log("No note in this column/track to set velocity")
+    }
+}
+
+export function deleteValue(song: SongDocument, patternColumn: PatternColumnDocument, columnType: string, time: number, channel: number) {
+    if (columnType === "note") {
+        // Delete in a note column
+        const editNoteEvent = patternColumn.events.find(e => e.time === time && e.channel === channel && e.data0 !== 0);
+        const editNoteOffEvent = patternColumn.events.find(e => e.time === time && e.channel === channel && e.data0 === 0);
+
+        if (editNoteEvent) {
+            const noteOffEvent = getNextPatternEvent(patternColumn, time, channel, editNoteEvent.value);
+            if (noteOffEvent && noteOffEvent.data0 === 0) {
+                // Delete note and its note-off - if there is a noteoff at the same time, leave the noteoff
+                song.deletePatternEvent(patternColumn, editNoteEvent);
+                song.deletePatternEvent(patternColumn, noteOffEvent);
+                return true;
+            } else {
+                console.warn("Missing note-off, invalid pattern event, not deleting anything")
+            }
+        } else if (editNoteOffEvent) {
+            // Delete noteoff = extend noteoff until next note or end of pattern
+            const nextNoteEvent = getNextPatternEvent(patternColumn, time, channel, undefined, 0);
+
+            if (nextNoteEvent) {
+                if (nextNoteEvent.data0 !== 0) {
+                    song.deletePatternEvent(patternColumn, editNoteOffEvent);
+                    song.createPatternEvent(patternColumn, nextNoteEvent.time, editNoteOffEvent.value, 0, 0, channel);
+                    return true;
+                } else {
+                    console.warn("Next note is a noteoff, expected note, not extending the noteoff.", nextNoteEvent)
+                }
+            } else {
+                // throwing here to prevent possible shifting afterwards, which could result in wrong noteoffS
+                throw new Error("TODO: the case where noteoff extends to EOP")
+            }
+        }
+    } else {
+        // Delete in a non-note column, i.e cc/u8 value
+        const patternEvent = patternColumn.events.find(e => e.time === time && e.channel === channel);
+        song.deletePatternEvent(patternColumn, patternEvent);
+        return true;
+    }
+}
+
+export function deletePatternEvents(song: SongDocument, renderColumns: RenderColumnInfo[], start: number, end: number, startRow: number, endRow: number) {
+
+    for (let i =  start; i <= end; i++) {
+        const renderColumn = renderColumns[i];
+
+        if (renderColumn.type === "velo") {
+            // Deleted along with the note
+            continue;
+        }
+
+        for (let j = startRow; j <= endRow; j++) {
+            deleteValue(song, renderColumn.patternColumn, renderColumn.type, j, renderColumn.channel);
+        }
+    }
+}
+
+export function exportClipboardPattern(renderColumns: RenderColumnInfo[], start: number, end: number, startRow: number, endRow: number) {
+    const clipboardObject: ClipboardPattern = {
+        width: (end - start) + 1,
+        height: (endRow - startRow) + 1,
+        columns: [],
+    };
+
+    for (let i =  start; i <= end; i++) {
+        const renderColumn = renderColumns[i];
+        if (renderColumn.type === "note") {
+            // Serialize notes and velo in this column/channel/track - should be selected visually too (TODO)
+            const events = renderColumn.patternColumn.events
+                .filter(e => e.time >= startRow && e.time <= endRow && e.channel === renderColumn.channel)
+                .map(e => ({
+                    time: e.time - startRow,
+                    value: e.value,
+                    data0: e.data0,
+                } as ClipboardMidiEvent)
+            );
+
+            clipboardObject.columns.push({events});
+        } else
+        if (renderColumn.type === "velo") {
+            // Not serializing velo alone, but keeping the column to sync back with rendercolumns
+            clipboardObject.columns.push({events: []});
+        } else {
+            // All but note-columns are treated as basic value-columns
+            const events = renderColumn.patternColumn.events
+                .filter(e => e.time >= startRow && e.time <= endRow)
+                .map(e => ({
+                    time: e.time - startRow,
+                    value: e.value,
+                    data0: e.data0
+                } as ClipboardMidiEvent));
+
+            clipboardObject.columns.push({events});
+        }
+    }
+
+    return clipboardObject;
 }

@@ -1,17 +1,69 @@
-import { IComponent, INotify } from "../nutz";
+import { DragTarget, IComponent, INotify } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 import { Appl } from "../App";
-import { InstrumentDocument, PatternColumnDocument, PatternDocument } from "../audio/SongDocument";
-import { CursorColumnInfo, formatNote, formatU8, getCursorColumnAt, getCursorColumnAtPosition, getCursorColumnIndex, getCursorColumns, getPatternRenderColumns, getRenderColumnWidth, RenderColumnInfo } from "./PatternEditorHelper";
+import { InstrumentDocument, PatternColumnDocument, PatternDocument, WaveRange } from "../audio/SongDocument";
+import { CursorColumnInfo, deleteValue, editNote, editNoteOff, editValue, editVelocity, formatNote, formatU8, getCursorColumnAt, getCursorColumnAtPosition, getCursorColumnIndex, getCursorColumns, getPatternRenderColumns, getRenderColumnIndex, getRenderColumnPosition, getRenderColumnWidth, RenderColumnInfo } from "./PatternEditorHelper";
 
 const maxPolyphonic = 8;
 
-function getPreviousPatternEvent(patternColumn: PatternColumnDocument, time: number, channel: number) {
-    return patternColumn.events.reduce((prev, e) => (e.channel === channel && (e.time < time)) ? e : prev, null);
+interface PatternSelection {
+    startColumn: number;
+    endColumn: number;
+    startRow: number;
+    endRow: number;
 }
 
-function getNextPatternEvent(patternColumn: PatternColumnDocument, time: number, channel: number, note?: number) {
-    return patternColumn.events.find(e => e.channel === channel && e.time > time && (note === undefined || e.value === note));
+class DragSelect extends DragTarget {
+    component: PatternEditorCanvas;
+    startColumn: number;
+    endColumn: number;
+    startRow: number;
+    endRow: number;
+
+    constructor(component: PatternEditorCanvas, e: PointerEvent) {
+        super();
+
+        this.component = component;
+
+        const fontHeight = this.component.fontEm.fontBoundingBoxAscent + this.component.fontEm.fontBoundingBoxDescent;
+        const c = Math.floor((e.offsetX - this.component.rowNumberWidth) / this.component.fontEm.width);
+        const t = Math.floor(e.offsetY / fontHeight) - 1 + this.component.scrollRow;
+        const cursorColumn = getCursorColumnAtPosition(this.component.renderColumns, c);
+        if (!cursorColumn) { // TODO
+            throw new Error("getCursorColumnAtPosition should always give a match")
+        }
+
+        this.startColumn = getRenderColumnIndex(this.component.renderColumns, cursorColumn.renderColumn);
+        this.startRow = t;
+    }
+
+    move(e: PointerEvent) {
+        const fontHeight = this.component.fontEm.fontBoundingBoxAscent + this.component.fontEm.fontBoundingBoxDescent;
+        const c = Math.floor((e.offsetX - this.component.rowNumberWidth) / this.component.fontEm.width);
+        const t = Math.floor(e.offsetY / fontHeight) - 1 + this.component.scrollRow;
+
+        const cursorColumn = getCursorColumnAtPosition(this.component.renderColumns, c);
+
+        this.endColumn = getRenderColumnIndex(this.component.renderColumns, cursorColumn.renderColumn);
+        this.endRow = t;
+
+        this.component.setSelection(this.startColumn, this.startRow, this.endColumn, this.endRow);
+    }
+
+    up(e: PointerEvent) {
+        const fontHeight = this.component.fontEm.fontBoundingBoxAscent + this.component.fontEm.fontBoundingBoxDescent;
+        const c = Math.floor((e.offsetX - this.component.rowNumberWidth) / this.component.fontEm.width);
+        const t = Math.floor(e.offsetY / fontHeight) - 1 + this.component.scrollRow;
+
+        const cursorColumn = getCursorColumnAtPosition(this.component.renderColumns, c);
+
+        this.component.cursorColumn = getCursorColumnIndex(this.component.renderColumns, cursorColumn);
+        this.component.cursorTime = t;
+
+        this.component.redrawCanvas();
+        this.component.parent.notify(this.component, "cursormove")
+    }
+
 }
 
 export class PatternEditorCanvas implements IComponent {
@@ -73,34 +125,33 @@ export class PatternEditorCanvas implements IComponent {
         this.redrawCanvas();
     };
 
-    onMouseDown = (e: MouseEvent) => {
+    dragTarget: DragTarget;
 
-        const ctx = this.canvas.getContext("2d");
-        ctx.font = "14px monospace";
-        const em = ctx.measureText("M");
+    onMouseDown = (e: PointerEvent) => {
+        if (!this.dragTarget) {
+            // this.clearSelection();
 
-        const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
-        const fontHeight = em.fontBoundingBoxAscent + em.fontBoundingBoxDescent; // emHeightAscent 16;
+            this.dragTarget = new DragSelect(this, e);
+            this.canvas.setPointerCapture(e.pointerId);
+        }
+    };
 
-        const rowNumberWidth = em.width * 5;
-        const c = Math.floor((e.offsetX - rowNumberWidth) / em.width);
-
-        const cursorColumn = getCursorColumnAtPosition(renderColumns, c);
-        if (!cursorColumn) {
+    onMouseUp = (e: PointerEvent) => {
+        if (!this.dragTarget) {
             return;
         }
 
-        this.cursorColumn = getCursorColumnIndex(renderColumns, cursorColumn); //.position; // index!
-        this.cursorTime = Math.floor(e.offsetY / fontHeight) - 1 + this.scrollRow;
-
-        this.redrawCanvas();
-        this.parent.notify(this, "cursormove")
+        this.canvas.releasePointerCapture(e.pointerId);
+        this.dragTarget.up(e);
+        this.dragTarget = null;
     };
 
-    onMouseUp = (e: MouseEvent) => {
-    };
+    onMouseMove = (e: PointerEvent) => {
+        if (!this.dragTarget) {
+            return;
+        }
 
-    onMouseMove = (e: MouseEvent) => {
+        this.dragTarget.move(e);
     };
 
     onContextMenu = (e: MouseEvent) => {
@@ -117,6 +168,12 @@ export class PatternEditorCanvas implements IComponent {
         // On the other hand, the canvas handles mouse events directly, and thus needs to notify the parent
         // when the mouse moves the cursor.
         // Thats why this doesn't emit "cursormove" events, while the onMouseDown handler does.
+
+        if (e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) {
+            // only deal with plain keys
+            return false;
+        }
+
         switch (e.key) {
             case "ArrowUp":
                 this.moveCursor(0, -1);
@@ -164,9 +221,8 @@ export class PatternEditorCanvas implements IComponent {
                 break;
         }
 
-        const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
-        if (renderColumns.length === 0) return;
-        const cursorColumn = getCursorColumnAt(renderColumns, this.cursorColumn);
+        if (this.renderColumns.length === 0) return;
+        const cursorColumn = getCursorColumnAt(this.renderColumns, this.cursorColumn);
         if (cursorColumn.type === "u4-basenote") {
             return this.editNoteKeyDown(e, cursorColumn);
         } else {
@@ -177,33 +233,27 @@ export class PatternEditorCanvas implements IComponent {
     }
 
     editKeyUp(e: KeyboardEvent) {
-        const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
-        if (renderColumns.length === 0) return;
+        if (this.renderColumns.length === 0) return;
 
-        const cursorColumn = getCursorColumnAt(renderColumns, this.cursorColumn);
+        const cursorColumn = getCursorColumnAt(this.renderColumns, this.cursorColumn);
         if (cursorColumn.type === "u4-basenote") {
             this.editNoteKeyUp(e, cursorColumn);
         }
     };
 
     moveCursor(dx, dy) {
-        const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
-        const cursorColumns = getCursorColumns(renderColumns);
-
         this.cursorTime = Math.max(Math.min(this.cursorTime + dy, this.pattern.duration - 1), 0);
-        this.cursorColumn = Math.max(Math.min(this.cursorColumn + dx, cursorColumns.length - 1), 0);
+        this.cursorColumn = Math.max(Math.min(this.cursorColumn + dx, this.cursorColumns.length - 1), 0);
         
         this.scrollIntoView();
         this.redrawCanvas();
     }
 
     moveNextColumn() {
-        const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
-        const cursorColumns = getCursorColumns(renderColumns);
-        const ccc = cursorColumns[this.cursorColumn];
+        const ccc = this.cursorColumns[this.cursorColumn];
 
-        for (let i = this.cursorColumn + 1; i < cursorColumns.length; i++) {
-            const cc = cursorColumns[i];
+        for (let i = this.cursorColumn + 1; i < this.cursorColumns.length; i++) {
+            const cc = this.cursorColumns[i];
             if (ccc.tabStep != cc.tabStep) {
                 this.cursorColumn = i;
                 break;
@@ -215,25 +265,22 @@ export class PatternEditorCanvas implements IComponent {
     }
 
     movePreviousColumn() {
-        const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
-        const cursorColumns = getCursorColumns(renderColumns);
-
-        let ccc = cursorColumns[this.cursorColumn];
+        let ccc = this.cursorColumns[this.cursorColumn];
         let i: number;
 
         // first scan backwards until tabStep changes
         for (i = this.cursorColumn - 1; i >= 0; i--) {
-            const cc = cursorColumns[i];
+            const cc = this.cursorColumns[i];
             if (ccc.tabStep != cc.tabStep) {
                 break;
             }
         }
 
-        ccc = cursorColumns[i];
+        ccc = this.cursorColumns[i];
 
         // then find first column in current tabstep
         for (; i >= 0; i--) {
-            const cc = cursorColumns[i];
+            const cc = this.cursorColumns[i];
             if (ccc.tabStep != cc.tabStep) {
                 break;
             }
@@ -252,9 +299,7 @@ export class PatternEditorCanvas implements IComponent {
     }
 
     moveEnd() {
-        const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
-        const cursorColumns = getCursorColumns(renderColumns);
-        this.cursorColumn = cursorColumns.length - 1;
+        this.cursorColumn = this.cursorColumns.length - 1;
         this.scrollIntoView();
         this.redrawCanvas();
     }
@@ -278,8 +323,7 @@ export class PatternEditorCanvas implements IComponent {
 
     shiftEventsAfterCursor(delta: number) {
         // add +1 to all events time at cursor and below, delete events outside pattern, leave noteoffs at end
-        const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
-        const cursorColumn = getCursorColumnAt(renderColumns, this.cursorColumn);
+        const cursorColumn = getCursorColumnAt(this.renderColumns, this.cursorColumn);
         const patternColumn = cursorColumn.renderColumn.patternColumn;
 
         const events = patternColumn.events.filter(e => e.channel === cursorColumn.channel && e.time >= this.cursorTime);
@@ -292,50 +336,8 @@ export class PatternEditorCanvas implements IComponent {
 
     deleteAtCursor() {
         // can be note and noteoff on same time/channel: if both = delete note
-        const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
-        const cursorColumn = getCursorColumnAt(renderColumns, this.cursorColumn);
-        const patternColumn = cursorColumn.renderColumn.patternColumn;
-
-        if (cursorColumn.type === "u4-basenote" || cursorColumn.type === "u4-octave") {
-            // Delete in a note column
-            const editNoteEvent = patternColumn.events.find(e => e.time === this.cursorTime && e.channel === cursorColumn.channel && e.data0 !== 0);
-            const editNoteOffEvent = patternColumn.events.find(e => e.time === this.cursorTime && e.channel === cursorColumn.channel && e.data0 === 0);
-
-            if (editNoteEvent) {
-                const noteOffEvent = getNextPatternEvent(patternColumn, this.cursorTime, cursorColumn.channel, editNoteEvent.value);
-                if (noteOffEvent && noteOffEvent.data0 === 0) {
-                    // Delete note and its note-off - if there is a noteoff at the same time, leave the noteoff
-                    this.app.song.deletePatternEvent(patternColumn, editNoteEvent);
-                    this.app.song.deletePatternEvent(patternColumn, noteOffEvent);
-                    return true;
-                } else {
-                    console.warn("Missing note-off, invalid pattern event, not deleting anything")
-                }
-            } else if (editNoteOffEvent) {
-                // Delete noteoff = extend noteoff until next note or end of pattern
-                const nextNoteEvent = getNextPatternEvent(patternColumn, this.cursorTime, cursorColumn.channel);
-
-                if (nextNoteEvent) {
-                    if (nextNoteEvent.data0 !== 0) {
-                        this.app.song.deletePatternEvent(patternColumn, editNoteOffEvent);
-                        this.app.song.createPatternEvent(patternColumn, nextNoteEvent.time, editNoteOffEvent.value, 0, 0, cursorColumn.channel);
-                        return true;
-                    } else {
-                        console.warn("Next note is a noteoff, expected note, not extending the noteoff.", nextNoteEvent)
-                    }
-                } else {
-                    // throwing here to prevent possible shifting afterwards, which could result in wrong noteoffS
-                    throw new Error("TODO: the case where noteoff extends to EOP")
-                }
-            }
-        } else {
-            // Delete in a non-note column, i.e cc/u8 value
-            const patternEvent = patternColumn.events.find(e => e.time === this.cursorTime && e.channel === cursorColumn.channel);
-            this.app.song.deletePatternEvent(patternColumn, patternEvent);
-            return true;
-        }
-
-        return false;
+        const cursorColumn = getCursorColumnAt(this.renderColumns, this.cursorColumn);
+        deleteValue(this.app.song, cursorColumn.renderColumn.patternColumn, cursorColumn.renderColumn.type, this.cursorTime, cursorColumn.channel);
     }
 
     getNoteForKey(code: string) {
@@ -363,7 +365,7 @@ export class PatternEditorCanvas implements IComponent {
 
         const note = this.getNoteForKey(ev.code);
         if (note !== -1) {
-            this.editNote(note);
+            this.editNoteAtCursor(note);
 
             // Send midi to instrumnt
             // TODO: stuck notes if canvas loses focus before key up
@@ -375,7 +377,7 @@ export class PatternEditorCanvas implements IComponent {
 
         switch (ev.key) {
             case "1":
-                this.editNoteOff();
+                this.editNoteOffAtCursor();
                 return true;
         }
 
@@ -430,129 +432,99 @@ export class PatternEditorCanvas implements IComponent {
         }
     }
 
-    editNoteOff() {
-        const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
-        const cursorColumn = getCursorColumnAt(renderColumns, this.cursorColumn);
+    editNoteOffAtCursor() {
+        const cursorColumn = getCursorColumnAt(this.renderColumns, this.cursorColumn);
         const patternColumn = cursorColumn.renderColumn.patternColumn;
 
         // - already noteoff, exit
         // - TODO: already note = set note-off for previous note here
         // - else shorten or extend noteoff
 
-        const patternEvent = patternColumn.events.find(e => e.channel === cursorColumn.channel && e.time == this.cursorTime);
-        if (patternEvent) {
-            console.log("Already note or noteoff here, not inserting noteoff")
-            return;
-        }
-
-        const previousPatternEvent = getPreviousPatternEvent(patternColumn, this.cursorTime, cursorColumn.channel); // patternColumn.events.reduce((prev, e) => (e.channel === cursorColumn.channel && (e.time < this.cursorTime)) ? e : prev, null);
-        if (!previousPatternEvent) {
-            console.log("Cannot set note off here, no previous note in channel", patternColumn.events);
-            return;
-        }
-
-        if (previousPatternEvent.data0 == 0) {
-            // if previous note is a noteoff: extend duration, delete old noteoff before new noteoff
-            this.app.song.deletePatternEvent(patternColumn, previousPatternEvent);
-        } else {
-            // previous note is a note: shorten duration, find and delete its noteoff before new noteoff
-            const nextPatternEvent = getNextPatternEvent(patternColumn, previousPatternEvent.time, cursorColumn.channel, previousPatternEvent.value);
-            if (nextPatternEvent && nextPatternEvent.data0 === 0) {
-                this.app.song.deletePatternEvent(patternColumn, nextPatternEvent);
-            } else {
-                console.warn("Could not find noteoff for previous note. Not shortening")
-            }
-        }
-
-        this.app.song.createPatternEvent(patternColumn, this.cursorTime, previousPatternEvent.value, 0, 0, cursorColumn.channel);
+        editNoteOff(this.app.song, patternColumn, this.cursorTime, cursorColumn.channel);
     }
 
-    editNote(note: number) {
-        const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
-        const cursorColumn = getCursorColumnAt(renderColumns, this.cursorColumn);
+    editNoteAtCursor(note: number) {
+        const cursorColumn = getCursorColumnAt(this.renderColumns, this.cursorColumn);
         const patternColumn = cursorColumn.renderColumn.patternColumn;
 
-        // Get note at cursor position - velo!=0, no noteoff
-        const editNoteEvent = patternColumn.events.find(e => e.channel === cursorColumn.channel && e.time == this.cursorTime && e.data0 !== 0);
-
-        // cases:
-        // update note / octave -> also update note off
-        // update noteoff = insert new note over it
-        // insert note before noteoff of another note
-        // insert note outside any other notes
-
-        if (editNoteEvent) {
-
-            // find noteoff and update its value
-            const nextPatternEvent = getNextPatternEvent(patternColumn, this.cursorTime, cursorColumn.channel, editNoteEvent.value);
-            if (nextPatternEvent) {
-                // not validating velo==0 before updating, _should_ be the noteoff
-                this.app.song.updatePatternEvent(editNoteEvent, note, editNoteEvent.data0, editNoteEvent.data1);
-                this.app.song.updatePatternEvent(nextPatternEvent, note, 0, cursorColumn.channel);                    
-            } else {
-                console.warn("Not updating note off, missing note off, invalid pattern event")
-            }
-        } else {
-            // if previous note is a note -> split, find noteend and move it to here
-            // if previous note is a noteoff or none -> insert plain
-            const previousPatternEvent = getPreviousPatternEvent(patternColumn, this.cursorTime, cursorColumn.channel);
-            if (previousPatternEvent && previousPatternEvent.data0 !== 0) {
-                // Insert in duration of another note: shorten previous note
-                const noteoffForPrevious = getNextPatternEvent(patternColumn, previousPatternEvent.time, cursorColumn.channel, previousPatternEvent.value);
-                if (noteoffForPrevious.data0 === 0) {
-                    this.app.song.deletePatternEvent(patternColumn, noteoffForPrevious);
-                    this.app.song.createPatternEvent(patternColumn, this.cursorTime, previousPatternEvent.value, 0, 0, cursorColumn.channel);
-                } else {
-                    console.warn("Not shortening previous note, missing note off, invalid pattern event")
-                }
-            }
-
-            this.app.song.createPatternEvent(patternColumn, this.cursorTime, note, 127, 0, cursorColumn.channel);
-            this.app.song.createPatternEvent(patternColumn, this.cursorTime + 1, note, 0, 0, cursorColumn.channel);
-        }
+        editNote(this.app.song, patternColumn, this.cursorTime, cursorColumn.channel, note);
     }
 
     editDigit(digit: number) {
-        const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
-        const cursorColumn = getCursorColumnAt(renderColumns, this.cursorColumn);
+        const cursorColumn = getCursorColumnAt(this.renderColumns, this.cursorColumn);
         const patternColumn = cursorColumn.renderColumn.patternColumn;
-        const patternEvent = patternColumn.events.find(e => e.channel === cursorColumn.channel && e.time == this.cursorTime);
 
         if (cursorColumn.type === "u4-lower") {
+            const patternEvent = patternColumn.events.find(e => e.channel === cursorColumn.channel && e.time == this.cursorTime);
             const newValue = ((patternEvent?.value??0) & 0xF0) | digit;
 
-            if (patternEvent) {
-                this.app.song.updatePatternEvent(patternEvent, newValue, patternEvent.data0, patternEvent.data1);
-            } else {
-                this.app.song.createPatternEvent(patternColumn, this.cursorTime, newValue, 0, 0, cursorColumn.channel);
-            }
-        } else if (cursorColumn.type === "u4-upper") {
-            const newValue = ((patternEvent?.value??0) & 0x0F) | (digit << 4);
+            editValue(this.app.song, patternColumn, this.cursorTime, patternEvent.channel, newValue);
 
-            if (patternEvent) {
-                this.app.song.updatePatternEvent(patternEvent, newValue, patternEvent.data0, patternEvent.data1);
-            } else {
-                this.app.song.createPatternEvent(patternColumn, this.cursorTime, newValue, 0, 0, cursorColumn.channel);
-            }
+            // if (patternEvent) {
+            //     this.app.song.updatePatternEvent(patternEvent, newValue, patternEvent.data0, patternEvent.data1);
+            // } else {
+            //     this.app.song.createPatternEvent(patternColumn, this.cursorTime, newValue, 0, 0, cursorColumn.channel);
+            // }
+        } else if (cursorColumn.type === "u4-upper") {
+            const patternEvent = patternColumn.events.find(e => e.channel === cursorColumn.channel && e.time == this.cursorTime);
+            const newValue = ((patternEvent?.value??0) & 0x0F) | (digit << 4);
+            editValue(this.app.song, patternColumn, this.cursorTime, patternEvent.channel, newValue);
+
+            // if (patternEvent) {
+            //     this.app.song.updatePatternEvent(patternEvent, newValue, patternEvent.data0, patternEvent.data1);
+            // } else {
+            //     this.app.song.createPatternEvent(patternColumn, this.cursorTime, newValue, 0, 0, cursorColumn.channel);
+            // }
         } else if (cursorColumn.type == "u4-velo-lower") {
+            const patternEvent = patternColumn.events.find(e => e.channel === cursorColumn.channel && e.time == this.cursorTime && e.data0 !== 0);
             const newValue = ((patternEvent?.data0??0) & 0xF0) | digit;
-            if (patternEvent) {
-                this.app.song.updatePatternEvent(patternEvent, patternEvent.value, newValue, patternEvent.data1);
-            } else {
-                console.log("Cannote change velocity: No note at current position")
-            }
+            editVelocity(this.app.song, patternEvent, newValue);
+            // if (patternEvent) {
+            //     this.app.song.updatePatternEvent(patternEvent, patternEvent.value, newValue, patternEvent.data1);
+            // } else {
+            //     console.log("Cannote change velocity: No note at current position")
+            // }
         } else if (cursorColumn.type == "u4-velo-upper") {
+            const patternEvent = patternColumn.events.find(e => e.channel === cursorColumn.channel && e.time == this.cursorTime && e.data0 !== 0);
             const newValue = ((patternEvent?.data0??0) & 0x0F) | (digit << 4);
-            if (patternEvent) {
-                this.app.song.updatePatternEvent(patternEvent, patternEvent.value, newValue, patternEvent.data1);
-            } else {
-                console.log("Cannote change velocity: No note at current position")
-            }
+            editVelocity(this.app.song, patternEvent, newValue);
+            // if (patternEvent) {
+            //     this.app.song.updatePatternEvent(patternEvent, patternEvent.value, newValue, patternEvent.data1);
+            // } else {
+            //     console.log("Cannote change velocity: No note at current position")
+            // }
         }
     }
 
+    renderColumns: RenderColumnInfo[];
+    cursorColumns: CursorColumnInfo[];
+    fontEm: TextMetrics;
+    rowNumberWidth: number;
+    selection: PatternSelection;
+
     setPattern(pattern: PatternDocument) {
         this.pattern = pattern;
+
+        if (this.pattern) {
+            const ctx = this.canvas.getContext("2d");
+            ctx.font = "14px monospace";
+
+            this.fontEm = ctx.measureText("M");
+            this.renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
+            this.cursorColumns = getCursorColumns(this.renderColumns);
+
+            this.rowNumberWidth = this.fontEm.width * 5;
+        } else {
+            this.renderColumns = [];
+            this.cursorColumns = [];
+        }
+
+        this.redrawCanvas();
+    }
+
+    setSelection(startColumn: number, startRow: number, endColumn: number, endRow: number) {
+        this.selection = { startColumn, startRow, endColumn, endRow };
+        console.log("Set selection:", this.selection);
         this.redrawCanvas();
     }
 
@@ -562,12 +534,9 @@ export class PatternEditorCanvas implements IComponent {
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         ctx.font = "14px monospace";
 
-        const em = ctx.measureText("M");
-        const fontHeight = em.fontBoundingBoxAscent + em.fontBoundingBoxDescent;
+        const fontHeight = this.fontEm.fontBoundingBoxAscent + this.fontEm.fontBoundingBoxDescent;
 
-        const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
-
-        // draw 16/4 row colorings
+        // draw row colorings
 
         let x = 0;
         let lastInstrument: InstrumentDocument;
@@ -575,12 +544,10 @@ export class PatternEditorCanvas implements IComponent {
         const visibleRows = Math.floor(this.canvas.height / fontHeight) - 1;
         const totalRows = this.pattern.duration;
 
-        const rowNumberWidth = em.width * 5;
+        const rowNumberWidth = this.fontEm.width * 5;
         ctx.textAlign = "right";
         ctx.fillStyle = "#FFF";
         for (let i = 0; i < Math.min(visibleRows, totalRows); i++) {
-            // TODO; color the whole row with row color vs beat vs subdivision etc
-            // 
             const rowNumber = (this.scrollRow + i);
             let rowColor: string;
             if ((rowNumber % 16) === 0) {
@@ -597,20 +564,36 @@ export class PatternEditorCanvas implements IComponent {
             }
 
             ctx.fillStyle = "#FFF";
-            ctx.fillText((rowNumber + 1).toString(), x + rowNumberWidth - em.width, (i + 1) * fontHeight + em.fontBoundingBoxAscent);
+            ctx.fillText((rowNumber + 1).toString(), x + rowNumberWidth - this.fontEm.width, (i + 1) * fontHeight + this.fontEm.fontBoundingBoxAscent);
         }
 
         ctx.textAlign = "left";
 
         x += rowNumberWidth;
 
-        for (let renderColumn of renderColumns) {
+        if (this.selection) {
+            const c1 = Math.min(this.selection.startColumn, this.selection.endColumn);
+            const c2 = Math.max(this.selection.startColumn, this.selection.endColumn);
+            const selectStartColumn = this.renderColumns[c1];
+            const selectEndColumn = this.renderColumns[c2];
+
+            const x1 = getRenderColumnPosition(this.renderColumns, selectStartColumn) * this.fontEm.width;
+            const x2 = (getRenderColumnPosition(this.renderColumns, selectEndColumn) + getRenderColumnWidth(selectEndColumn.type)) * this.fontEm.width;
+
+            let y1 = (Math.min(this.selection.startRow, this.selection.endRow) - this.scrollRow) * fontHeight;
+            let y2 = (Math.max(this.selection.startRow, this.selection.endRow) - this.scrollRow + 1) * fontHeight;
+
+            ctx.fillStyle = "#444";
+            ctx.fillRect(x + x1, fontHeight + y1, (x2 - x1), y2 - y1);
+        }
+
+        for (let renderColumn of this.renderColumns) {
             const patternColumn = renderColumn.patternColumn;
 
             // print instrument name/pin in column
             if (lastInstrument !== patternColumn.instrument) {
                 ctx.fillStyle = "#FFF";
-                ctx.fillText(patternColumn.instrument.name + " - " + patternColumn.instrument.instrumentId, x, 0 + em.fontBoundingBoxAscent)
+                ctx.fillText(patternColumn.instrument.name + " - " + patternColumn.instrument.instrumentId, x, 0 + this.fontEm.fontBoundingBoxAscent)
 
                 lastInstrument = patternColumn.instrument;
             }
@@ -629,24 +612,24 @@ export class PatternEditorCanvas implements IComponent {
 
                 if (renderColumn.type === "note") {
                     if (patternEvent.data0 !== 0) {
-                        ctx.fillText(formatNote(patternEvent.value), x, eventScreenTime * fontHeight + em.fontBoundingBoxAscent + fontHeight)
+                        ctx.fillText(formatNote(patternEvent.value), x, eventScreenTime * fontHeight + this.fontEm.fontBoundingBoxAscent + fontHeight)
                     } else {
-                        ctx.fillText("---", x, eventScreenTime * fontHeight + em.fontBoundingBoxAscent + fontHeight)
+                        ctx.fillText("---", x, eventScreenTime * fontHeight + this.fontEm.fontBoundingBoxAscent + fontHeight)
                     }
                 } else if (renderColumn.type === "velo") {
                     if (patternEvent.data0 != 0) {
-                        ctx.fillText(formatU8(patternEvent.data0), x, eventScreenTime * fontHeight + em.fontBoundingBoxAscent + fontHeight)
+                        ctx.fillText(formatU8(patternEvent.data0), x, eventScreenTime * fontHeight + this.fontEm.fontBoundingBoxAscent + fontHeight)
                     } else {
-                        ctx.fillText("--", x, eventScreenTime * fontHeight + em.fontBoundingBoxAscent + fontHeight)
+                        ctx.fillText("--", x, eventScreenTime * fontHeight + this.fontEm.fontBoundingBoxAscent + fontHeight)
                     }
                 } else {
                     const value = patternEvent.value;
-                    ctx.fillText(formatU8(value), x, eventScreenTime * fontHeight + em.fontBoundingBoxAscent + fontHeight)
+                    ctx.fillText(formatU8(value), x, eventScreenTime * fontHeight + this.fontEm.fontBoundingBoxAscent + fontHeight)
                 }
             }
 
             let columnWidth = getRenderColumnWidth(renderColumn.type);
-            x += columnWidth * em.width;
+            x += columnWidth * this.fontEm.width;
 
             ctx.strokeStyle = "#000";
             ctx.beginPath();
@@ -656,11 +639,11 @@ export class PatternEditorCanvas implements IComponent {
         }
 
         // cursor
-        const currentCursorColumn = getCursorColumnAt(renderColumns, this.cursorColumn);
+        const currentCursorColumn = getCursorColumnAt(this.renderColumns, this.cursorColumn);
         if (currentCursorColumn) {
             ctx.save();
-            const cursorX = rowNumberWidth + currentCursorColumn.position * em.width;
-            const cursorWidth = currentCursorColumn.size * em.width;
+            const cursorX = rowNumberWidth + currentCursorColumn.position * this.fontEm.width;
+            const cursorWidth = currentCursorColumn.size * this.fontEm.width;
             ctx.fillStyle = "#FFF";
             ctx.globalCompositeOperation = "difference";
             ctx.fillRect(cursorX, ((this.cursorTime - this.scrollRow) * fontHeight) + fontHeight, cursorWidth, fontHeight)
