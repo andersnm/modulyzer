@@ -1,5 +1,5 @@
 import { Appl } from "../../App";
-import { RecordingsPanel } from "../../components/WavesPanel";
+import { WavesPanel } from "../../components/WavesPanel";
 
 export class ShowWavesCommand {
     constructor(private app: Appl) {
@@ -13,7 +13,7 @@ export class ShowWavesCommand {
             return;
         }
 
-        const recordings = new RecordingsPanel(this.app);
+        const recordings = new WavesPanel(this.app);
         this.app.sidebarTabs.addTab("Waves", recordings);
 
         this.app.sidebarTabs.setCurrentTab(this.app.sidebarTabs.tabs.tabs.length - 1);

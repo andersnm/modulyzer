@@ -40,9 +40,10 @@ export class WavePlayer extends EventTarget {
 
             node.connect(context.destination);
             if (wave.selection) {
-                const start = wave.selection.start / wave.sampleRate;
-                const end = wave.selection.end / wave.sampleRate;
-                const duration = end - start;
+                const start = Math.min(wave.selection.start, wave.selection.end) / wave.sampleRate;
+                const end = Math.max(wave.selection.start, wave.selection.end) / wave.sampleRate;
+
+                const duration = (end - start);
                 node.start(0, start, duration);
             } else {
                 node.start(0);

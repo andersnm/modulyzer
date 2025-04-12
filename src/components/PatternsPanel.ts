@@ -11,6 +11,7 @@ export class PatternsPanel implements IComponent {
         this.app = app;
         this.container = document.createElement("div");
         this.container.classList.add("flex", "flex-col", "w-full", "h-full");
+        this.container.tabIndex = 0;
 
         this.buttonBar = ButtonToolbar(this.app, [
             {

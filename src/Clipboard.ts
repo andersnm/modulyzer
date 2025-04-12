@@ -12,6 +12,10 @@ export async function readClipboardWave(): Promise<WAVFile> {
         }
     }
 
+    if (!wavBlob) {
+        return;
+    }
+
     const wavArrayBuffer = await wavBlob.arrayBuffer();
     console.log(wavArrayBuffer)
 

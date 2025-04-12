@@ -36,6 +36,7 @@ export class DataTable implements IComponent {
         this.columns.push({label, propertyNameOrIndex});
 
         const th = document.createElement("th");
+        th.classList.add("select-none");
         th.innerText = label;
 
         this.headerRow.appendChild(th);
@@ -56,7 +57,7 @@ export class DataTable implements IComponent {
         for (let column of this.columns) {
             const value = data[column.propertyNameOrIndex];
             const td = document.createElement("td");
-            td.classList.add("whitespace-nowrap");
+            td.classList.add("whitespace-nowrap", "select-none");
 
             if (typeof value === "string") {
                 td.innerText = value;
@@ -73,6 +74,15 @@ export class DataTable implements IComponent {
     }
 
     setSelectedIndex(index: number) {
+        const totalRows = this.table.childNodes.length - 1;
+        if (index < -1) {
+            index = -1;
+        }
+
+        if (index >= totalRows) {
+            index = totalRows - 1;
+        }
+
         const oldIndex = this.selectedIndex;
         const oldRow = this.table.childNodes[oldIndex + 1];
 

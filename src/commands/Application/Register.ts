@@ -9,7 +9,6 @@ import { ShowPatternEditorCommand } from './ShowPatternEditorCommand';
 import { ShowWaveEditorCommand } from './ShowWaveEditorCommand';
 import { SaveSongCommand } from './SaveSongCommand';
 import { RecordWaveCommand } from './RecordWaveCommand';
-import { PlayWaveCommand } from './PlayWaveCommand';
 import { OpenSongCommand } from './OpenSongCommand';
 import { PlaySongCommand } from './PlaySongCommand';
 import { StopSongCommand } from './StopSongCommand';
@@ -35,7 +34,6 @@ export function registerApplicationCommands(app: Appl) {
     app.registerCommand("create-wave", "hgi-stroke hgi-plus-sign-square", "Create New Wave", new CreateWaveCommand(app));
     app.registerCommand("open-wave", "hgi-stroke hgi-folder-02", "Load Wave", new OpenWaveCommand(app));
     app.registerCommand("record-wave", "hgi-stroke hgi-record", "Start/Stop Recording", new RecordWaveCommand(app));
-    app.registerCommand("play-wave", "hgi-stroke hgi-next", "Play Wave", new PlayWaveCommand(app));
     app.registerCommand("paste-new-wave", "hgi-stroke hgi-next", "Import New Wave from Clipboard", new PasteNewWaveCommand(app));
 
     app.registerCommand("create-pattern", "hgi-stroke hgi-plus-sign-square", "Create New Pattern", new CreatePatternCommand(app));

@@ -17,6 +17,15 @@ class DragSelect extends DragTarget {
 
     move(e: PointerEvent) {
         this.end = samplePositionFromPixel(this.component.canvas, e.offsetX, this.component.zoom, this.component.buffers[0].length);
+
+        if (this.end < 0) {
+            this.end = 0;
+        }
+
+        if (this.end >= this.component.buffers[0].length) {
+            this.end = this.component.buffers[0].length - 1;
+        }
+
         this.component.setSelection(this.start, this.end)
     }
 
