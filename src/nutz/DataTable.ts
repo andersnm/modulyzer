@@ -13,40 +13,110 @@ function getChildNodeIndex(childNodes, node) {
     return -1;
 }
 
+function scrollIntoViewIfNeeded(parent: HTMLElement, headerHeight: number, child: HTMLElement) {
+    const scrollRect = parent.getBoundingClientRect();
+    const parentRect = new DOMRect(scrollRect.left, scrollRect.top + headerHeight, scrollRect.width, scrollRect.height - headerHeight)
+
+    const childRect = child.getBoundingClientRect();
+
+    if (childRect.bottom > parentRect.bottom) {
+        const newScrollTop = parent.scrollTop - (parentRect.bottom - childRect.bottom);
+        parent.scrollTo(0, newScrollTop);
+    }
+
+    if (childRect.top < parentRect.top) {
+        const newScrollTop = parent.scrollTop - (parentRect.top - childRect.top);
+        parent.scrollTo(0, newScrollTop);
+    }
+}
+
 export class DataTable implements IComponent {
     parent: INotify;
     columns: {label: string, propertyNameOrIndex: string|number}[] = [];
 
-    table: HTMLElement;
+    container: HTMLDivElement;
+    table: HTMLTableElement;
+    thead: HTMLTableSectionElement;
+    tbody: HTMLTableSectionElement;
     headerRow: HTMLTableRowElement;
     selectedIndex: number = -1;
 
     constructor(parent: INotify) {
         this.parent = parent;
 
+        this.container = document.createElement("div")
+        this.container.classList.add("w-full", "h-full", "relative", "overflow-auto")
+        this.container.tabIndex = 0;
+        this.container.addEventListener("keydown", this.onKeyDown);
+
         this.table = document.createElement("table");
-        this.table.classList.add("w-full");
+        this.table.classList.add("w-full", "grid", "grid-cols-0", "absolute");
+
+        this.thead = document.createElement("thead");
+        this.thead.classList.add("contents");
+
+        this.tbody = document.createElement("tbody");
+        this.tbody.classList.add("contents");
 
         this.headerRow = document.createElement("tr");
+        this.headerRow.classList.add("contents");
 
-        this.table.appendChild(this.headerRow);
+        this.thead.appendChild(this.headerRow);
+        this.table.appendChild(this.thead);
+        this.table.appendChild(this.tbody);
+
+        this.container.appendChild(this.table);
+
+        // const css = {
+        //    "tr.selected td": [ "bg-neutral-200", "text-neutral-700", "bg-neutral-600" ],
+        // };
     }
 
+    onKeyDown = (ev: KeyboardEvent) => {
+        switch (ev.key) {
+            case "ArrowDown":
+                this.setSelectedIndex(this.selectedIndex + 1);
+                ev.stopPropagation();
+                ev.preventDefault();
+                break;
+            case "ArrowUp":
+                this.setSelectedIndex(this.selectedIndex - 1);
+                ev.stopPropagation();
+                ev.preventDefault();
+                break;
+            case "PageDown":
+                this.setSelectedIndex(this.selectedIndex + 16);
+                ev.stopPropagation();
+                ev.preventDefault();
+                break;
+            case "PageUp":
+                this.setSelectedIndex(this.selectedIndex - 16);
+                ev.stopPropagation();
+                ev.preventDefault();
+                break;
+        }
+    };
+
     addColumn(label: string, propertyNameOrIndex: string|number) {
+        this.table.classList.remove("grid-cols-" + this.columns.length);
+
         this.columns.push({label, propertyNameOrIndex});
 
         const th = document.createElement("th");
-        th.classList.add("select-none");
+        th.classList.add("select-none", "sticky", "top-0", "bg-neutral-700");
         th.innerText = label;
 
         this.headerRow.appendChild(th);
+
+        this.table.classList.add("grid-cols-" + this.columns.length);
     }
 
     addRow(data: any) {
         const row = document.createElement("tr");
+        row.classList.add("contents");
 
         row.addEventListener("click", () => {
-            const index = getChildNodeIndex(this.table.childNodes, row) - 1;
+            const index = getChildNodeIndex(this.tbody.childNodes, row);
             this.setSelectedIndex(index);
         });
 
@@ -57,7 +127,7 @@ export class DataTable implements IComponent {
         for (let column of this.columns) {
             const value = data[column.propertyNameOrIndex];
             const td = document.createElement("td");
-            td.classList.add("whitespace-nowrap", "select-none");
+            td.classList.add("whitespace-nowrap", "select-none", "text-ellipsis", "overflow-hidden");
 
             if (typeof value === "string") {
                 td.innerText = value;
@@ -68,13 +138,13 @@ export class DataTable implements IComponent {
             row.appendChild(td);
         }
 
-        this.table.appendChild(row);
+        this.tbody.appendChild(row);
 
         this.bindRow(row);
     }
 
     setSelectedIndex(index: number) {
-        const totalRows = this.table.childNodes.length - 1;
+        const totalRows = this.tbody.childNodes.length;
         if (index < -1) {
             index = -1;
         }
@@ -84,7 +154,7 @@ export class DataTable implements IComponent {
         }
 
         const oldIndex = this.selectedIndex;
-        const oldRow = this.table.childNodes[oldIndex + 1];
+        const oldRow = this.tbody.childNodes[oldIndex] as HTMLElement;
 
         this.selectedIndex = index;
 
@@ -94,32 +164,49 @@ export class DataTable implements IComponent {
         }
 
         if (index !== -1) {
-            const row = this.table.childNodes[index + 1];
-            this.bindRow(row)
+            const row = this.tbody.childNodes[index] as HTMLElement;
+            this.bindRow(row);
+
+            const bounding = (this.headerRow.childNodes[0] as HTMLElement).getBoundingClientRect();
+            scrollIntoViewIfNeeded(this.container, bounding.height, row.childNodes[0] as HTMLElement);
         }
 
         this.parent.notify(this, "select", index);
     }
 
     removeRow(index: number) {
-        this.table.childNodes[index + 1].remove();
+        this.tbody.childNodes[index].remove();
     }
 
     getRowCount() {
-        return this.table.childNodes.length - 1;
+        return this.tbody.childNodes.length;
     }
 
-
-    bindRow(row) {
-        const rowIndex = getChildNodeIndex(this.table.childNodes, row) - 1;
+    bindRow(row: HTMLElement) {
+        const rowIndex = getChildNodeIndex(this.tbody.childNodes, row);
+        row.className = "contents";
         if (rowIndex === this.selectedIndex) {
-            row.className = "text-neutral-700 bg-neutral-200";
-        } else {
-            row.className = "";
+            row.classList.add("selected");
         }
     }
 
     getDomNode(): Node {
-        return this.table;
+        return this.container;
     }
 }
+
+// Class names generated dynamically:
+// grid-cols-0
+// grid-cols-1
+// grid-cols-2
+// grid-cols-3
+// grid-cols-4
+// grid-cols-5
+// grid-cols-6
+// grid-cols-7
+// grid-cols-8
+// grid-cols-9
+// grid-cols-10
+// grid-cols-11
+// grid-cols-12
+// grid-cols-13

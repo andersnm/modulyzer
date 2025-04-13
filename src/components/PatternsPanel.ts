@@ -1,19 +1,20 @@
 import { Appl } from "../App";
-import { ButtonToolbar, DataTable, IComponent, ScrollableFlexContainer } from "../nutz";
+import { DataTable, IComponent } from "../nutz";
+import { ViewFrame } from "../nutz/ViewFrame";
 
-export class PatternsPanel implements IComponent {
+export class PatternsPanel extends ViewFrame {
     app: Appl;
-    container: HTMLElement;
-    buttonBar: HTMLElement;
     list: DataTable;
 
     constructor(app: Appl) {
+        super(app);
         this.app = app;
-        this.container = document.createElement("div");
-        this.container.classList.add("flex", "flex-col", "w-full", "h-full");
-        this.container.tabIndex = 0;
 
-        this.buttonBar = ButtonToolbar(this.app, [
+        this.list = new DataTable(this);
+        this.list.addColumn("Name", "name")
+        this.list.addColumn("Duration", "duration")
+
+        this.setToolbar([
             {
                 type: "button",
                 label: "New...",
@@ -21,23 +22,29 @@ export class PatternsPanel implements IComponent {
             },
         ]);
 
-        this.list = new DataTable(this);
-        this.list.addColumn("Name", "name")
-        this.list.addColumn("Duration", "duration")
+        this.setView(this.list.getDomNode() as HTMLElement);
 
-        const scrollArea = new ScrollableFlexContainer(this.list.getDomNode());
+        this.container.addEventListener("nutz:mounted", this.onMounted);
+        this.container.addEventListener("nutz:unmounted", this.onUnmounted);
+    }
 
-        this.container.appendChild(this.buttonBar);
-        this.container.appendChild(scrollArea.getDomNode());
+    onMounted = async (ev) => {
+        this.bind();
+        this.app.song.addEventListener("createPattern", this.onUpdate)
+        this.app.song.addEventListener("updatePattern", this.onUpdate)
+    };
 
-        this.app.song.addEventListener("createPattern", () => this.bind())
-        this.app.song.addEventListener("updatePattern", () => this.bind())
+    onUnmounted = async (ev) => {
+        this.app.song.removeEventListener("createPattern", this.onUpdate)
+        this.app.song.removeEventListener("updatePattern", this.onUpdate)
+    };
 
+    onUpdate = () => {
         this.bind();
     }
 
     async bind() {
-        console.log("binding");
+        const selectedIndex = this.list.selectedIndex;
 
         while (this.list.getRowCount()) this.list.removeRow(0);
 
@@ -47,6 +54,8 @@ export class PatternsPanel implements IComponent {
                 duration: item.duration.toString()
             });
         }
+
+        this.list.setSelectedIndex(Math.min(selectedIndex, this.list.getRowCount() - 1));
     }
 
     notify(source: IComponent, eventName: string, ...args: any): void {

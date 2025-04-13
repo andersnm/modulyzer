@@ -65,11 +65,11 @@ export interface ButtonToolbarSeparator {
 
 export interface ButtonToolbarButton {
     type: "button";
-    // icon: string;
     label: string;
     action: string;
-    // click: () => void;
 }
+
+export type ButtonToolbarType = ButtonToolbarButton|ButtonToolbarSeparator;
 
 function isButtonToolbarButton(b): b is ButtonToolbarButton {
     return b.type === "button";

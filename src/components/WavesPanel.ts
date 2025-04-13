@@ -1,6 +1,6 @@
 import { Appl } from "../App";
-import { readClipboardWave } from "../Clipboard";
-import { Button, ButtonToolbar, DataTable, IComponent, ScrollableFlexContainer } from "../nutz";
+import { Button, DataTable, IComponent } from "../nutz";
+import { ViewFrame } from "../nutz/ViewFrame";
 import { formatNote } from "./PatternEditorHelper";
 
 function formatTime(sec: number): string {
@@ -9,19 +9,22 @@ function formatTime(sec: number): string {
     return min + "m " + Math.floor(sec) + "s";
 }
 
-export class WavesPanel implements IComponent {
+export class WavesPanel extends ViewFrame {
     app: Appl;
-    container: HTMLElement;
-    buttonBar: HTMLElement;
     list: DataTable;
+    playButtons: HTMLButtonElement[] = [];
 
     constructor(app: Appl) {
+        super(app);
         this.app = app;
-        this.container = document.createElement("div");
-        this.container.classList.add("flex", "flex-col", "w-full", "h-full");
-        this.container.tabIndex = 0;
 
-        this.buttonBar = ButtonToolbar(this.app, [
+        this.list = new DataTable(this);
+        this.list.addColumn("", "action")
+        this.list.addColumn("Name", "name")
+        this.list.addColumn("Duration", "duration")
+        this.list.addColumn("Note", "note")
+
+        this.setToolbar([
             {
                 type: "button",
                 label: "New...",
@@ -39,16 +42,7 @@ export class WavesPanel implements IComponent {
             },
         ]);
 
-        this.list = new DataTable(this);
-        this.list.addColumn("", "action")
-        this.list.addColumn("Name", "name")
-        this.list.addColumn("Duration", "duration")
-        this.list.addColumn("Note", "note")
-
-        const scrollDiv = new ScrollableFlexContainer(this.list.getDomNode())
-
-        this.container.appendChild(this.buttonBar);
-        this.container.appendChild(scrollDiv.getDomNode());
+        this.setView(this.list.getDomNode() as HTMLElement);
 
         this.container.addEventListener("nutz:mounted", this.onMounted);
         this.container.addEventListener("nutz:unmounted", this.onUnmounted);
@@ -80,29 +74,21 @@ export class WavesPanel implements IComponent {
                     this.app.executeCommand("paste-new-wave");
                 }
                 break;
-            case "ArrowDown":
-                this.list.setSelectedIndex(this.list.selectedIndex + 1);
-                break;
-            case "ArrowUp":
-                this.list.setSelectedIndex(this.list.selectedIndex - 1);
-                break;
-            case "PageDown":
-                this.list.setSelectedIndex(this.list.selectedIndex + 16);
-                break;
-            case "PageUp":
-                this.list.setSelectedIndex(this.list.selectedIndex - 16);
-                break;
             case "Enter":
                 if (this.list.selectedIndex >= 0) {
                     const wave = this.app.song.waves[this.list.selectedIndex];
                     this.app.executeCommand("show-wave-editor", wave);
                 }
+                ev.preventDefault();
+                ev.stopPropagation();
                 break;
             case " ":
                 if (this.list.selectedIndex >= 0) {
                     const playButton = this.playButtons[this.list.selectedIndex];
                     playButton.click();
                 }
+                ev.preventDefault();
+                ev.stopPropagation();
                 break;
         }
     };
@@ -118,13 +104,11 @@ export class WavesPanel implements IComponent {
 
     }
 
-    playButtons: HTMLButtonElement[] = [];
-
     bind() {
+        const selectedIndex = this.list.selectedIndex;
+
         while (this.list.getRowCount()) this.list.removeRow(0);
         this.playButtons.length = 0;
-
-        let oldIndex = this.list.selectedIndex;
 
         let clickedButton = null;
 
@@ -164,14 +148,6 @@ export class WavesPanel implements IComponent {
             this.playButtons.push(playButton);
         }
 
-        if (oldIndex >= this.list.getRowCount()) {
-            oldIndex = this.list.getRowCount() - 1;
-        }
-
-        this.list.setSelectedIndex(oldIndex);
-    }
-
-    getDomNode(): Node {
-        return this.container;
+        this.list.setSelectedIndex(Math.min(selectedIndex, this.list.getRowCount() - 1));
     }
 }

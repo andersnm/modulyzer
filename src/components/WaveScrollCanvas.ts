@@ -175,10 +175,9 @@ export class WaveScrollCanvas implements IComponent {
         this.parent = parent;
         this.container = document.createElement("div");
         this.container.className = "h-32 w-full pb-1";
-        
+
         this.canvas = FlexCanvas();
         this.canvas.classList.add("rounded-lg");
-        this.canvas.tabIndex = 0;
 
         this.canvas.addEventListener("pointerdown", this.onMouseDown);
         this.canvas.addEventListener("pointerup", this.onMouseUp);

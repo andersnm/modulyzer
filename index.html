@@ -14,10 +14,14 @@
         border: 0;
         width: 100%;
         height: 100%;
-        /*overflow: hidden;*/
     }
-    *:focus {
-      outline: none;
+
+    /* DataTable highlight selected row. Cannot style tr.contents in grid.
+       Instead, should either @apply neutral classes, or use Tailwinds parent targeting selectors, 
+       or let component generate css for "complex selectors" based on class names */
+    tr.selected td {
+      background-color: #FFF;
+      color:#434;
     }
     </style>
   </head>

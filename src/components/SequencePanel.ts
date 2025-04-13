@@ -17,7 +17,7 @@ export class SequencePanel extends CommandHost implements IComponent {
 
         this.container = document.createElement("div");
         this.container.className = "flex flex-col flex-1";
-        this.container.tabIndex = -1; // elements that should not be navigated to directly
+        this.container.tabIndex = 0;
 
         this.sequenceEditor = new SequenceEditorCanvas(app);
 
