@@ -12,7 +12,9 @@ export class PatternsPanel extends ViewFrame {
 
         this.list = new DataTable(this);
         this.list.addColumn("Name", "name")
-        this.list.addColumn("Duration", "duration")
+        this.list.addColumn("Cols", "columns")
+        this.list.addColumn("Sub.", "subdivision")
+        this.list.addColumn("Rows", "rows")
 
         this.setToolbar([
             {
@@ -51,7 +53,9 @@ export class PatternsPanel extends ViewFrame {
         for (let item of this.app.song.patterns) {
             this.list.addRow({
                 name: item.name,
-                duration: item.duration.toString()
+                columns: item.columns.length.toString(),
+                rows: item.duration.toString(),
+                subdivision: item.subdivision.toString(),
             });
         }
 

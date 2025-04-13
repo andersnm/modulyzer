@@ -125,7 +125,7 @@ export class DataTable implements IComponent {
         });
 
         for (let column of this.columns) {
-            const value = data[column.propertyNameOrIndex];
+            const value = data[column.propertyNameOrIndex]??"";
             const td = document.createElement("td");
             td.classList.add("whitespace-nowrap", "select-none", "text-ellipsis", "overflow-hidden");
 
