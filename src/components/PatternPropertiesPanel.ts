@@ -1,5 +1,5 @@
 import { Appl } from "../App";
-import { FormGroup, IComponent, INotify, ModalButtonBar } from "../nutz";
+import { FormGroup, IComponent, INotify, Inset, ModalButtonBar } from "../nutz";
 
 export class PatternPropertiesPanel implements IComponent {
     app: Appl;
@@ -22,7 +22,7 @@ export class PatternPropertiesPanel implements IComponent {
         this.length = length;
         this.subdivision = subdivision;
 
-        this.container = document.createElement("div");
+        this.container = Inset(undefined, [ "flex-col", "flex-1" , "gap-1"]);
         this.container.tabIndex = -1;
 
         this.nameInput = document.createElement("input");

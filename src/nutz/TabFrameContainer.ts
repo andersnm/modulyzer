@@ -1,6 +1,7 @@
 import { DomText } from "./DomText";
 import { IComponent } from "./IComponent";
 import { Panel } from "./Panel";
+import { Outset } from "./StandardStuff";
 import { Tabs, TabsPositionType } from "./Tabs";
 
 export class TabFrameContainer implements IComponent {
@@ -11,7 +12,8 @@ export class TabFrameContainer implements IComponent {
 
     constructor(protected enableTitle: boolean) {
         this.tabs = new Tabs(this);
-        // this.tabs.addEventListener("c")
+
+        this.tabs.getDomNode().classList.add("pl-2");
 
         this.outer = document.createElement("div");
         this.outer.className = "flex flex-col flex-1";
@@ -32,7 +34,7 @@ export class TabFrameContainer implements IComponent {
             this.outer.appendChild(tabs);
         } else {
             this.outer.appendChild(tabs);
-            this.outer.appendChild(tabContent.getDomNode());
+            this.outer.appendChild(Outset(tabContent.getDomNode(), ["flex-col", "flex-1"]));
         }
 
         // notify comp direct -> in specfic -> compo aalways owns notify-mount and notify-unmount??

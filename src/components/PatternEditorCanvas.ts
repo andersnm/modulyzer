@@ -233,6 +233,11 @@ export class PatternEditorCanvas implements IComponent {
         }
 
         if (this.renderColumns.length === 0) return;
+
+        if (e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) {
+            return false;
+        }
+
         const cursorColumn = getCursorColumnAt(this.renderColumns, this.cursorColumn);
         if (cursorColumn.type === "u4-basenote") {
             return this.editNoteKeyDown(e, cursorColumn);

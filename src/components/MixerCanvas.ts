@@ -84,6 +84,7 @@ export class MixerCanvas implements IComponent {
         this.app = app;
         this.container = document.createElement("div");
         this.container.className = "flex-1 w-full pb-1";
+        this.container.tabIndex = 0;
         
         this.canvas = FlexCanvas();
         this.canvas.classList.add("rounded-lg");

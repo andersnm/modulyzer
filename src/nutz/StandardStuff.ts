@@ -4,7 +4,7 @@ import { IComponent, INotify } from "./IComponent";
 
 export function FormGroup(label: string, content: Node|Node[]): HTMLElement {
     const containerElement = document.createElement("div");
-    containerElement.className = "mb-4 rounded-lg p-1 bg-neutral-600";
+    containerElement.className = "rounded-lg p-1 bg-neutral-600 text-white";
 
     const l = document.createElement("label");
     l.className = "block text-sm font-bold mb-1";
@@ -147,4 +147,29 @@ export class ModalButtonBar implements IComponent {
     getDomNode(): Node {
         return this.container;
     }
+}
+
+export function Outset(childNodes?: Node|Node[], classNames: string|string[] = "flex-col") {
+    const div = document.createElement("div");
+    div.classList.add("x-outset", "flex", "bg-neutral-600", "p-1", "rounded-lg");
+    if (Array.isArray(classNames)) {
+        div.classList.add(...classNames);
+    } else {
+        div.classList.add(classNames);
+    }
+
+    domAppendNodes(div, childNodes);
+    return div;
+}
+
+export function Inset(childNodes?: Node|Node[], classNames: string|string[] = "flex-col") {
+    const div = document.createElement("div");
+    div.classList.add("x-inset", "flex", "bg-neutral-800", "p-1", "rounded-lg");
+    if (Array.isArray(classNames)) {
+        div.classList.add(...classNames);
+    } else {
+        div.classList.add(classNames);
+    }
+    domAppendNodes(div, childNodes);
+    return div;
 }

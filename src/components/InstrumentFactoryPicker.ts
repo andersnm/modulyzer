@@ -1,5 +1,5 @@
 import { Appl } from "../App";
-import { FormGroup, IComponent, INotify, ModalButtonBar } from "../nutz";
+import { FormGroup, IComponent, INotify, Inset, ModalButtonBar } from "../nutz";
 
 export class InstrumentFactoryPicker implements IComponent {
     app: Appl;
@@ -15,8 +15,7 @@ export class InstrumentFactoryPicker implements IComponent {
     constructor(app: Appl, parent: INotify) {
         this.app = app;
         this.parent = parent;
-        this.container = document.createElement("div");
-        this.container.className = "flex flex-col flex-1";
+        this.container = Inset(undefined, [ "flex-col", "flex-1", "gap-1" ]);
         this.container.tabIndex = -1;
 
         this.instrumentSelect = document.createElement("select");

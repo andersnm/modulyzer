@@ -18,7 +18,7 @@ export class SequenceEditorCanvas implements IComponent {
         this.app = app;
 
         this.container = document.createElement("div");
-        this.container.className = "flex-1 w-full pb-1";
+        this.container.className = "flex-1 w-full";
         this.container.tabIndex = 0;
 
         this.canvas = FlexCanvas();

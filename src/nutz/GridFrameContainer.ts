@@ -5,9 +5,9 @@ export type FrameStack = "vertical" | "horizontal";
 
 export interface FrameInfo2 {
     where: FrameWhere;
-    size: number; // percent? pixel?
     content: IComponent;
     stack?: FrameStack;
+    gap?: number;
 }
 
 export class GridFrameContainer implements IComponent {
@@ -19,12 +19,12 @@ export class GridFrameContainer implements IComponent {
         this.outer.className = "flex flex-1";
     }
 
-    addFrame(where: FrameWhere, size: number, content: IComponent, stack?: FrameStack) {
+    addFrame(where: FrameWhere, content: IComponent, stack?: FrameStack, gap?: number) {
         this.frames.push({
             where,
-            size,
             content,
-            stack
+            stack,
+            gap,
         });
 
         this.bind();
@@ -53,17 +53,17 @@ export class GridFrameContainer implements IComponent {
     }
 
     renderFrame(frame: FrameInfo2, innerFrame: HTMLElement): HTMLElement {
-        const { where, stack } = frame;
+        const { where, stack, gap } = frame;
     
         // can we react if stack changes? dont think so anymore
         const flexStacking = stack === "horizontal" ? "flex-row" : "flex-col";
 
         if (where === "left") {
             const outer = document.createElement("div");
-            outer.className = "flex flex-row flex-1 frame-left";
+            outer.className = "flex flex-row flex-1 frame-left " + "gap-" + (gap??0);
 
             const inner = document.createElement("div");
-            inner.className = "flex " + flexStacking + " w-80 border-r-2 border-transparent";
+            inner.className = "flex " + flexStacking + " w-80 border-transparent";
 
             const frameContent = frame.content.getDomNode();
             inner.appendChild(frameContent);
@@ -77,10 +77,10 @@ export class GridFrameContainer implements IComponent {
             return outer;
         } else if (where === "top") {
             const outer = document.createElement("div");
-            outer.className = "flex flex-col flex-1 frame-top";
+            outer.className = "flex flex-col flex-1 frame-top " + "gap-" + (gap??0);;
 
             const inner = document.createElement("div");
-            inner.className = "flex " + flexStacking + " border-b-2 border-transparent";
+            inner.className = "flex " + flexStacking + " border-transparent";
 
             const frameContent = frame.content.getDomNode();
             inner.appendChild(frameContent);
@@ -94,10 +94,10 @@ export class GridFrameContainer implements IComponent {
             return outer;
         } else if (where === "bottom") {
             const outer = document.createElement("div");
-            outer.className = "flex flex-col flex-1 frame-top";
+            outer.className = "flex flex-col flex-1 frame-bottom " + "gap-" + (gap??0);;
 
             const inner = document.createElement("div");
-            inner.className = "flex " + flexStacking + " border-b-2 border-transparent";
+            inner.className = "flex " + flexStacking + " border-transparent";
 
             const frameContent = frame.content.getDomNode();
             inner.appendChild(frameContent);

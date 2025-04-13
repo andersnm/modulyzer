@@ -1,14 +1,15 @@
 import { IComponent } from "./IComponent";
+import { Outset } from "./StandardStuff";
 
 export class Panel {
     outer: HTMLElement;
 
     constructor(title: IComponent, right: IComponent, content: IComponent) {
         this.outer = document.createElement("div");
-        this.outer.className = "flex flex-col h-full w-full";
+        this.outer.className = "x-panel flex flex-col flex-1 bg-neutral-600 rounded-lg";
 
         const topOuter = document.createElement("div");
-        topOuter.className = "flex flex-row px-1 py-1 bg-neutral-600";
+        topOuter.className = "flex flex-row p-1";
 
         const topText =  document.createElement("div");
         topText.className = "grow text-white font-bold";
@@ -21,18 +22,8 @@ export class Panel {
         topOuter.appendChild(topText);
         topOuter.appendChild(topRight);
 
-        const contentOuter = document.createElement("div");
-        contentOuter.className = "h-full w-full p-1 bg-neutral-600";
-
-        const contentInner = document.createElement("div");
-        contentInner.className = "flex flex-col h-full w-full p-1 bg-neutral-800 rounded-lg overflow-auto text-white";
-
-        contentInner.appendChild(content.getDomNode());
-
-        contentOuter.appendChild(contentInner);
-
         this.outer.appendChild(topOuter);
-        this.outer.appendChild(contentOuter);
+        this.outer.appendChild(Outset(content.getDomNode(), ["flex-col", "flex-1"]));
     }
 
     getDomNode() {

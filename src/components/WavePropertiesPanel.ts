@@ -1,5 +1,5 @@
 import { Appl } from "../App";
-import { FormGroup, IComponent, INotify, ModalButtonBar } from "../nutz";
+import { FormGroup, IComponent, INotify, Inset, ModalButtonBar } from "../nutz";
 import { bindNoteDropdown } from "./PatternEditorHelper";
 
 export class WavePropertiesPanel implements IComponent {
@@ -20,7 +20,7 @@ export class WavePropertiesPanel implements IComponent {
         this.name = name;
         this.note = note;
 
-        this.container = document.createElement("div");
+        this.container = Inset(undefined, [ "flex-col", "flex-1", "gap-1" ]);
         this.container.tabIndex = -1;
 
         this.nameInput = document.createElement("input");

@@ -50,7 +50,7 @@ export class DataTable implements IComponent {
         this.container.addEventListener("keydown", this.onKeyDown);
 
         this.table = document.createElement("table");
-        this.table.classList.add("w-full", "grid", "grid-cols-0", "absolute");
+        this.table.classList.add("w-full", "grid", "grid-cols-0", "absolute", "text-white");
 
         this.thead = document.createElement("thead");
         this.thead.classList.add("contents");

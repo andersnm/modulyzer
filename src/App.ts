@@ -157,10 +157,10 @@ export class Appl extends CommandHost implements IComponent {
 
         this.mainTabs = new TabFrameContainer(false);
 
-        this.frame.addFrame("top", 100, this.menuBar);
-        this.frame.addFrame("top", 100, toolbarContainer);
-        this.frame.addFrame("left", 100, this.sidebarTabs);
-        this.frame.addFrame("main", 100, this.mainTabs);
+        this.frame.addFrame("top", this.menuBar);
+        this.frame.addFrame("top", toolbarContainer, undefined, 1);
+        this.frame.addFrame("left", this.sidebarTabs, undefined, 1);
+        this.frame.addFrame("main", this.mainTabs);
 
         this.modalDialogContainer = new ModalDialogContainer();
 
