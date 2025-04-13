@@ -39,7 +39,7 @@ export function registerWaveEditorCommands(component: WavePanel) {
     component.registerHotkey("SHIFT+A", "zoom-clear");
     component.registerHotkey("CTRL+P", "crop");
     component.registerHotkey("CTRL+SHIFT+S", "save-wave");
-    component.registerHotkey("CTRL+BACKSPACE", "edit-wave");
-    component.registerHotkey("DELETE", "delete");
+    component.registerHotkey("CTRL+Backspace", "edit-wave");
+    component.registerHotkey("Delete", "delete");
     component.registerHotkey(" ", "play-wave");
 }

@@ -7,6 +7,6 @@ export function registerMixerCommands(component: MixerPanel) {
     component.registerCommand("delete-selection", "hgi-stroke hgi-minus-sign", null, new DeleteSelectionCommand(component));
 
     // component.registerHotkey("CTRL+A", "select-all");
-    component.registerHotkey("CTRL+ENTER", "add-instrument");
-    component.registerHotkey("DELETE", "delete-selection");
+    component.registerHotkey("CTRL+Enter", "add-instrument");
+    component.registerHotkey("Delete", "delete-selection");
 }

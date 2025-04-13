@@ -92,14 +92,16 @@ export function ButtonToolbar(app: ICommandHost, buttonToolbarButtons: (ButtonTo
                     button.appendChild(iconSpan);
                 }
 
+                const hotkey = app.getHotkeyForCommand(toolbarButton.action);
+
                 if (cmd.description) {
                     button.title = cmd.description;
-                    if (cmd.hotkey) {
-                        button.title += " (" + cmd.hotkey + ")";
+                    if (hotkey) {
+                        button.title += " (" + hotkey + ")";
                     }
                 } else
-                if (cmd.hotkey) {
-                    button.title = cmd.hotkey;
+                if (hotkey) {
+                    button.title = hotkey;
                 }
             }
 

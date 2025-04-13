@@ -1,4 +1,4 @@
-import { ICommand, ICommandStatic } from "./ICommand";
+import { ICommand } from "./ICommand";
 
 export function formatHotkey(e: KeyboardEvent) {
     let keyName = "";
@@ -15,39 +15,51 @@ export function formatHotkey(e: KeyboardEvent) {
         keyName += "META+";
     }
 
-    keyName += e.key.toUpperCase();
+    if (e.key.length === 1) {
+        keyName += e.key.toUpperCase();
+    } else {
+        keyName += e.key;
+    }
+
     return keyName;
 }
 
 export interface ICommandHost {
-    executeCommand(command: string): void;
-    getCommand(command: string): { hotkey: string, icon: string, description: string };
+    executeCommand(command: string, ...args: any[]): void;
+    getCommand(command: string): ICommandInfo;
     getHotkeyForCommand(command: string): string | null;
 }
 
 interface ICommandInfo {
     name: string;
-    hotkey: string;
     icon: string|null;
     description: string|null;
     handler: ICommand;
 }
 
 export abstract class CommandHost implements ICommandHost {
-    parent: CommandHost | null;
+    parent: ICommandHost | null;
     commands: { [key: string]: ICommandInfo } = {};
     hotkeys: { [key: string]: string } = {};
 
-    constructor(parent: CommandHost | null) {
+    constructor(parent: ICommandHost | null) {
         this.parent = parent;
     }
 
     registerCommand(name: string, icon: string|null, description: string|null, handler: ICommand) {
-        this.commands[name] = { name, icon, description, hotkey: null, handler };
+        this.commands[name] = { name, icon, description, handler };
     }
     
     getCommand(name: string): ICommandInfo {
-        return this.commands[name];
+        if (this.commands.hasOwnProperty(name)) {
+            return this.commands[name];
+        }
+
+        if (this.parent) {
+            return this.parent.getCommand(name);
+        }
+
+        return null;
     }
 
     executeCommand(cmd: string, ...args: any[]) {
@@ -71,11 +83,6 @@ export abstract class CommandHost implements ICommandHost {
 
     registerHotkey(key: string, cmd: string) {
         this.hotkeys[key] = cmd;
-        
-        const cmdInfo = this.commands[cmd];
-        if (cmdInfo && !cmdInfo.hotkey) {
-            this.commands[cmd].hotkey = key;
-        }
     }
 
     getHotkeyForCommand(cmd) {
@@ -84,6 +91,10 @@ export abstract class CommandHost implements ICommandHost {
             if (hotkey == cmd) {
                 return hotkeyKey;
             }
+        }
+
+        if (this.parent) {
+            return this.parent.getHotkeyForCommand(cmd);
         }
 
         return null;

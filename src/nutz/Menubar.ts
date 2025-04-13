@@ -9,7 +9,7 @@ function convertNutzMenu(app: ICommandHost, menu: MenuItem[]): NutzMenuItem[] {
         label: m.label,
         action: m.action,
         icon: app.getCommand(m.action)?.icon,
-        shortcut: app.getCommand(m.action)?.hotkey,
+        shortcut: app.getHotkeyForCommand(m.action),
         items: m.items ? convertNutzMenu(app, m.items) : null,
     }));
 

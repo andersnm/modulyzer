@@ -16,8 +16,8 @@ export function registerPatternEditorCommands(component: PatternPanel) {
     component.registerHotkey("CTRL+X", "cut");
     component.registerHotkey("CTRL+C", "copy");
     component.registerHotkey("CTRL+V", "paste");
-    component.registerHotkey("ESCAPE", "show-sequence-editor");
-    component.registerHotkey("CTRL+BACKSPACE", "edit-pattern");
-    component.registerHotkey("CTRL+ENTER", "add-column");
-    component.registerHotkey("CTRL+SHIFT+RETURN", "duplicate-pattern");
+    component.registerHotkey("Escape", "show-sequence-editor");
+    component.registerHotkey("CTRL+Backspace", "edit-pattern");
+    component.registerHotkey("CTRL+Enter", "add-column");
+    component.registerHotkey("CTRL+SHIFT+Enter", "duplicate-pattern");
 }

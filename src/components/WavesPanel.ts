@@ -18,6 +18,8 @@ export class WavesPanel extends ViewFrame {
         super(app);
         this.app = app;
 
+        this.registerHotkey("CTRL+V", "paste-new-wave");
+
         this.list = new DataTable(this);
         this.list.addColumn("", "action")
         this.list.addColumn("Name", "name")
@@ -68,12 +70,6 @@ export class WavesPanel extends ViewFrame {
 
     onKeyDown = (ev: KeyboardEvent) => {
         switch (ev.key) {
-            case "v":
-            case "V":
-                if (!ev.shiftKey && ev.ctrlKey && !ev.altKey && !ev.metaKey) {
-                    this.app.executeCommand("paste-new-wave");
-                }
-                break;
             case "Enter":
                 if (this.list.selectedIndex >= 0) {
                     const wave = this.app.song.waves[this.list.selectedIndex];

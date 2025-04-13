@@ -1,4 +1,4 @@
-import { DragTarget, IComponent, INotify } from "../nutz";
+import { DragTarget, formatHotkey, IComponent, INotify } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 import { Appl } from "../App";
 import { InstrumentDocument, PatternColumnDocument, PatternDocument, WaveRange } from "../audio/SongDocument";
@@ -81,10 +81,12 @@ export class PatternEditorCanvas implements IComponent {
         this.parent = parent;
         this.container = document.createElement("div");
         this.container.className = "flex-1 w-full pb-1";
-        
+        this.container.tabIndex = 0;
+        this.container.addEventListener("keydown", this.onKeyDown);
+        this.container.addEventListener("keyup", this.onKeyUp);
+
         this.canvas = FlexCanvas();
         this.canvas.classList.add("rounded-lg");
-        // this.canvas.tabIndex = 0;
 
         this.canvas.addEventListener("pointerdown", this.onMouseDown);
         this.canvas.addEventListener("pointerup", this.onMouseUp);
@@ -92,9 +94,7 @@ export class PatternEditorCanvas implements IComponent {
         this.canvas.addEventListener("contextmenu", this.onContextMenu);
 
         this.canvas.addEventListener("resize", this.onResize);
-        // this.canvas.addEventListener("keydown", this.onKeyDown);
-        // this.canvas.addEventListener("keyup", this.onKeyUp);
-        
+
         this.container.appendChild(this.canvas);
 
         this.container.addEventListener("nutz:mounted", this.onMounted);
@@ -159,6 +159,19 @@ export class PatternEditorCanvas implements IComponent {
         e.preventDefault();
     };
 
+    onKeyDown = (e: KeyboardEvent) => {
+        if (this.editKeyDown(e)) {
+            this.parent.notify(this, "cursormove")
+            e.stopPropagation(); // dont run global handler
+            e.preventDefault(); // dont do canvas default
+            return;
+        }
+    };
+
+    onKeyUp = (e: KeyboardEvent) => {
+        this.editKeyUp(e);
+    };
+
     editKeyDown(e: KeyboardEvent) {
         // NOTE: There is an idea to emit "cursormove" events only in response to "internal actions",
         // as opposed to not sending events due to "external actions" triggered in the parent component.
@@ -169,12 +182,11 @@ export class PatternEditorCanvas implements IComponent {
         // when the mouse moves the cursor.
         // Thats why this doesn't emit "cursormove" events, while the onMouseDown handler does.
 
-        if (e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) {
-            // only deal with plain keys
-            return false;
-        }
+        // TODO: The above is no longer correct, the canvas has the focus now
 
-        switch (e.key) {
+        const key = formatHotkey(e);
+
+        switch (key) {
             case "ArrowUp":
                 this.moveCursor(0, -1);
                 return true;
@@ -198,11 +210,10 @@ export class PatternEditorCanvas implements IComponent {
                 this.shiftEventsAfterCursor(1);
                 return true;
             case "Tab":
-                if (e.shiftKey) {
-                    this.movePreviousColumn();
-                } else {
-                    this.moveNextColumn();
-                }
+                this.moveNextColumn();
+                return true;
+            case "SHIFT+Tab":
+                this.movePreviousColumn();
                 return true;
             case "Home":
                 this.moveHome();

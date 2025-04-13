@@ -1,14 +1,13 @@
 import { Appl } from "../App";
 import { PatternDocument } from "../audio/SongDocument";
 import { registerPatternEditorCommands } from "../commands/PatternEditor/Register";
-import { ButtonToolbar, CommandHost, formatHotkey, IComponent, StatusBar } from "../nutz";
+import { IComponent, StatusBar } from "../nutz";
+import { ViewFrame } from "../nutz/ViewFrame";
 import { PatternEditorCanvas } from "./PatternEditorCanvas";
 import { formatNote, getCursorColumnAt, getPatternRenderColumns } from "./PatternEditorHelper";
 
-export class PatternPanel extends CommandHost implements IComponent {
+export class PatternPanel extends ViewFrame implements IComponent {
     app: Appl;
-    container: HTMLElement;
-    toolbar: HTMLElement;
     patternEditor: PatternEditorCanvas;
     statusBar: StatusBar;
 
@@ -18,13 +17,9 @@ export class PatternPanel extends CommandHost implements IComponent {
 
         registerPatternEditorCommands(this)
 
-        this.container = document.createElement("div");
-        this.container.className = "flex flex-col flex-1";
-        this.container.tabIndex = 0;
-
         this.patternEditor = new PatternEditorCanvas(app, this);
 
-        this.toolbar = ButtonToolbar(this, [
+        this.setToolbar([
             {
                 type: "button",
                 label: "Add Column",
@@ -37,18 +32,15 @@ export class PatternPanel extends CommandHost implements IComponent {
             }
         ]);
 
+        this.setView(this.patternEditor.getDomNode() as HTMLElement);
+
         this.statusBar = new StatusBar();
         this.statusBar.addPart(["w-48"], "Row: 0, Track: 0")
         this.statusBar.addPart(["w-48", "border-l-2", "pl-2", "border-neutral-500"], "Value")
         this.statusBar.addPart(["flex-1", "border-l-2", "pl-2", "border-neutral-500"], "Parameter description")
 
-        this.container.appendChild(this.toolbar);
-        this.container.appendChild(this.patternEditor.getDomNode());
+        // NOTE: Adding statusbar in ViewFrame's container
         this.container.appendChild(this.statusBar.getDomNode());
-
-        this.container.addEventListener("focus", this.onFocus);
-        this.container.addEventListener("keydown", this.onKeyDown);
-        this.container.addEventListener("keyup", this.onKeyUp);
     }
 
     setPattern(pattern: PatternDocument) {
@@ -60,32 +52,6 @@ export class PatternPanel extends CommandHost implements IComponent {
     getDomNode(): Node {
         return this.container;
     }
-
-    onFocus = () => {
-        // this.patternEditor.canvas.focus();
-    }
-
-    onKeyDown = (e: KeyboardEvent) => {
-        if (this.patternEditor.editKeyDown(e)) {
-            this.updateStatusBar();
-            e.stopPropagation(); // dont run global handler
-            e.preventDefault(); // dont do canvas default
-            return;
-        }
-
-        const keyName = formatHotkey(e);
-        const hotkeyCommand = this.hotkeys[keyName];
-        // console.log(keyName)
-        if (hotkeyCommand) {
-            this.executeCommand(hotkeyCommand);
-            e.stopPropagation();
-            e.preventDefault();
-        }
-    };
-
-    onKeyUp = (e: KeyboardEvent) => {
-        this.patternEditor.editKeyUp(e);
-    };
 
     updateStatusBar() {
 
