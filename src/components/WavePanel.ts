@@ -1,15 +1,15 @@
 import { WaveEditorCanvas } from "./WaveEditorCanvas";
 import { WaveScrollCanvas } from "./WaveScrollCanvas";
 import { Appl } from "../App";
-import { ButtonToolbar, CommandHost, formatHotkey, IComponent } from "../nutz";
+import { IComponent } from "../nutz";
 import { WaveDocumentEx } from "../audio/SongDocument";
 import { registerWaveEditorCommands } from "../commands/WaveEditor/Register";
+import { ViewFrame } from "../nutz/ViewFrame";
 
-export class WavePanel extends CommandHost implements IComponent {
+export class WavePanel extends ViewFrame {
     app: Appl;
+    view: HTMLDivElement;
     document: WaveDocumentEx;
-    container: HTMLElement;
-    toolbar: HTMLElement;
     waveEditor: WaveEditorCanvas;
     waveScroll: WaveScrollCanvas;
 
@@ -19,14 +19,14 @@ export class WavePanel extends CommandHost implements IComponent {
 
         registerWaveEditorCommands(this);
 
-        this.container = document.createElement("div");
-        this.container.className = "flex flex-col flex-1";
-        this.container.tabIndex = 0;
+        this.view = document.createElement("div");
+        this.view.className = "flex flex-col flex-1";
+        this.view.tabIndex = 0;
 
         this.waveEditor = new WaveEditorCanvas(this);
         this.waveScroll = new WaveScrollCanvas(this);
 
-        this.toolbar = ButtonToolbar(this, [
+        this.setToolbar([
             {
                 type: "button",
                 label: "Cut",
@@ -85,13 +85,13 @@ export class WavePanel extends CommandHost implements IComponent {
 
         ]);
 
-        this.container.appendChild(this.toolbar);
-        this.container.appendChild(this.waveEditor.getDomNode());
-        this.container.appendChild(this.waveScroll.getDomNode());
+        this.view.appendChild(this.waveEditor.getDomNode());
+        this.view.appendChild(this.waveScroll.getDomNode());
+
+        this.setView(this.view);
 
         this.container.addEventListener("nutz:mounted", this.onMounted);
         this.container.addEventListener("nutz:unmounted", this.onUnmounted);
-        this.container.addEventListener("keydown", this.onKeyDown);
     }
 
     onMounted = () => {
@@ -120,17 +120,6 @@ export class WavePanel extends CommandHost implements IComponent {
         this.waveEditor.clear();
         this.waveScroll.clear();
         this.document = null;
-    };
-
-    onKeyDown = (e: KeyboardEvent) => {
-        const keyName = formatHotkey(e);
-        const hotkeyCommand = this.hotkeys[keyName];
-        // console.log(keyName)
-        if (hotkeyCommand) {
-            this.executeCommand(hotkeyCommand);
-            e.stopPropagation();
-            e.preventDefault();
-        }
     };
 
     notify(source: IComponent, eventName: string, ...args: any): void {

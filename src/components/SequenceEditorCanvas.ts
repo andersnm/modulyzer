@@ -19,7 +19,8 @@ export class SequenceEditorCanvas implements IComponent {
 
         this.container = document.createElement("div");
         this.container.className = "flex-1 w-full pb-1";
-        
+        this.container.tabIndex = 0;
+
         this.canvas = FlexCanvas();
         this.canvas.classList.add("rounded-lg");
 
@@ -33,6 +34,7 @@ export class SequenceEditorCanvas implements IComponent {
 
         this.container.addEventListener("nutz:mounted", this.onMounted);
         this.container.addEventListener("nutz:unmounted", this.onUnmounted);
+        this.container.addEventListener("keydown", this.onKeyDown);
     }
 
     onMounted = async (ev) => {
@@ -112,6 +114,14 @@ export class SequenceEditorCanvas implements IComponent {
         // this.app.showMenu(sequencerMenu, pt as any);
 
         ev.preventDefault();
+    };
+
+    onKeyDown = (e: KeyboardEvent) => {
+        if (this.editKeyDown(e)) {
+            e.stopPropagation(); // dont run global handler
+            e.preventDefault(); // dont do canvas default
+            return;
+        }
     };
 
     editKeyDown(e: KeyboardEvent) {
