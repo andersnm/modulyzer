@@ -1,4 +1,4 @@
-import { FormGroup, FormGroupRadio, IComponent, INotify, Inset, ModalButtonBar } from "../nutz";
+import { FormGroup, FormGroupRadio, IComponent, INotify, VInset, ModalButtonBar } from "../nutz";
 import { bindNoteDropdown } from "./PatternEditorHelper";
 
 export class CreateWavePanel implements IComponent {
@@ -16,7 +16,7 @@ export class CreateWavePanel implements IComponent {
     constructor(parent: INotify) {
         this.parent = parent;
 
-        this.container= Inset(undefined, [ "flex-col", "flex-1", "gap-1" ]);
+        this.container= VInset(undefined, [ "flex-1", "gap-1" ]);
         this.container.tabIndex = -1;
 
         this.nameInput = document.createElement("input");

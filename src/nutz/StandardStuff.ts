@@ -147,51 +147,36 @@ export class ModalButtonBar implements IComponent {
     }
 }
 
-export function Outset(childNodes?: Node|Node[], classNames: string|string[] = "flex-col") {
-    const div = document.createElement("div");
-    div.classList.add("x-outset", "flex", "bg-neutral-600", "p-1", "rounded-lg");
+function setClassAndChildNodes<T extends HTMLElement>(div: T, childNodes?: Node|Node[], classNames?: string|string[]): T {
     if (Array.isArray(classNames)) {
         div.classList.add(...classNames);
     } else if (classNames) {
         div.classList.add(classNames);
     }
-
     domAppendNodes(div, childNodes);
     return div;
 }
 
-export function Inset(childNodes?: Node|Node[], classNames: string|string[] = "flex-col") {
+export function VOutset(childNodes?: Node|Node[], classNames?: string|string[]) {
     const div = document.createElement("div");
-    div.classList.add("x-inset", "flex", "bg-neutral-800", "p-1", "rounded-lg");
-    if (Array.isArray(classNames)) {
-        div.classList.add(...classNames);
-    } else if (classNames) {
-        div.classList.add(classNames);
-    }
-    domAppendNodes(div, childNodes);
-    return div;
+    div.classList.add("x-outset", "flex", "flex-col", "bg-neutral-600", "p-1", "rounded-lg");
+    return setClassAndChildNodes(div, childNodes, classNames);
+}
+
+export function VInset(childNodes?: Node|Node[], classNames?: string|string[]) {
+    const div = document.createElement("div");
+    div.classList.add("x-vinset", "flex", "flex-col", "bg-neutral-800", "p-1", "rounded-lg");
+    return setClassAndChildNodes(div, childNodes, classNames);
 }
 
 export function VFlex(childNodes?: Node|Node[], classNames?: string|string[]) {
     const div = document.createElement("div");
     div.classList.add("x-vflex", "flex", "flex-col");
-    if (Array.isArray(classNames)) {
-        div.classList.add(...classNames);
-    } else if (classNames) {
-        div.classList.add(classNames);
-    }
-    domAppendNodes(div, childNodes);
-    return div;
+    return setClassAndChildNodes(div, childNodes, classNames);
 }
 
 export function HFlex(childNodes?: Node|Node[], classNames?: string|string[]) {
     const div = document.createElement("div");
     div.classList.add("x-hflex", "flex", "flex-row");
-    if (Array.isArray(classNames)) {
-        div.classList.add(...classNames);
-    } else if (classNames) {
-        div.classList.add(classNames);
-    }
-    domAppendNodes(div, childNodes);
-    return div;
+    return setClassAndChildNodes(div, childNodes, classNames);
 }

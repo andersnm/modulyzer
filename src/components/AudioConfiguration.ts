@@ -1,4 +1,4 @@
-import { FormGroup, IComponent, INotify, Inset, ModalButtonBar } from '../nutz';
+import { FormGroup, IComponent, INotify, VInset, ModalButtonBar } from '../nutz';
 
 export type DomElementCallbackType = (el: HTMLElement) => void;
 
@@ -36,7 +36,7 @@ export class AudioConfiguration implements IComponent {
 
     constructor(parent: INotify) {
         this.parent = parent;
-        this.containerElement = Inset(undefined, [ "flex-col", "flex-1" ]);
+        this.containerElement = VInset(undefined, "flex-1");
         this.containerElement.tabIndex = -1;
 
         this.deniedForm = this.renderDenied();

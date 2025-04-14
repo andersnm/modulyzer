@@ -1,15 +1,13 @@
 import { IComponent } from "./IComponent";
-import { Outset } from "./StandardStuff";
+import { HFlex, VFlex, VOutset } from "./StandardStuff";
 
 export class Panel {
     outer: HTMLElement;
 
     constructor(title: IComponent, right: IComponent, content: IComponent) {
-        this.outer = document.createElement("div");
-        this.outer.className = "x-panel flex flex-col flex-1 bg-neutral-600 rounded-lg";
+        this.outer = VFlex(undefined, ["x-panel", "flex-1", "bg-neutral-600", "rounded-lg"]);
 
-        const topOuter = document.createElement("div");
-        topOuter.className = "flex flex-row p-1";
+        const topOuter = HFlex(undefined, "p-1");
 
         const topText =  document.createElement("div");
         topText.className = "grow text-white font-bold";
@@ -23,7 +21,7 @@ export class Panel {
         topOuter.appendChild(topRight);
 
         this.outer.appendChild(topOuter);
-        this.outer.appendChild(Outset(content.getDomNode(), ["flex-col", "flex-1"]));
+        this.outer.appendChild(VOutset(content.getDomNode(), "flex-1"));
     }
 
     getDomNode() {

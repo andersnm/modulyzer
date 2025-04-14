@@ -2,7 +2,7 @@
 
 import { CommandHost, formatHotkey, ICommandHost } from "./CommandHost";
 import { IComponent } from "./IComponent";
-import { HFlex, Inset } from "./StandardStuff";
+import { HFlex, VFlex, VInset } from "./StandardStuff";
 
 export class ViewFrame extends CommandHost implements IComponent {
     container: HTMLElement;
@@ -14,14 +14,13 @@ export class ViewFrame extends CommandHost implements IComponent {
 
         this.content = document.createElement("div");
 
-        this.container = document.createElement("div");
-        this.container.classList.add("flex", "flex-col", "w-full", "h-full", "gap-1");
+        this.container = VFlex(undefined, [ "flex-1", "gap-1"]);
         this.container.tabIndex = -1;
 
         this.toolbars = HFlex([], "gap-1");
 
-        this.container.appendChild(Inset(this.toolbars));
-        this.container.appendChild(Inset(this.content, "flex-1"));
+        this.container.appendChild(VInset(this.toolbars));
+        this.container.appendChild(VInset(this.content, "flex-1"));
 
         this.container.addEventListener("focus", this.onFocus);
         this.container.addEventListener("keydown", this.onKeyDown);
