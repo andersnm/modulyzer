@@ -76,6 +76,8 @@ export class PatternEditorCanvas implements IComponent {
     pattern: PatternDocument;
     scrollRow: number = 0;
 
+    octave: number = 4;
+
     constructor(app: Appl, parent: INotify) {
         this.app = app;
         this.parent = parent;
@@ -362,12 +364,12 @@ export class PatternEditorCanvas implements IComponent {
 
         const t = kbTop.findIndex(k => k === code);
         if (t !== -1) {
-            return 60 + t;
+            return (this.octave + 1) * 12 + t;
         }
 
         const b = kbBottom.findIndex(k => k === code);
         if (b !== -1) {
-            return 48 + b;
+            return this.octave * 12 + b;
         }
 
         return -1;
@@ -580,7 +582,7 @@ export class PatternEditorCanvas implements IComponent {
             }
 
             ctx.fillStyle = "#FFF";
-            ctx.fillText((rowNumber + 1).toString(), x + rowNumberWidth - this.fontEm.width, (i + 1) * fontHeight + this.fontEm.fontBoundingBoxAscent);
+            ctx.fillText(rowNumber.toString(), x + rowNumberWidth - this.fontEm.width, (i + 1) * fontHeight + this.fontEm.fontBoundingBoxAscent);
         }
 
         ctx.textAlign = "left";

@@ -2,6 +2,7 @@ import { Appl } from "../App";
 import { SequenceEditorCanvas } from "./SequenceEditorCanvas";
 import { registerSequenceEditorCommands } from "../commands/SequenceEditor/Register";
 import { ViewFrame } from "../nutz/ViewFrame";
+import { ButtonToolbar } from "../nutz";
 
 export class SequencePanel extends ViewFrame {
     app: Appl;
@@ -16,13 +17,13 @@ export class SequencePanel extends ViewFrame {
 
         this.sequenceEditor = new SequenceEditorCanvas(app);
 
-        this.setToolbar([
+        this.addToolbar(ButtonToolbar(this, [
             {
                 type: "button",
                 label: "Add Column",
                 action: "add-column",
             }
-        ]);
+        ]));
 
         this.setView(this.sequenceEditor.getDomNode());
     }

@@ -1,5 +1,5 @@
 import { Appl } from "../App";
-import { FormGroup, IComponent, INotify, ModalButtonBar } from "../nutz";
+import { FormGroup, IComponent, INotify, Inset, ModalButtonBar } from "../nutz";
 
 export class SaveAsPanel implements IComponent {
     app: Appl;
@@ -16,7 +16,8 @@ export class SaveAsPanel implements IComponent {
         this.parent = parent;
         this.name = name;
 
-        this.container = document.createElement("div");
+        this.container = Inset(undefined, [ "flex-col", "flex-1" , "gap-1"]);
+        this.container.tabIndex = -1;
 
         this.nameInput = document.createElement("input");
         this.nameInput.className = "w-full rounded-lg p-1 bg-neutral-800";

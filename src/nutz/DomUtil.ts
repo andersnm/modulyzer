@@ -1,5 +1,5 @@
 export function domAppendNodes(domElement: ChildNode, childNodes: Node|Node[]) {
-    if (childNodes === undefined) {
+    if (childNodes === undefined || childNodes === null) {
         return;
     }
 

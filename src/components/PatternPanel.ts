@@ -1,14 +1,59 @@
 import { Appl } from "../App";
 import { PatternDocument } from "../audio/SongDocument";
 import { registerPatternEditorCommands } from "../commands/PatternEditor/Register";
-import { IComponent, StatusBar } from "../nutz";
+import { ButtonToolbar, IComponent, StatusBar } from "../nutz";
 import { ViewFrame } from "../nutz/ViewFrame";
 import { PatternEditorCanvas } from "./PatternEditorCanvas";
 import { formatNote, getCursorColumnAt, getPatternRenderColumns } from "./PatternEditorHelper";
 
+class OctaveInput implements IComponent {
+
+    patternPanel: PatternPanel;
+    container: HTMLDivElement;
+    input: HTMLInputElement;
+
+    constructor(patternPanel: PatternPanel) {
+        this.patternPanel = patternPanel;
+        this.container = document.createElement("div");
+        this.container.classList.add("flex", "gap-1", "items-center");
+
+        const upHotkey = patternPanel.getHotkeyForCommand("octave-up");
+        const downHotkey = patternPanel.getHotkeyForCommand("octave-down");
+        const tooltip = "Current octave (" + upHotkey + "/" + downHotkey + ")"
+
+        const label = document.createElement("span");
+        label.classList.add("text-white");
+        label.title = tooltip;
+        label.innerText = "Octave:";
+
+        this.input = document.createElement("input");
+        this.input.type = "number";
+        this.input.min = "1";
+        this.input.max = "7";
+        this.input.valueAsNumber = this.patternPanel.patternEditor.octave;
+        this.input.title = tooltip;
+        this.input.classList.add("rounded-lg", "p-1", "bg-neutral-600", "text-white", "text-center");
+
+        this.input.addEventListener("change", () => {
+            const i = parseInt(this.input.value);
+            if (!isNaN(i)) {
+                this.patternPanel.patternEditor.octave = i;
+            }
+        })
+
+        this.container.appendChild(label);
+        this.container.appendChild(this.input);
+    }
+
+    getDomNode(): Node {
+        return this.container;
+    }
+}
+
 export class PatternPanel extends ViewFrame implements IComponent {
     app: Appl;
     patternEditor: PatternEditorCanvas;
+    octaveInput: OctaveInput;
     statusBar: StatusBar;
 
     constructor(app: Appl) {
@@ -18,8 +63,9 @@ export class PatternPanel extends ViewFrame implements IComponent {
         registerPatternEditorCommands(this)
 
         this.patternEditor = new PatternEditorCanvas(app, this);
+        this.octaveInput = new OctaveInput(this);
 
-        this.setToolbar([
+        this.addToolbar(ButtonToolbar(this, [
             {
                 type: "button",
                 label: "Add Column",
@@ -30,7 +76,9 @@ export class PatternPanel extends ViewFrame implements IComponent {
                 label: "Edit...",
                 action: "edit-pattern",
             }
-        ]);
+        ]));
+
+        this.addToolbar(this.octaveInput.getDomNode() as HTMLElement);
 
         this.setView(this.patternEditor.getDomNode() as HTMLElement);
 

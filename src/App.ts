@@ -1,4 +1,4 @@
-import { ButtonToolbar, CommandHost, formatHotkey, FullScreen, GridFrameContainer, ICommand, IComponent, StatusBar, TabFrameContainer, visitNodeAndChildNodesBreadth, visitNodeAndChildNodesDepth } from "./nutz";
+import { ButtonToolbar, CommandHost, formatHotkey, FullScreen, GridFrameContainer, HFlex, ICommand, IComponent, StatusBar, TabFrameContainer, visitNodeAndChildNodesBreadth, visitNodeAndChildNodesDepth } from "./nutz";
 import { MenuBar } from "./nutz/Menubar";
 import { ModalDialogContainer } from "./nutz/ModalDialogContainer";
 import { mainMenu, MenuItem } from './menu/menu';
@@ -59,25 +59,6 @@ class BpmInput implements IComponent {
     }
 }
 
-class ToolbarContainer implements IComponent {
-    container: HTMLDivElement;
-
-    constructor() {
-        // horizontally aligned, break if overflow
-        this.container = document.createElement("div");
-        this.container.className = "flex flex-row gap-1";
-
-    }
-
-    addToolbar(toolbar: Node) {
-        this.container.appendChild(toolbar);
-    }
-
-    getDomNode(): Node {
-        return this.container;
-    }
-}
-
 export class Appl extends CommandHost implements IComponent {
     fullscreen: FullScreen;
     menuBar: MenuBar;
@@ -123,7 +104,6 @@ export class Appl extends CommandHost implements IComponent {
         this.menuBar = new MenuBar(this);
         this.menuBar.bindMenubarMenu(mainMenu);
 
-        // NOTE: toolbar input button assigns to bpmInput
         const toolbar = ButtonToolbar(this, [
             {
                 type: "button",
@@ -148,9 +128,8 @@ export class Appl extends CommandHost implements IComponent {
         ]);
 
         this.bpmInput = new BpmInput(this);
-        const toolbarContainer = new ToolbarContainer();
-        toolbarContainer.addToolbar(toolbar);
-        toolbarContainer.addToolbar(this.bpmInput.getDomNode());
+
+        const toolbarContainer = HFlex([toolbar, this.bpmInput.getDomNode()], "gap-1");
 
         this.sidebarTabs = new TabFrameContainer(true);
         this.sidebarTabs.setTabsPosition("bottom");
@@ -158,7 +137,7 @@ export class Appl extends CommandHost implements IComponent {
         this.mainTabs = new TabFrameContainer(false);
 
         this.frame.addFrame("top", this.menuBar);
-        this.frame.addFrame("top", toolbarContainer, undefined, 1);
+        this.frame.addFrame("top", { getDomNode: () => toolbarContainer }, undefined, 1);
         this.frame.addFrame("left", this.sidebarTabs, undefined, 1);
         this.frame.addFrame("main", this.mainTabs);
 

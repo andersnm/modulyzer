@@ -1,7 +1,7 @@
 import { WaveEditorCanvas } from "./WaveEditorCanvas";
 import { WaveScrollCanvas } from "./WaveScrollCanvas";
 import { Appl } from "../App";
-import { IComponent } from "../nutz";
+import { ButtonToolbar, IComponent } from "../nutz";
 import { WaveDocumentEx } from "../audio/SongDocument";
 import { registerWaveEditorCommands } from "../commands/WaveEditor/Register";
 import { ViewFrame } from "../nutz/ViewFrame";
@@ -26,7 +26,7 @@ export class WavePanel extends ViewFrame {
         this.waveEditor = new WaveEditorCanvas(this);
         this.waveScroll = new WaveScrollCanvas(this);
 
-        this.setToolbar([
+        this.addToolbar(ButtonToolbar(this, [
             {
                 type: "button",
                 label: "Cut",
@@ -82,8 +82,7 @@ export class WavePanel extends ViewFrame {
                 label: "Edit...",
                 action: "edit-wave",
             },
-
-        ]);
+        ]));
 
         this.view.appendChild(this.waveEditor.getDomNode());
         this.view.appendChild(this.waveScroll.getDomNode());

@@ -1,5 +1,6 @@
 import { Appl } from "../App";
 import { registerMixerCommands } from "../commands/Mixer/Register";
+import { ButtonToolbar } from "../nutz";
 import { ViewFrame } from "../nutz/ViewFrame";
 import { MixerCanvas } from "./MixerCanvas";
 
@@ -15,7 +16,7 @@ export class MixerPanel extends ViewFrame {
 
         this.mixerCanvas = new MixerCanvas(app);
 
-        this.setToolbar([
+        this.addToolbar(ButtonToolbar(this, [
             {
                 type: "button",
                 label: "Add Instrument",
@@ -26,8 +27,7 @@ export class MixerPanel extends ViewFrame {
                 label: "Delete",
                 action: "delete-selection",
             }
-
-        ]);
+        ]));
 
         this.setView(this.mixerCanvas.getDomNode() as HTMLElement);
     }

@@ -1,5 +1,5 @@
 import { Appl } from "../App";
-import { DataTable, IComponent } from "../nutz";
+import { ButtonToolbar, DataTable, IComponent } from "../nutz";
 import { ViewFrame } from "../nutz/ViewFrame";
 
 export class PatternsPanel extends ViewFrame {
@@ -16,13 +16,13 @@ export class PatternsPanel extends ViewFrame {
         this.list.addColumn("Sub.", "subdivision")
         this.list.addColumn("Rows", "rows")
 
-        this.setToolbar([
+        this.addToolbar(ButtonToolbar(this, [
             {
                 type: "button",
                 label: "New...",
                 action: "create-pattern",
             },
-        ]);
+        ]));
 
         this.setView(this.list.getDomNode() as HTMLElement);
 

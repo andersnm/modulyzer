@@ -2,11 +2,11 @@
 
 import { CommandHost, formatHotkey, ICommandHost } from "./CommandHost";
 import { IComponent } from "./IComponent";
-import { ButtonToolbar, ButtonToolbarType, Inset } from "./StandardStuff";
+import { HFlex, Inset } from "./StandardStuff";
 
 export class ViewFrame extends CommandHost implements IComponent {
     container: HTMLElement;
-    buttonBar: HTMLElement;
+    toolbars: HTMLDivElement;
     content: HTMLElement;
 
     constructor(parent: ICommandHost) {
@@ -18,9 +18,9 @@ export class ViewFrame extends CommandHost implements IComponent {
         this.container.classList.add("flex", "flex-col", "w-full", "h-full", "gap-1");
         this.container.tabIndex = -1;
 
-        this.buttonBar = ButtonToolbar(this, []);
+        this.toolbars = HFlex([], "gap-1");
 
-        this.container.appendChild(Inset(this.buttonBar));
+        this.container.appendChild(Inset(this.toolbars));
         this.container.appendChild(Inset(this.content, "flex-1"));
 
         this.container.addEventListener("focus", this.onFocus);
@@ -44,10 +44,8 @@ export class ViewFrame extends CommandHost implements IComponent {
         }
     };
 
-    setToolbar(buttons: ButtonToolbarType[]) {
-        const newButtonBar = ButtonToolbar(this, buttons);
-        this.buttonBar.parentElement.replaceChild(newButtonBar, this.buttonBar);
-        this.buttonBar = newButtonBar;
+    addToolbar(child: HTMLElement) {
+        this.toolbars.appendChild(child);
     }
 
     setView(element: HTMLElement) {

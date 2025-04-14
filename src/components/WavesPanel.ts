@@ -1,5 +1,5 @@
 import { Appl } from "../App";
-import { Button, DataTable, IComponent } from "../nutz";
+import { Button, ButtonToolbar, DataTable, IComponent } from "../nutz";
 import { ViewFrame } from "../nutz/ViewFrame";
 import { formatNote } from "./PatternEditorHelper";
 
@@ -26,7 +26,7 @@ export class WavesPanel extends ViewFrame {
         this.list.addColumn("Duration", "duration")
         this.list.addColumn("Note", "note")
 
-        this.setToolbar([
+        this.addToolbar(ButtonToolbar(this, [
             {
                 type: "button",
                 label: "New...",
@@ -42,7 +42,7 @@ export class WavesPanel extends ViewFrame {
                 label: "Paste New",
                 action: "paste-new-wave",
             },
-        ]);
+        ]));
 
         this.setView(this.list.getDomNode() as HTMLElement);
 
