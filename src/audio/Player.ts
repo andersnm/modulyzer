@@ -62,8 +62,9 @@ class PatternPlayer {
     pattern: Pattern;
     currentBeat: number = 0;
 
-    constructor(pattern: Pattern) {
+    constructor(pattern: Pattern, currentBeat: number) {
         this.pattern = pattern;
+        this.currentBeat = currentBeat;
     }
 
     process(durationBeats: number, result: PatternPlayerEvent[]) {
@@ -210,7 +211,7 @@ export class Player extends EventTarget {
                 const evTime = ev.time / 1; // this.tpb;
 
                 if (evTime >= this.currentBeat && evTime < this.currentBeat + durationBeats) {
-                    const pp = new PatternPlayer(ev.pattern);
+                    const pp = new PatternPlayer(ev.pattern, this.currentBeat - evTime);
                     this.playingPatterns.push(pp);
                 }
             }
