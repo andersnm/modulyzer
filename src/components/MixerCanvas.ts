@@ -58,12 +58,13 @@ class DragConnect extends DragTarget {
         // actually commit to document, we just changed the value directly in the document (without notifying anybody)
         const connectToInstrument = this.component.instrumentAtPoint(e.offsetX, e.offsetY);
 
-        if (connectToInstrument) {
-            this.component.app.song.createConnection(this.component.connectFromInstrument, connectToInstrument);
-        }
-
+        const connectFromInstrument = this.component.connectFromInstrument;
         this.component.connectFromInstrument = null;
         this.component.connectToPt = null;
+
+        if (connectToInstrument) {
+            this.component.app.song.createConnection(connectFromInstrument, connectToInstrument);
+        }
     }
 }
 
