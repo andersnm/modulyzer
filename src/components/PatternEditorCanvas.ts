@@ -105,9 +105,9 @@ export class PatternEditorCanvas implements IComponent {
 
     onMounted = () => {
         this.app.song.addEventListener("updateInstrument", this.onResize);
-        this.app.song.addEventListener("updatePattern", this.onResize);
-        this.app.song.addEventListener("createPatternColumn", this.onResize);
-        this.app.song.addEventListener("updatePatternColumn", this.onResize);
+        this.app.song.addEventListener("updatePattern", this.onRebind);
+        this.app.song.addEventListener("createPatternColumn", this.onRebind);
+        this.app.song.addEventListener("updatePatternColumn", this.onRebind);
         this.app.song.addEventListener("createPatternEvent", this.onResize);
         this.app.song.addEventListener("updatePatternEvent", this.onResize);
         this.app.song.addEventListener("deletePatternEvent", this.onResize);
@@ -115,12 +115,16 @@ export class PatternEditorCanvas implements IComponent {
 
     onUnmounted = () => {
         this.app.song.removeEventListener("updateInstrument", this.onResize);
-        this.app.song.removeEventListener("updatePattern", this.onResize);
-        this.app.song.removeEventListener("createPatternColumn", this.onResize);
-        this.app.song.removeEventListener("updatePatternColumn", this.onResize);
+        this.app.song.removeEventListener("updatePattern", this.onRebind);
+        this.app.song.removeEventListener("createPatternColumn", this.onRebind);
+        this.app.song.removeEventListener("updatePatternColumn", this.onRebind);
         this.app.song.removeEventListener("createPatternEvent", this.onResize);
         this.app.song.removeEventListener("updatePatternEvent", this.onResize);
         this.app.song.removeEventListener("deletePatternEvent", this.onResize);
+    };
+
+    onRebind = () => {
+        this.setPattern(this.pattern);
     };
 
     onResize = () => {

@@ -66,6 +66,7 @@ export class PatternDocument {
     name: string = "";
     duration: number = 1;
     subdivision: number = 4;
+    swing: number = 50;
     columns: PatternColumnDocument[] = [];
 }
 
@@ -257,10 +258,11 @@ export class SongDocument extends EventTarget {
         return pattern;
     }
 
-    updatePattern(pattern: PatternDocument, name: string, length: number, subdivision: number) {
+    updatePattern(pattern: PatternDocument, name: string, length: number, subdivision: number, swing: number) {
         pattern.name = name;
         pattern.duration = length;
         pattern.subdivision = subdivision;
+        pattern.swing = swing;
 
         this.dispatchEvent(new CustomEvent("updatePattern", { detail: pattern }));
     }
@@ -333,7 +335,8 @@ export class SongDocument extends EventTarget {
         return pe;
     }
 
-    updatePatternEvent(pe: PatternEventDocument, value: number, data0: number, data1: number) {
+    updatePatternEvent(pe: PatternEventDocument, time: number, value: number, data0: number, data1: number) {
+        pe.time = time;
         pe.value = value;
         pe.data0 = data0;
         pe.data1 = data1;

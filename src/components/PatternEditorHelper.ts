@@ -254,8 +254,8 @@ export function editNote(song: SongDocument, patternColumn: PatternColumnDocumen
         const nextPatternEvent = getNextPatternEvent(patternColumn, time, channel, editNoteEvent.value);
         if (nextPatternEvent) {
             // not validating velo==0 before updating, _should_ be the noteoff
-            song.updatePatternEvent(editNoteEvent, note, editNoteEvent.data0, editNoteEvent.data1);
-            song.updatePatternEvent(nextPatternEvent, note, 0, channel);
+            song.updatePatternEvent(editNoteEvent, editNoteEvent.time, note, editNoteEvent.data0, editNoteEvent.data1);
+            song.updatePatternEvent(nextPatternEvent, nextPatternEvent.time, note, 0, channel);
         } else {
             console.warn("Not updating note off, missing note off, invalid pattern event")
         }
@@ -311,7 +311,7 @@ export function editNoteOff(song: SongDocument, patternColumn: PatternColumnDocu
 export function editValue(song: SongDocument, patternColumn: PatternColumnDocument, time: number, channel: number, value: number) {
     const patternEvent = patternColumn.events.find(e => e.channel === channel && e.time === time);
     if (patternEvent) {
-        song.updatePatternEvent(patternEvent, value, patternEvent.data0, 0);
+        song.updatePatternEvent(patternEvent, patternEvent.time, value, patternEvent.data0, 0);
     } else {
         song.createPatternEvent(patternColumn, time, value, 0, 0, channel);
     }
@@ -323,7 +323,7 @@ export function editVelocity(song: SongDocument, patternEvent: PatternEventDocum
     }
 
     if (patternEvent) {
-        song.updatePatternEvent(patternEvent, patternEvent.value, velocity, 0);
+        song.updatePatternEvent(patternEvent, patternEvent.time, patternEvent.value, velocity, 0);
     } else {
         console.log("No note in this column/track to set velocity")
     }

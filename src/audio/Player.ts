@@ -21,6 +21,7 @@ export class Pattern {
     columns: PatternColumn[] = [];
     duration: number;
     subdivision: number = 4;
+    swing: number = 0.5;
 }
 
 export class SequenceEvent {
@@ -67,6 +68,21 @@ class PatternPlayer {
         this.currentBeat = currentBeat;
     }
 
+    getSwingTime(patternTimeInBeats: number): number {
+        const withinBeat = patternTimeInBeats - Math.floor(patternTimeInBeats);
+
+        const firstHalfProportion = this.pattern.swing;
+        const secondHalfProportion = 1 - this.pattern.swing;
+
+        // Adjust the time based on the swing factor
+        if (withinBeat < 0.5) {
+            return Math.floor(patternTimeInBeats) + withinBeat * firstHalfProportion * 2;
+        } else {
+            return Math.floor(patternTimeInBeats) + 0.5 * firstHalfProportion * 2 +
+                   (withinBeat - 0.5) * secondHalfProportion * 2;
+        }
+    }
+
     process(durationBeats: number, result: PatternPlayerEvent[]) {
         for (let column of this.pattern.columns) {
             const instrument = column.instrument;
@@ -74,7 +90,7 @@ class PatternPlayer {
             const pin = pins[column.pin];
 
             for (let event of column.events) {
-                const eventTime = event.time / this.pattern.subdivision;
+                const eventTime = this.getSwingTime(event.time / this.pattern.subdivision);
 
                 if (eventTime >= this.currentBeat && eventTime < this.currentBeat + durationBeats) {
                     const deltaBeats = eventTime - this.currentBeat;

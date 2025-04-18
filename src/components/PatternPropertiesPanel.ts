@@ -10,17 +10,20 @@ export class PatternPropertiesPanel implements IComponent {
     nameInput: HTMLInputElement;
     lengthInput: HTMLInputElement;
     subdivisionInput: HTMLInputElement;
+    swingInput: HTMLInputElement;
 
     name: string = "00";
     length: number = 64;
     subdivision: number = 4;
+    swing: number = 50;
 
-    constructor(app: Appl, parent: INotify, name: string, length: number, subdivision: number) {
+    constructor(app: Appl, parent: INotify, name: string, length: number, subdivision: number, swing: number) {
         this.app = app;
         this.parent = parent;
         this.name = name;
         this.length = length;
         this.subdivision = subdivision;
+        this.swing = swing;
 
         this.container = VInset(undefined, [ "flex-1" , "gap-1"]);
         this.container.tabIndex = -1;
@@ -58,11 +61,24 @@ export class PatternPropertiesPanel implements IComponent {
 
         const subdivisionGroup = FormGroup("Subdivision", this.subdivisionInput);
 
+        this.swingInput = document.createElement("input");
+        this.swingInput.className = "w-full rounded-lg p-1 bg-neutral-800";
+        this.swingInput.type = "number";
+        this.swingInput.min = "1";
+        this.swingInput.max = "99";
+        this.swingInput.valueAsNumber = this.swing;
+        this.swingInput.addEventListener("change", () => {
+            this.swing = this.swingInput.valueAsNumber;
+        });
+
+        const swingGroup = FormGroup("Swing", this.swingInput);
+
         const modalButtonBar = new ModalButtonBar(this, this.parent);
 
         this.container.appendChild(nameGroup);
         this.container.appendChild(lengthGroup);
         this.container.appendChild(subdivisionGroup);
+        this.container.appendChild(swingGroup);
         this.container.appendChild(modalButtonBar.getDomNode());
     }
 

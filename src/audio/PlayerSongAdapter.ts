@@ -250,6 +250,7 @@ export class PlayerSongAdapter {
         p.name = pattern.name;
         p.duration = pattern.duration;
         p.subdivision = pattern.subdivision;
+        p.swing = pattern.swing / 100;
     };
 
     onDeletePattern = (ev: CustomEvent<PatternDocument>) => {
@@ -296,6 +297,11 @@ export class PlayerSongAdapter {
         pe.data0 = patternEvent.data0;
         pe.data1 = patternEvent.data1;
 
+        this.insertPatternEventAtTime(pc, pe);
+        this.patternEventMap.set(patternEvent, pe);
+    };
+
+    insertPatternEventAtTime(pc: PatternColumn, pe: PatternEvent) {
         // Insert sorted by time, events at the same time are sorted by
         // ascending velocity/cc value - note offs before notes
         let ti = pc.events.findIndex(e => e.time >= pe.time);
@@ -320,9 +326,7 @@ export class PlayerSongAdapter {
         } else {
             pc.events.push(pe);
         }
-
-        this.patternEventMap.set(patternEvent, pe);
-    };
+    }
 
     onUpdatePatternEvent = (ev: CustomEvent<PatternEventDocument>) => {
         const patternEvent = ev.detail;
@@ -331,6 +335,16 @@ export class PlayerSongAdapter {
         pe.value = patternEvent.value;
         pe.data0 = patternEvent.data0;
         pe.data1 = patternEvent.data1;
+
+        if (pe.time !== patternEvent.time) {
+            pe.time = patternEvent.time;
+
+            const patternColumn = patternEvent.patternColumn;
+            const pc = this.patternColumnMap.get(patternColumn);
+            const idx = pc.events.indexOf(pe);
+            pc.events.splice(idx, 1);
+            this.insertPatternEventAtTime(pc, pe);
+        }
     };
 
     onDeletePatternEvent = (ev: CustomEvent<PatternEventDocument>) => {

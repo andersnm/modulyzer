@@ -18,14 +18,14 @@ export class EditPatternCommand implements ICommand, INotify {
             return;
         }
 
-        const patternPanel = new PatternPropertiesPanel(this.app, this, pattern.name, pattern.duration, pattern.subdivision);
+        const patternPanel = new PatternPropertiesPanel(this.app, this, pattern.name, pattern.duration, pattern.subdivision, pattern.swing);
         const result = await this.app.modalDialogContainer.showModal("Pattern Properties", patternPanel);
 
         if (!result) {
             return;
         }
 
-        this.app.song.updatePattern(pattern, patternPanel.name, patternPanel.length, patternPanel.subdivision);
+        this.app.song.updatePattern(pattern, patternPanel.name, patternPanel.length, patternPanel.subdivision, patternPanel.swing);
     }
 
     notify(source: IComponent, eventName: string, ...args: any): void {

@@ -2,7 +2,9 @@ import { PatternPanel } from "../../components/PatternPanel";
 import { AddColumnCommand } from "./AddColumnCommand";
 import { CopyCommand } from "./CopyCommand";
 import { CutCommand } from "./CutCommand";
+import { DoubleSubdivideCommand } from "./DoubleSubdivideCommand";
 import { EditPatternCommand } from "./EditPatternCommand";
+import { HalveSubdivideCommand } from "./HalveSubdivideCommand";
 import { OctaveDownCommand } from "./OctaveDownCommand";
 import { OctaveUpCommand } from "./OctaveUpCommand";
 import { PasteCommand } from "./PasteCommand";
@@ -16,11 +18,15 @@ export function registerPatternEditorCommands(component: PatternPanel) {
 
     component.registerCommand("octave-up", "hgi-stroke hgi-circle-arrow-up-01", null, new OctaveUpCommand(component));
     component.registerCommand("octave-down", "hgi-stroke hgi-circle-arrow-down-01", null, new OctaveDownCommand(component));
+    component.registerCommand("double-subdivide", "hgi-stroke hgi-divide-sign-circle", "Double pattern length and subdivision", new DoubleSubdivideCommand(component));
+    component.registerCommand("halve-subdivide", "hgi-stroke hgi-divide-sign-circle", "Halve pattern length and subdivision", new HalveSubdivideCommand(component));
 
     component.registerHotkey("CTRL+A", "select-all");
     component.registerHotkey("CTRL+X", "cut");
     component.registerHotkey("CTRL+C", "copy");
     component.registerHotkey("CTRL+V", "paste");
+    component.registerHotkey("CTRL+D", "double-subdivide");
+    component.registerHotkey("CTRL+H", "halve-subdivide");
     component.registerHotkey("Escape", "show-sequence-editor");
     component.registerHotkey("CTRL+Backspace", "edit-pattern");
     component.registerHotkey("CTRL+Enter", "add-column");
