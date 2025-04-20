@@ -1,4 +1,4 @@
-import { IComponent } from "./IComponent";
+import { IComponent, INotify } from "./IComponent";
 
 export interface MenuItem {
     label: string;
@@ -9,7 +9,7 @@ export interface MenuItem {
 }
 
 export class Menu implements IComponent {
-    private parent: IComponent;
+    private parent: INotify;
     menuContainer: HTMLElement;
     inner: HTMLElement;
     submenu: Menu = null;
@@ -17,11 +17,11 @@ export class Menu implements IComponent {
     selectedIndex: number = -1;
     items: MenuItem[] = [];
 
-    constructor(parent: IComponent) {
+    constructor(parent: INotify) {
         this.parent = parent;
         this.menuContainer = document.createElement("div");
         this.menuContainer.tabIndex = 0;
-        this.menuContainer.className = "nutz-menu absolute px-1 py-1 bg-neutral-600 rounded w-72";
+        this.menuContainer.className = "nutz-menu z-20 absolute px-1 py-1 bg-neutral-600 rounded w-72";
 
         this.inner = document.createElement("div");
         this.inner.className = "flex flex-col p-1 bg-neutral-800 rounded-lg overflow-auto text-white";
@@ -45,8 +45,6 @@ export class Menu implements IComponent {
                 } else {
                     this.selectedIndex = this.items.length - 1;
                 }
-            } else if (ev.key === "ArrowLeft") {
-                this.parent.notify(this, "keydown", ev);
             } else if (ev.key === "ArrowRight") {
                 const item = this.items[this.selectedIndex];
                 if (item && item.items && item.items.length) {
@@ -66,9 +64,9 @@ export class Menu implements IComponent {
             } else if (ev.key === "Enter") {
                 const item = this.items[this.selectedIndex];
                 this.notify(this, "action", item.action);
+            } else {
+                this.notify(this, "keydown", ev);
             }
-
-            // const selectedItem = this.items[this.selectedIndex];
 
             if (oldIndex !== this.selectedIndex) {
                 if (oldIndex !== -1) {
@@ -235,6 +233,8 @@ export class Menu implements IComponent {
                 this.menuContainer.focus();
             } else if (args[0].key === "ArrowRight") {
                 // if item has child items, open it, else send to parent
+            } else {
+                this.parent.notify(source, eventName, ...args);
             }
         }
     }

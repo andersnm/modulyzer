@@ -20,6 +20,7 @@ import { WAVEncoder, WAVFormat } from "./wavefile/WAVEncoder";
 import { PlayerSongAdapter } from "./audio/PlayerSongAdapter";
 import { WavePlayer } from "./audio/WavePlayer"; 
 import { registerApplicationCommands } from "./commands/Application/Register";
+import { ContextMenuContainer } from "./nutz/ContextMenuContainer";
 
 class BpmInput implements IComponent {
 
@@ -75,6 +76,7 @@ export class Appl extends CommandHost implements IComponent {
     wavePlayer: WavePlayer;
 
     modalDialogContainer: ModalDialogContainer;
+    contextMenuContainer: ContextMenuContainer;
 
     domObserver: MutationObserver;
 
@@ -142,6 +144,7 @@ export class Appl extends CommandHost implements IComponent {
         this.frame.addFrame("main", this.mainTabs);
 
         this.modalDialogContainer = new ModalDialogContainer();
+        this.contextMenuContainer = new ContextMenuContainer();
 
         this.song.addEventListener("updateDocument", (ev: CustomEvent<SongDocument>) => {
             this.bpmInput.input.value = this.song.bpm.toString();

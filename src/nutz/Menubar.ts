@@ -4,7 +4,7 @@ import { ICommandHost } from "./CommandHost";
 import { IComponent, INotify } from "./IComponent";
 import { Menu } from "./Menu";
 
-function convertNutzMenu(app: ICommandHost, menu: MenuItem[]): NutzMenuItem[] {
+export function convertNutzMenu(app: ICommandHost, menu: MenuItem[]): NutzMenuItem[] {
     const nutzMenu: NutzMenuItem[] = menu.map(m => ({
         label: m.label,
         action: m.action,

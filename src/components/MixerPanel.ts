@@ -14,7 +14,7 @@ export class MixerPanel extends ViewFrame {
 
         registerMixerCommands(this);
 
-        this.mixerCanvas = new MixerCanvas(app);
+        this.mixerCanvas = new MixerCanvas(app, this);
 
         this.addToolbar(ButtonToolbar(this, [
             {

@@ -1,12 +1,23 @@
-import { DragTarget, IComponent, PointType, ptInRect, rectCenter, RectType } from "../nutz";
+import { DragTarget, ICommandHost, IComponent, INotify, Menu, PointType, ptInRect, rectCenter, RectType } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 import { Appl } from "../App";
 import { ConnectionDocument, InstrumentDocument } from "../audio/SongDocument";
 import { PinsPanel } from "./PinsPanel";
+import { MenuItem } from "../menu/menu";
 
 const boxWidth = 100;
 const boxHeight = 61; // 1.618
 const arrowSize = 10;
+const instrumentMenu: MenuItem[] = [
+    {
+        label: "Pins",
+        action: "show-pins",
+    },
+    {
+        label: "Delete",
+        action: "delete-selection",
+    },
+];
 
 class DragMove extends DragTarget {
     instrument: InstrumentDocument;
@@ -70,6 +81,7 @@ class DragConnect extends DragTarget {
 
 export class MixerCanvas implements IComponent {
     app: Appl;
+    commandHost: ICommandHost
     container: HTMLElement;
     canvas: HTMLCanvasElement;
 
@@ -81,8 +93,9 @@ export class MixerCanvas implements IComponent {
     selectedInstrument: InstrumentDocument;
     selectedConnection: ConnectionDocument;
 
-    constructor(app: Appl) {
+    constructor(app: Appl, commandHost: ICommandHost) {
         this.app = app;
+        this.commandHost = commandHost;
         this.container = document.createElement("div");
         this.container.className = "flex-1 w-full pb-1";
         this.container.tabIndex = 0;
@@ -175,6 +188,16 @@ export class MixerCanvas implements IComponent {
 
     onContextMenu = (e: MouseEvent) => {
         console.log("onContextMenu")
+
+        const p = [ e.offsetX, e.offsetY ];
+        const instrument = this.instrumentAtPoint(e.offsetX, e.offsetY);
+
+        if (!instrument) {
+            return;
+        }
+
+        const rc = this.canvas.getBoundingClientRect();
+        this.app.contextMenuContainer.show(this.commandHost, rc.left + e.offsetX, rc.top + e.offsetY, instrumentMenu);
         e.preventDefault();
     };
 
@@ -184,16 +207,7 @@ export class MixerCanvas implements IComponent {
             return;
         }
 
-        // find pins view, bind to dblclicked instrument
-        const tabIndex = this.app.sidebarTabs.tabs.tabs.findIndex(t => t.label === "Pins");
-        if (tabIndex === -1) {
-            return;
-        }
-
-        const panel = this.app.sidebarTabs.tabContent[tabIndex] as PinsPanel;
-        panel.bindInstrument(instrument);
-        this.app.sidebarTabs.setCurrentTab(tabIndex);
-
+        this.commandHost.executeCommand("show-pins");
         e.preventDefault();
     };
 
