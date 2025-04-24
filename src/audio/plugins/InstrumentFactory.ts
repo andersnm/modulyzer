@@ -1,12 +1,10 @@
-import { Player } from "../Player";
+import { Player, Wave } from "../Player";
 
 export interface CcChangeDetail {
     instrument: Instrument;
     value: number;
     data: number;
 }
-
-export const PIN_FLAG_WAVE = 1;
 
 export interface Pin {
     type: "controller" | "note";
@@ -24,6 +22,7 @@ export abstract class Instrument extends EventTarget {
     inputNode: AudioNode | null;
     outputNode: AudioNode | null;
     pinCcs: Set<number> = new Set();
+    waves: Wave[] = [];
 
     constructor(factory: InstrumentFactory) {
         super();
@@ -65,6 +64,7 @@ export abstract class Instrument extends EventTarget {
 }
 
 export abstract class InstrumentFactory {
+    useWaveTable: boolean = false;
     abstract getIdentifier(): string;
     abstract getInputChannelCount(): number;
     abstract getOutputChannelCount(): number;

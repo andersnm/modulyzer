@@ -3,7 +3,7 @@ import { MixerPanel } from "../../components/MixerPanel";
 import { PinsPanel } from "../../components/PinsPanel";
 import { ICommand } from "../../nutz";
 
-export class ShowPinsCommand implements ICommand {
+export class GotoPinsCommand implements ICommand {
     app: Appl;
 
     constructor(private component: MixerPanel) {
@@ -17,13 +17,7 @@ export class ShowPinsCommand implements ICommand {
             return;
         }
 
-        const tabIndex = this.app.sidebarTabs.tabs.tabs.findIndex(t => t.label === "Pins");
-        if (tabIndex === -1) {
-            return;
-        }
-
-        const panel = this.app.sidebarTabs.tabContent[tabIndex] as PinsPanel;
+        const panel = await this.app.executeCommand("show-pins") as PinsPanel;
         panel.bindInstrument(instrument);
-        this.app.sidebarTabs.setCurrentTab(tabIndex);
     }
 }

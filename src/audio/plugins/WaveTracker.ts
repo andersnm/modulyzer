@@ -1,7 +1,9 @@
 import { Player, Wave } from "../Player";
-import { Instrument, InstrumentFactory, Pin, PIN_FLAG_WAVE } from "./InstrumentFactory";
+import { Instrument, InstrumentFactory, Pin } from "./InstrumentFactory";
 
 export class WaveTrackerFactory extends InstrumentFactory {
+    useWaveTable = true;
+
     getIdentifier(): string {
         return "@modulyzer/WaveTracker";
     }
@@ -19,16 +21,13 @@ export class WaveTrackerFactory extends InstrumentFactory {
             {
                 type: "note",
                 name: "Wave",
-                flags: PIN_FLAG_WAVE,
-                description: "Notes are mapped 1:1 to wave table indices.",
+                description: "Notes are mapped in the wave table.",
                 value: 0,
             },
         ];
     }
 
     createInstrument(context: AudioContext, player: Player): Instrument {
-        // HOW TO ACCESS WAVETABLE! -> sub to changes -> song-document -> device -> player
-        // make buffernodes for waves as they are played, can overlap
         return new WaveTracker(context, this, player);
     }
 }
@@ -55,7 +54,7 @@ export class WaveTracker extends Instrument {
     }
 
     getWaveByNote(note: number) {
-        for (let wave of this.player.waves) {
+        for (let wave of this.waves) {
             if (wave.note === note) {
                 return wave;
             }

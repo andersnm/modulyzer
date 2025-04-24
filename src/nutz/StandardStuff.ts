@@ -81,6 +81,7 @@ export function ButtonToolbar(app: ICommandHost, buttonToolbarButtons: (ButtonTo
     for (let toolbarButton of buttonToolbarButtons) {
         if (isButtonToolbarButton(toolbarButton)) {
             const button = Button();
+            button.classList.add("whitespace-nowrap");
 
             const cmd = app.getCommand(toolbarButton.action);
 

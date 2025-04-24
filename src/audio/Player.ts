@@ -127,7 +127,6 @@ export class Player extends EventTarget {
     patterns: Pattern[] = [];
     instruments: Instrument[] = [];
     connections: Connection[] = [];
-    waves: Wave[] = [];
 
     sequence: Sequence = new Sequence();
     bpm: number = 125;

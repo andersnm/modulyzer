@@ -1,11 +1,21 @@
 import { Appl } from "../../App";
+import { WavesPanel } from "../../components/WavesPanel";
+import { ICommand } from "../../nutz";
 import { WAVDecoder } from "../../wavefile/WAVDecoder";
+import { findAvailableNote } from "./PasteNewWaveCommand";
 
-export class OpenWaveCommand {
-    constructor(private app: Appl) {
+export class OpenWaveCommand implements ICommand {
+    app: Appl;
+
+    constructor(private component: WavesPanel) {
+        this.app = component.app;
     }
 
     async handle() {
+        if (!this.component.instrument) {
+            return;
+        }
+
         const input = document.createElement("input");
         input.type = "file";
         input.accept = ".wav";
@@ -20,7 +30,8 @@ export class OpenWaveCommand {
                     const dc = new WAVDecoder();
                     const wav = dc.decode(reader.result as ArrayBuffer)
                     console.log(wav);
-                    this.app.song.createWave(file.name, 60, wav.length, wav.sampleRate, wav.channels);
+                    const note = findAvailableNote(this.component.instrument.waves);
+                    this.app.song.createWave(this.component.instrument, file.name, note, wav.length, wav.sampleRate, wav.channels);
                 };
                 reader.readAsArrayBuffer(file);
             }

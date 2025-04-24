@@ -1,36 +1,20 @@
 import { Appl } from "../../App";
-import { WaveDocumentEx } from "../../audio/SongDocument";
 import { WavePanel } from "../../components/WavePanel";
 
 export class ShowWaveEditorCommand {
     constructor(private app: Appl) {
     }
 
-    async handle(wave?: WaveDocumentEx) {
-
+    async handle() {
         const tabIndex = this.app.mainTabs.tabs.tabs.findIndex(t => t.label === "Wave");
         if (tabIndex !== -1) {
             this.app.mainTabs.setCurrentTab(tabIndex);
-
-            if (wave) {
-                const pq = this.app.mainTabs.tabContent[tabIndex] as WavePanel;
-                pq.setWave(wave);
-            }
-
-            return;
+            return this.app.mainTabs.tabContent[tabIndex];
         }
 
-        const pq = new WavePanel(this.app);
-        if (wave) {
-            pq.setWave(wave);
-        } else if (this.app.song.waves[0]) {
-            pq.setWave(this.app.song.waves[0]);
-        } else {
-            pq.setWave(null);
-        }
-
-        this.app.mainTabs.addTab("Wave", pq);
-
+        const panel = new WavePanel(this.app);
+        this.app.mainTabs.addTab("Wave", panel);
         this.app.mainTabs.setCurrentTab(this.app.mainTabs.tabs.tabs.length - 1);
+        return panel;
     }
 }

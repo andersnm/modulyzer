@@ -8,14 +8,15 @@ export class ShowPinsCommand implements ICommand {
     }
 
     async handle() {
-
         const tabIndex = this.app.sidebarTabs.tabs.tabs.findIndex(t => t.label === "Pins");
         if (tabIndex !== -1) {
             this.app.sidebarTabs.setCurrentTab(tabIndex);
-            return;
+            return this.app.sidebarTabs.tabContent[tabIndex];
         }
 
-        const recordings = new PinsPanel(this.app);
-        this.app.sidebarTabs.addTab("Pins", recordings);
+        const panel = new PinsPanel(this.app);
+        this.app.sidebarTabs.addTab("Pins", panel);
+        this.app.sidebarTabs.setCurrentTab(this.app.sidebarTabs.tabs.tabs.length - 1);
+        return panel;
     }
 }

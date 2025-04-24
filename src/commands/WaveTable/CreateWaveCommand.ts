@@ -1,9 +1,13 @@
 import { Appl } from "../../App";
 import { CreateWavePanel } from "../../components/CreateWavePanel";
+import { WavesPanel } from "../../components/WavesPanel";
 import { IComponent, INotify } from "../../nutz";
 
 export class CreateWaveCommand implements INotify {
-    constructor(private app: Appl) {
+    app: Appl;
+
+    constructor(private component: WavesPanel) {
+        this.app = component.app;
     }
 
     notify(source: IComponent, eventName: string, ...args: any): void {
@@ -19,6 +23,11 @@ export class CreateWaveCommand implements INotify {
     }
 
     async handle() {
+        if (!this.component.instrument) {
+            console.log("no instrument")
+            return;
+        }
+
         const audioConfiguration = new CreateWavePanel(this);
 
         const result = await this.app.modalDialogContainer.showModal("Create Wave", audioConfiguration);
@@ -33,7 +42,7 @@ export class CreateWaveCommand implements INotify {
                 buffers.push(new Float32Array(sampleCount));
             }
 
-            this.app.song.createWave(audioConfiguration.name, audioConfiguration.note, sampleCount, sampleRate, buffers);
+            this.app.song.createWave(this.component.instrument, audioConfiguration.name, audioConfiguration.note, sampleCount, sampleRate, buffers);
         }
     }
 }

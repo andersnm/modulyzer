@@ -17,7 +17,7 @@ export class ViewFrame extends CommandHost implements IComponent {
         this.container = VFlex(undefined, [ "flex-1", "gap-1"]);
         this.container.tabIndex = -1;
 
-        this.toolbars = HFlex([], "gap-1");
+        this.toolbars = HFlex([], ["gap-1", "flex-wrap"]);
 
         this.container.appendChild(VInset(this.toolbars));
         this.container.appendChild(VInset(this.content, "flex-1"));

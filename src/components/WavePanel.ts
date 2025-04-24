@@ -1,10 +1,11 @@
 import { WaveEditorCanvas } from "./WaveEditorCanvas";
 import { WaveScrollCanvas } from "./WaveScrollCanvas";
 import { Appl } from "../App";
-import { ButtonToolbar, IComponent } from "../nutz";
+import { ButtonToolbar, IComponent, StatusBar } from "../nutz";
 import { WaveDocumentEx } from "../audio/SongDocument";
 import { registerWaveEditorCommands } from "../commands/WaveEditor/Register";
 import { ViewFrame } from "../nutz/ViewFrame";
+import { formatNote } from "./PatternEditorHelper";
 
 export class WavePanel extends ViewFrame {
     app: Appl;
@@ -12,6 +13,7 @@ export class WavePanel extends ViewFrame {
     document: WaveDocumentEx;
     waveEditor: WaveEditorCanvas;
     waveScroll: WaveScrollCanvas;
+    statusBar: StatusBar;
 
     constructor(app: Appl) {
         super(app);
@@ -88,6 +90,13 @@ export class WavePanel extends ViewFrame {
         this.view.appendChild(this.waveScroll.getDomNode());
 
         this.setView(this.view);
+
+        this.statusBar = new StatusBar();
+        this.statusBar.addPart(["w-48"], "Offset: 0")
+        this.statusBar.addPart(["flex-1", "border-l-2", "pl-2", "border-neutral-500"], "No wave selected")
+
+        // NOTE: Adding statusbar in ViewFrame's container
+        this.container.appendChild(this.statusBar.getDomNode());
 
         this.container.addEventListener("nutz:mounted", this.onMounted);
         this.container.addEventListener("nutz:unmounted", this.onUnmounted);
@@ -196,6 +205,12 @@ export class WavePanel extends ViewFrame {
         } else {
             this.waveEditor.clearSelection();
             this.waveScroll.clearSelection();
+        }
+
+        if (wave) {
+            this.statusBar.setText(1, "Wave Table: " + wave.instrument.name + " Wave: " + wave.name + " MIDI Note: " + formatNote(wave.note));
+        } else {
+            this.statusBar.setText(1, "No wave selected");
         }
     }
 

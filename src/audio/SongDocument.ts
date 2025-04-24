@@ -31,6 +31,7 @@ export class InstrumentDocument {
     x: number = 0;
     y: number = 0;
     ccs: CcValueDictionary = {};
+    waves: WaveDocumentEx[] = [];
 }
 
 export class ConnectionDocument {
@@ -87,6 +88,7 @@ export class SequenceColumnDocument {
 }
 
 export class WaveDocumentEx {
+    instrument: InstrumentDocument;
     name: string;
     sampleCount: number;
     sampleRate: number;
@@ -175,7 +177,6 @@ export class SongDocument extends EventTarget {
     connections: ConnectionDocument[] = [];
     patterns: PatternDocument[] = [];
     sequenceColumns: SequenceColumnDocument[] = [];
-    waves: WaveDocumentEx[] = [];
 
     setBpm(bpm: number) {
         this.bpm = bpm;
@@ -215,6 +216,9 @@ export class SongDocument extends EventTarget {
             }
         }
 
+        while (instrument.waves.length) {
+            this.deleteWave(instrument, instrument.waves[instrument.waves.length - 1]);
+        }
 
         const index = this.instruments.findIndex(c => c === instrument);
         if (index === -1) {
@@ -406,8 +410,9 @@ export class SongDocument extends EventTarget {
         this.dispatchEvent(new CustomEvent("deleteSequenceEvent", { detail: sequenceEvent }));
     }
 
-    createWave(name: string, note: number, sampleCount: number, sampleRate: number, buffers: Float32Array[], selection: WaveRange = null, zoom: WaveRange = null) {
+    createWave(instrument: InstrumentDocument, name: string, note: number, sampleCount: number, sampleRate: number, buffers: Float32Array[], selection: WaveRange = null, zoom: WaveRange = null) {
         const wave = new WaveDocumentEx();
+        wave.instrument = instrument;
         wave.name = name;
         wave.note = note;
         wave.sampleCount = sampleCount;
@@ -415,7 +420,7 @@ export class SongDocument extends EventTarget {
         wave.buffers = buffers;
         wave.selection = selection;
         wave.zoom = zoom;
-        this.waves.push(wave);
+        instrument.waves.push(wave);
 
         this.dispatchEvent(new CustomEvent("createWave", { detail: wave }));
 
@@ -431,13 +436,13 @@ export class SongDocument extends EventTarget {
         this.dispatchEvent(new CustomEvent("updateWave", { detail: wave }));
     }
 
-    deleteWave(wave: WaveDocumentEx) {
-        const index = this.waves.findIndex(c => c === wave);
+    deleteWave(instrument: InstrumentDocument, wave: WaveDocumentEx) {
+        const index = instrument.waves.findIndex(c => c === wave);
         if (index === -1) {
             return;
         }
 
-        this.waves.splice(index, 1);
+        instrument.waves.splice(index, 1);
         this.dispatchEvent(new CustomEvent("deleteWave", { detail: wave }));
     }
 
@@ -467,11 +472,6 @@ export class SongDocument extends EventTarget {
         while (this.sequenceColumns.length) {
             this.deleteSequenceColumn(this.sequenceColumns[this.sequenceColumns.length - 1]);
         }
-
-        while (this.waves.length) {
-            this.deleteWave(this.waves[this.waves.length - 1]);
-        }
-
     }
 
     exportProjectJson() {
@@ -483,6 +483,15 @@ export class SongDocument extends EventTarget {
                 x: instrument.x,
                 y: instrument.y,
                 ccs: instrument.ccs,
+                waves: instrument.waves.map(wave => ({
+                    name: wave.name,
+                    note: wave.note,
+                    sampleRate: wave.sampleRate,
+                    sampleCount: wave.sampleCount,
+                    selection: wave.selection,
+                    zoom: wave.zoom,
+                    buffers: wave.buffers.map(b => compressFloat32ArrayToBase64(b)),
+                }))
             })),
             connections: this.connections.map(connection => ({
                 from: this.instruments.indexOf(connection.from),
@@ -512,15 +521,6 @@ export class SongDocument extends EventTarget {
                     })),
                 })),
             },
-            waves: this.waves.map(wave => ({
-                name: wave.name,
-                note: wave.note,
-                sampleRate: wave.sampleRate,
-                sampleCount: wave.sampleCount,
-                selection: wave.selection,
-                zoom: wave.zoom,
-                buffers: wave.buffers.map(b => compressFloat32ArrayToBase64(b)),
-            }))
         };
     
         return project;
@@ -537,6 +537,13 @@ export class SongDocument extends EventTarget {
 
         for (let jsonInstrument of json.instruments) {
             const i = this.createInstrument(jsonInstrument.ref, jsonInstrument.name, jsonInstrument.x, jsonInstrument.y, jsonInstrument.ccs || {});
+
+            if (Array.isArray(jsonInstrument.waves)) {
+                for (let jsonWave of jsonInstrument.waves) {
+                    const buffers = jsonWave.buffers.map(b => decompressBase64ToFloat32Array(b));
+                    this.createWave(i, jsonWave.name, jsonWave.note || 60, jsonWave.sampleCount, jsonWave.sampleRate, buffers, jsonWave.selection, jsonWave.zoom);
+                }
+            }
         }
 
         for (let jsonConnection of json.connections) {
@@ -578,13 +585,5 @@ export class SongDocument extends EventTarget {
                 this.createSequenceEvent(sc, jsonEvent.time, pattern);
             }
         }
-
-        // waves -> embed or refer to filenames (in storage, zip, ??)
-
-        for (let jsonWave of json.waves) {
-            const buffers = jsonWave.buffers.map(b => decompressBase64ToFloat32Array(b));
-            this.createWave(jsonWave.name, jsonWave.note || 60, jsonWave.sampleCount, jsonWave.sampleRate, buffers, jsonWave.selection, jsonWave.zoom);
-        }
     }
-    
 }

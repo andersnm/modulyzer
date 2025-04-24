@@ -71,6 +71,10 @@ export class PlayerSongAdapter {
 
         for (let i of this.song.instruments) {
             this.onCreateInstrument(new CustomEvent("createInstrument", { detail: i }));
+
+            for (let w of i.waves) {
+                this.onCreateWave(new CustomEvent("createWave", { detail: w }));
+            }
         }
 
         for (let c of this.song.connections) {
@@ -92,10 +96,6 @@ export class PlayerSongAdapter {
             for (let se of sc.events) {
                 this.onCreateSequenceEvent(new CustomEvent("createSequenceEvent", { detail: se }));
             }
-        }
-
-        for (let w of this.song.waves) {
-            this.onCreateWave(new CustomEvent("createWave", { detail: w }));
         }
     }
 
@@ -190,6 +190,8 @@ export class PlayerSongAdapter {
     onCreateWave = (ev: CustomEvent<WaveDocumentEx>) => {
         const w = ev.detail;
 
+        const instrument = this.instrumentMap.get(w.instrument);
+
         const audioBuffer = this.player.context.createBuffer(w.buffers.length, w.sampleCount, w.sampleRate);
         for (let i = 0; i < w.buffers.length; i++) {
             const buffer = audioBuffer.getChannelData(i);
@@ -203,7 +205,7 @@ export class PlayerSongAdapter {
         wave.note = w.note;
         wave.sampleCount = w.sampleCount;
         wave.sampleRate = w.sampleRate;
-        this.player.waves.push(wave);
+        instrument.waves.push(wave);
 
         this.waveMap.set(w, wave);
     };

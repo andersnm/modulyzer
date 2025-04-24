@@ -11,7 +11,11 @@ const arrowSize = 10;
 const instrumentMenu: MenuItem[] = [
     {
         label: "Pins",
-        action: "show-pins",
+        action: "goto-pins",
+    },
+    {
+        label: "Wavetable",
+        action: "goto-wavetable",
     },
     {
         label: "Delete",
@@ -192,11 +196,23 @@ export class MixerCanvas implements IComponent {
         const p = [ e.offsetX, e.offsetY ];
         const instrument = this.instrumentAtPoint(e.offsetX, e.offsetY);
 
+        const rc = this.canvas.getBoundingClientRect();
+
         if (!instrument) {
+
+            // click mixer bg -> create insturment
+            // create menu with instrument factory parameter
+            const mixerMenu: MenuItem[] = [ {
+                label: "Create Instrument...",
+                action: "add-instrument"
+            }];
+
+            this.app.contextMenuContainer.show(this.commandHost, rc.left + e.offsetX, rc.top + e.offsetY, mixerMenu);
+            e.preventDefault();
+
             return;
         }
 
-        const rc = this.canvas.getBoundingClientRect();
         this.app.contextMenuContainer.show(this.commandHost, rc.left + e.offsetX, rc.top + e.offsetY, instrumentMenu);
         e.preventDefault();
     };
@@ -207,7 +223,7 @@ export class MixerCanvas implements IComponent {
             return;
         }
 
-        this.commandHost.executeCommand("show-pins");
+        this.commandHost.executeCommand("goto-pins");
         e.preventDefault();
     };
 
