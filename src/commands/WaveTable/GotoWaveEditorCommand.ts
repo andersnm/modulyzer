@@ -1,5 +1,4 @@
 import { Appl } from "../../App";
-import { WaveDocumentEx } from "../../audio/SongDocument";
 import { WavePanel } from "../../components/WavePanel";
 import { WavesPanel } from "../../components/WavesPanel";
 

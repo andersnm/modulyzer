@@ -31,7 +31,7 @@ export class InstrumentDocument {
     x: number = 0;
     y: number = 0;
     ccs: CcValueDictionary = {};
-    waves: WaveDocumentEx[] = [];
+    waves: WaveDocument[] = [];
 }
 
 export class ConnectionDocument {
@@ -87,7 +87,7 @@ export class SequenceColumnDocument {
     events: SequenceEventDocument[] = [];
 }
 
-export class WaveDocumentEx {
+export class WaveDocument {
     instrument: InstrumentDocument;
     name: string;
     sampleCount: number;
@@ -411,7 +411,7 @@ export class SongDocument extends EventTarget {
     }
 
     createWave(instrument: InstrumentDocument, name: string, note: number, sampleCount: number, sampleRate: number, buffers: Float32Array[], selection: WaveRange = null, zoom: WaveRange = null) {
-        const wave = new WaveDocumentEx();
+        const wave = new WaveDocument();
         wave.instrument = instrument;
         wave.name = name;
         wave.note = note;
@@ -427,7 +427,7 @@ export class SongDocument extends EventTarget {
         return wave;
     }
 
-    updateWave(wave: WaveDocumentEx, name: string, note: number, selection: WaveRange, zoom: WaveRange) {
+    updateWave(wave: WaveDocument, name: string, note: number, selection: WaveRange, zoom: WaveRange) {
         wave.name = name;
         wave.note = note;
         wave.selection = selection;
@@ -436,7 +436,7 @@ export class SongDocument extends EventTarget {
         this.dispatchEvent(new CustomEvent("updateWave", { detail: wave }));
     }
 
-    deleteWave(instrument: InstrumentDocument, wave: WaveDocumentEx) {
+    deleteWave(instrument: InstrumentDocument, wave: WaveDocument) {
         const index = instrument.waves.findIndex(c => c === wave);
         if (index === -1) {
             return;
@@ -446,7 +446,7 @@ export class SongDocument extends EventTarget {
         this.dispatchEvent(new CustomEvent("deleteWave", { detail: wave }));
     }
 
-    replaceWaveBuffer(wave: WaveDocumentEx, offset: number, inputs: Float32Array[]) {
+    replaceWaveBuffer(wave: WaveDocument, offset: number, inputs: Float32Array[]) {
 
         for (let i = 0; i < wave.buffers.length; i++) {
             const output = wave.buffers[i];

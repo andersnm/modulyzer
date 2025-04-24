@@ -2,7 +2,7 @@ import { WaveEditorCanvas } from "./WaveEditorCanvas";
 import { WaveScrollCanvas } from "./WaveScrollCanvas";
 import { Appl } from "../App";
 import { ButtonToolbar, IComponent, StatusBar } from "../nutz";
-import { WaveDocumentEx } from "../audio/SongDocument";
+import { WaveDocument } from "../audio/SongDocument";
 import { registerWaveEditorCommands } from "../commands/WaveEditor/Register";
 import { ViewFrame } from "../nutz/ViewFrame";
 import { formatNote } from "./PatternEditorHelper";
@@ -10,7 +10,7 @@ import { formatNote } from "./PatternEditorHelper";
 export class WavePanel extends ViewFrame {
     app: Appl;
     view: HTMLDivElement;
-    document: WaveDocumentEx;
+    document: WaveDocument;
     waveEditor: WaveEditorCanvas;
     waveScroll: WaveScrollCanvas;
     statusBar: StatusBar;
@@ -112,7 +112,7 @@ export class WavePanel extends ViewFrame {
         this.app.song.removeEventListener("deleteWave", this.onDeleteWave);
     };
 
-    onUpdate = (ev: CustomEvent<WaveDocumentEx>) => {
+    onUpdate = (ev: CustomEvent<WaveDocument>) => {
         this.waveEditor.buffers = ev.detail.buffers;
         this.waveEditor.redrawCanvas();
 
@@ -120,7 +120,7 @@ export class WavePanel extends ViewFrame {
         this.waveScroll.redrawCanvas();
     };
 
-    onDeleteWave = (ev: CustomEvent<WaveDocumentEx>) => {
+    onDeleteWave = (ev: CustomEvent<WaveDocument>) => {
         if (ev.detail !== this.document) {
             return;
         }
@@ -182,7 +182,7 @@ export class WavePanel extends ViewFrame {
         return this.container;
     }
 
-    setWave(wave: WaveDocumentEx) {
+    setWave(wave: WaveDocument) {
         this.document = wave;
         if (wave) {
             this.waveEditor.buffers = this.document.buffers;

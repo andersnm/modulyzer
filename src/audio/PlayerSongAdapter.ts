@@ -1,6 +1,6 @@
 import { Connection, Pattern, PatternColumn, PatternEvent, Player, SequenceColumn, SequenceEvent, Wave } from "./Player";
 import { CcChangeDetail, Instrument } from "./plugins/InstrumentFactory";
-import { ConnectionDocument, InstrumentDocument, PatternColumnDocument, PatternDocument, PatternEventDocument, SequenceColumnDocument, SequenceEventDocument, SongDocument, WaveDocumentEx } from "./SongDocument";
+import { ConnectionDocument, InstrumentDocument, PatternColumnDocument, PatternDocument, PatternEventDocument, SequenceColumnDocument, SequenceEventDocument, SongDocument, WaveDocument } from "./SongDocument";
 
 function findByValue<K, V>(map: Map<K, V>, value: V): K | undefined {
     for (const entry of map.entries()) {
@@ -21,7 +21,7 @@ export class PlayerSongAdapter {
     patternEventMap: Map<PatternEventDocument, PatternEvent>  = new Map();
     sequenceColumnMap: Map<SequenceColumnDocument, SequenceColumn>  = new Map();
     sequenceEventMap: Map<SequenceEventDocument, SequenceEvent>  = new Map();
-    waveMap: Map<WaveDocumentEx, Wave>  = new Map();
+    waveMap: Map<WaveDocument, Wave>  = new Map();
 
     constructor(player: Player, song: SongDocument) {
         this.player = player;
@@ -187,7 +187,7 @@ export class PlayerSongAdapter {
         this.connectionMap.delete(c);
     };
 
-    onCreateWave = (ev: CustomEvent<WaveDocumentEx>) => {
+    onCreateWave = (ev: CustomEvent<WaveDocument>) => {
         const w = ev.detail;
 
         const instrument = this.instrumentMap.get(w.instrument);
@@ -210,7 +210,7 @@ export class PlayerSongAdapter {
         this.waveMap.set(w, wave);
     };
 
-    onUpdateWave = (ev: CustomEvent<WaveDocumentEx>) => {
+    onUpdateWave = (ev: CustomEvent<WaveDocument>) => {
         const w = ev.detail;
 
         const wave = this.waveMap.get(w);

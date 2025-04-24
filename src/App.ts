@@ -1,22 +1,18 @@
 import { ButtonToolbar, CommandHost, formatHotkey, FullScreen, GridFrameContainer, HFlex, ICommand, IComponent, StatusBar, TabFrameContainer, visitNodeAndChildNodesBreadth, visitNodeAndChildNodesDepth } from "./nutz";
 import { MenuBar } from "./nutz/Menubar";
 import { ModalDialogContainer } from "./nutz/ModalDialogContainer";
-import { mainMenu, MenuItem } from './menu/menu';
-import { tryGetMicrophonePermission } from "./audio/AudioUtil";
+import { mainMenu } from './menu/menu';
 import { AudioDevice } from "./audio/AudioDevice";
-import { WavePanel } from "./components/WavePanel";
-import { SongDocument, WaveDocumentEx } from "./audio/SongDocument";
+import { SongDocument, WaveDocument } from "./audio/SongDocument";
 import { InstrumentFactory } from "./audio/plugins/InstrumentFactory";
 import { MasterFactory } from "./audio/plugins/Master";
 import { ComboDelayFactory } from "./audio/plugins/ComboDelay";
 import { OscillatorFactory } from "./audio/plugins/Oscillator";
-import { MixerPanel } from "./components/MixerPanel";
 import { ReverbFactory } from "./audio/plugins/Reverb";
 import { Dx7Factory } from "./audio/plugins/Dx7";
 import { Player } from "./audio/Player";
 import { WaveTrackerFactory } from "./audio/plugins/WaveTracker";
 import { Open303Factory } from "./audio/plugins/Open303";
-import { WAVEncoder, WAVFormat } from "./wavefile/WAVEncoder";
 import { PlayerSongAdapter } from "./audio/PlayerSongAdapter";
 import { WavePlayer } from "./audio/WavePlayer"; 
 import { registerApplicationCommands } from "./commands/Application/Register";
@@ -245,10 +241,10 @@ export class Appl extends CommandHost implements IComponent {
         input.click();
     }
 
-    recordWave: WaveDocumentEx = null;
+    recordWave: WaveDocument = null;
     recordOffset: number = 0;
 
-    startRecordWave(wave: WaveDocumentEx, offset: number = 0) {
+    startRecordWave(wave: WaveDocument, offset: number = 0) {
 
         if (this.recordWave) {
             this.stopRecordWave();

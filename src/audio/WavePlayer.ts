@@ -1,7 +1,5 @@
 import { Appl } from "../App";
-import { Wave } from "../audio/Player";
-import { WaveDocumentEx } from "../audio/SongDocument";
-import { WavePanel } from "../components/WavePanel";
+import { WaveDocument } from "../audio/SongDocument";
 
 /**
  * Standalone thing for playing waves on the current audio device context
@@ -18,7 +16,7 @@ export class WavePlayer extends EventTarget {
         this.app = app;
     }
 
-    playWave(wave: WaveDocumentEx) {
+    playWave(wave: WaveDocument) {
         this.stopWave();
 
         return new Promise<void>((resolve, reject) => {

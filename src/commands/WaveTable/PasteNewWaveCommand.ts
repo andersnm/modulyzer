@@ -1,9 +1,9 @@
 import { Appl } from "../../App";
-import { WaveDocumentEx } from "../../audio/SongDocument";
+import { WaveDocument } from "../../audio/SongDocument";
 import { readClipboardWave } from "../../Clipboard";
 import { WavesPanel } from "../../components/WavesPanel";
 
-export function findAvailableNote(waves: WaveDocumentEx[]) {
+export function findAvailableNote(waves: WaveDocument[]) {
     let note = 48; // 48 = C-3
     let counter = 0;
     while (counter < 100) {
