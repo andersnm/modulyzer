@@ -336,7 +336,7 @@ export function deleteValue(song: SongDocument, patternColumn: PatternColumnDocu
         const editNoteOffEvent = patternColumn.events.find(e => e.time === time && e.channel === channel && e.data0 === 0);
 
         if (editNoteEvent) {
-            const noteOffEvent = getNextPatternEvent(patternColumn, time, channel, editNoteEvent.value);
+            const noteOffEvent = getNextPatternEvent(patternColumn, time, channel, editNoteEvent.value, 0);
             if (noteOffEvent && noteOffEvent.data0 === 0) {
                 // Delete note and its note-off - if there is a noteoff at the same time, leave the noteoff
                 song.deletePatternEvent(patternColumn, editNoteEvent);
@@ -347,7 +347,7 @@ export function deleteValue(song: SongDocument, patternColumn: PatternColumnDocu
             }
         } else if (editNoteOffEvent) {
             // Delete noteoff = extend noteoff until next note or end of pattern
-            const nextNoteEvent = getNextPatternEvent(patternColumn, time, channel, undefined, 0);
+            const nextNoteEvent = getNextPatternEvent(patternColumn, time, channel, undefined);
 
             if (nextNoteEvent) {
                 if (nextNoteEvent.data0 !== 0) {
@@ -358,8 +358,9 @@ export function deleteValue(song: SongDocument, patternColumn: PatternColumnDocu
                     console.warn("Next note is a noteoff, expected note, not extending the noteoff.", nextNoteEvent)
                 }
             } else {
-                // throwing here to prevent possible shifting afterwards, which could result in wrong noteoffS
-                throw new Error("TODO: the case where noteoff extends to EOP")
+                song.deletePatternEvent(patternColumn, editNoteOffEvent);
+                song.createPatternEvent(patternColumn, patternColumn.pattern.duration - 1, editNoteOffEvent.value, 0, 0, channel);
+                return true;
             }
         }
     } else {

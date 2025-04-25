@@ -207,10 +207,15 @@ export class PatternEditorCanvas implements IComponent {
                 return true;
             case "Delete":
                 this.deleteAtCursor();
-                this.shiftEventsAfterCursor(-1);
                 return true;
             case "Backspace":
-                this.deleteAtCursor();
+                if (this.moveCursor(0, -1)) {
+                    if (this.deleteAtCursor()) {
+                        this.shiftEventsAfterCursor(-1);
+                    } else {
+                        this.moveCursor(0, 1);
+                    }
+                }
                 return true;
             case "Insert":
                 this.shiftEventsAfterCursor(1);
@@ -264,11 +269,16 @@ export class PatternEditorCanvas implements IComponent {
     };
 
     moveCursor(dx, dy) {
+        const ct = this.cursorTime;
+        const cc = this.cursorColumn;
         this.cursorTime = Math.max(Math.min(this.cursorTime + dy, this.pattern.duration - 1), 0);
         this.cursorColumn = Math.max(Math.min(this.cursorColumn + dx, this.cursorColumns.length - 1), 0);
         
         this.scrollIntoView();
         this.redrawCanvas();
+
+        // Returns true if the cursor moved
+        return ct !== this.cursorTime || cc !== this.cursorColumn;
     }
 
     moveNextColumn() {
@@ -360,6 +370,10 @@ export class PatternEditorCanvas implements IComponent {
         // can be note and noteoff on same time/channel: if both = delete note
         const cursorColumn = getCursorColumnAt(this.renderColumns, this.cursorColumn);
         deleteValue(this.app.song, cursorColumn.renderColumn.patternColumn, cursorColumn.renderColumn.type, this.cursorTime, cursorColumn.channel);
+
+        // Returns true if all events were deleted at this position = can shift
+        const events = cursorColumn.renderColumn.patternColumn.events.filter(e => e.channel === cursorColumn.channel && e.time === this.cursorTime);
+        return events.length === 0;
     }
 
     getNoteForKey(code: string) {
