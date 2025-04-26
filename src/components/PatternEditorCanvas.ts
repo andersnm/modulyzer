@@ -69,14 +69,20 @@ class DragSelect extends DragTarget {
 export class PatternEditorCanvas implements IComponent {
     app: Appl;
     parent: INotify;
+    dragTarget: DragTarget;
     container: HTMLElement;
     canvas: HTMLCanvasElement;
     cursorColumn: number = 0;
     cursorTime: number = 0;
     pattern: PatternDocument;
     scrollRow: number = 0;
-
     octave: number = 4;
+
+    renderColumns: RenderColumnInfo[];
+    cursorColumns: CursorColumnInfo[];
+    fontEm: TextMetrics;
+    rowNumberWidth: number;
+    selection: PatternSelection;
 
     constructor(app: Appl, parent: INotify) {
         this.app = app;
@@ -101,11 +107,14 @@ export class PatternEditorCanvas implements IComponent {
 
         this.container.addEventListener("nutz:mounted", this.onMounted);
         this.container.addEventListener("nutz:unmounted", this.onUnmounted);
+
+        this.setPattern(null);
     }
 
     onMounted = () => {
         this.app.song.addEventListener("updateInstrument", this.onResize);
         this.app.song.addEventListener("updatePattern", this.onRebind);
+        this.app.song.addEventListener("deletePattern", this.onDeletePattern);
         this.app.song.addEventListener("createPatternColumn", this.onRebind);
         this.app.song.addEventListener("updatePatternColumn", this.onRebind);
         this.app.song.addEventListener("createPatternEvent", this.onResize);
@@ -116,11 +125,18 @@ export class PatternEditorCanvas implements IComponent {
     onUnmounted = () => {
         this.app.song.removeEventListener("updateInstrument", this.onResize);
         this.app.song.removeEventListener("updatePattern", this.onRebind);
+        this.app.song.removeEventListener("deletePattern", this.onDeletePattern);
         this.app.song.removeEventListener("createPatternColumn", this.onRebind);
         this.app.song.removeEventListener("updatePatternColumn", this.onRebind);
         this.app.song.removeEventListener("createPatternEvent", this.onResize);
         this.app.song.removeEventListener("updatePatternEvent", this.onResize);
         this.app.song.removeEventListener("deletePatternEvent", this.onResize);
+    };
+
+    onDeletePattern = (ev: CustomEvent<PatternDocument>) => {
+        if (ev.detail === this.pattern) {
+            this.setPattern(null);
+        }
     };
 
     onRebind = () => {
@@ -130,8 +146,6 @@ export class PatternEditorCanvas implements IComponent {
     onResize = () => {
         this.redrawCanvas();
     };
-
-    dragTarget: DragTarget;
 
     onMouseDown = (e: PointerEvent) => {
         if (!this.dragTarget) {
@@ -190,6 +204,10 @@ export class PatternEditorCanvas implements IComponent {
 
         // TODO: The above is no longer correct, the canvas has the focus now
 
+        if (!this.pattern) {
+            return false;
+        }
+    
         const key = formatHotkey(e);
 
         switch (key) {
@@ -532,24 +550,17 @@ export class PatternEditorCanvas implements IComponent {
         }
     }
 
-    renderColumns: RenderColumnInfo[];
-    cursorColumns: CursorColumnInfo[];
-    fontEm: TextMetrics;
-    rowNumberWidth: number;
-    selection: PatternSelection;
-
     setPattern(pattern: PatternDocument) {
         this.pattern = pattern;
+        const ctx = this.canvas.getContext("2d");
+        ctx.font = "14px monospace";
+
+        this.fontEm = ctx.measureText("M");
+        this.rowNumberWidth = this.fontEm.width * 5;
 
         if (this.pattern) {
-            const ctx = this.canvas.getContext("2d");
-            ctx.font = "14px monospace";
-
-            this.fontEm = ctx.measureText("M");
             this.renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
             this.cursorColumns = getCursorColumns(this.renderColumns);
-
-            this.rowNumberWidth = this.fontEm.width * 5;
         } else {
             this.renderColumns = [];
             this.cursorColumns = [];
@@ -578,7 +589,7 @@ export class PatternEditorCanvas implements IComponent {
         let lastInstrument: InstrumentDocument;
 
         const visibleRows = Math.floor(this.canvas.height / fontHeight) - 1;
-        const totalRows = this.pattern.duration;
+        const totalRows = this.pattern?.duration ?? 0;
 
         const rowNumberWidth = this.fontEm.width * 5;
         ctx.textAlign = "right";

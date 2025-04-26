@@ -1,6 +1,7 @@
 import { Appl } from "../App";
 import { IComponent } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
+import { PatternPanel } from "./PatternPanel";
 
 export class SequenceEditorCanvas implements IComponent {
     container: HTMLElement;
@@ -38,6 +39,10 @@ export class SequenceEditorCanvas implements IComponent {
     }
 
     onMounted = async (ev) => {
+        if (this.app.player?.playing) {
+            this.onPlaying();
+        }
+
         this.app.song.addEventListener("playing", this.onPlaying);
         this.app.song.addEventListener("stopped", this.onStopped);
         this.app.song.addEventListener("updateDocument", this.onResize);
@@ -174,12 +179,13 @@ export class SequenceEditorCanvas implements IComponent {
         }
     }
 
-    gotoPattern() {
+    async gotoPattern() {
         const sequenceColumn = this.app.song.sequenceColumns[this.cursorColumn];
         const sequenceEvent = sequenceColumn.events.find(e => e.time === this.cursorTime);
 
         if (sequenceEvent) {
-            this.app.executeCommand("show-pattern-editor", sequenceEvent.pattern);
+            const panel = await this.app.executeCommand("show-pattern-editor") as PatternPanel;
+            panel.setPattern(sequenceEvent.pattern);
         }
     }
 

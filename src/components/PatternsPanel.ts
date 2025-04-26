@@ -1,6 +1,7 @@
 import { Appl } from "../App";
 import { ButtonToolbar, DataTable, IComponent } from "../nutz";
 import { ViewFrame } from "../nutz/ViewFrame";
+import { PatternPanel } from "./PatternPanel";
 
 export class PatternsPanel extends ViewFrame {
     app: Appl;
@@ -62,12 +63,13 @@ export class PatternsPanel extends ViewFrame {
         this.list.setSelectedIndex(Math.min(selectedIndex, this.list.getRowCount() - 1));
     }
 
-    notify(source: IComponent, eventName: string, ...args: any): void {
+    async notify(source: IComponent, eventName: string, ...args: any) {
         if (source === this.list) {
             if (eventName === "dblclick") {
                 const index = args[0];
                 const pattern = this.app.song.patterns[index];
-                this.app.executeCommand("show-pattern-editor", pattern);
+                const panel = await this.app.executeCommand("show-pattern-editor") as PatternPanel;
+                panel.setPattern(pattern);
             }
         }
     }
