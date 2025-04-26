@@ -1,4 +1,5 @@
 import { deflate, inflate } from 'pako';
+import { getNewPatternName } from '../components/PatternEditorHelper';
 
 function compressFloat32ArrayToBase64(data: Float32Array): string {
     const uint8Array = new Uint8Array(data.buffer);
@@ -458,6 +459,21 @@ export class SongDocument extends EventTarget {
         }
 
         this.dispatchEvent(new CustomEvent("updateWave", { detail: wave }));
+    }
+
+    duplicatePattern(pattern: PatternDocument) {
+        const name = getNewPatternName(this.patterns);
+
+        const p = this.createPattern(name, pattern.duration, pattern.subdivision);
+        for (let column of pattern.columns) {
+            const pc = this.createPatternColumn(p, column.instrument, column.pin);
+
+            for (let event of column.events) {
+                const pe = this.createPatternEvent(pc, event.time, event.value, event.data0, event.data1, event.channel);
+            }
+        }
+
+        return p;
     }
 
     clearAll() {

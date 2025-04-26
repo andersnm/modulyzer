@@ -115,7 +115,7 @@ export class DataTable implements IComponent {
         const row = document.createElement("tr");
         row.classList.add("contents");
 
-        row.addEventListener("click", () => {
+        row.addEventListener("pointerdown", () => {
             const index = getChildNodeIndex(this.tbody.childNodes, row);
             this.setSelectedIndex(index);
         });

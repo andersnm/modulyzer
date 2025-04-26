@@ -251,9 +251,8 @@ export function editNote(song: SongDocument, patternColumn: PatternColumnDocumen
     if (editNoteEvent) {
 
         // find noteoff and update its value
-        const nextPatternEvent = getNextPatternEvent(patternColumn, time, channel, editNoteEvent.value);
+        const nextPatternEvent = getNextPatternEvent(patternColumn, time, channel, editNoteEvent.value, 0);
         if (nextPatternEvent) {
-            // not validating velo==0 before updating, _should_ be the noteoff
             song.updatePatternEvent(editNoteEvent, editNoteEvent.time, note, editNoteEvent.data0, editNoteEvent.data1);
             song.updatePatternEvent(nextPatternEvent, nextPatternEvent.time, note, 0, channel);
         } else {
@@ -265,8 +264,8 @@ export function editNote(song: SongDocument, patternColumn: PatternColumnDocumen
         const previousPatternEvent = getPreviousPatternEvent(patternColumn, time, channel);
         if (previousPatternEvent && previousPatternEvent.data0 !== 0) {
             // Insert in duration of another note: shorten previous note
-            const noteoffForPrevious = getNextPatternEvent(patternColumn, previousPatternEvent.time, channel, previousPatternEvent.value);
-            if (noteoffForPrevious.data0 === 0) {
+            const noteoffForPrevious = getNextPatternEvent(patternColumn, previousPatternEvent.time, channel, previousPatternEvent.value, 0);
+            if (noteoffForPrevious) {
                 song.deletePatternEvent(patternColumn, noteoffForPrevious);
                 song.createPatternEvent(patternColumn, time, previousPatternEvent.value, 0, 0, channel);
             } else {
@@ -297,8 +296,8 @@ export function editNoteOff(song: SongDocument, patternColumn: PatternColumnDocu
         song.deletePatternEvent(patternColumn, previousPatternEvent);
     } else {
         // previous note is a note: shorten duration, find and delete its noteoff before new noteoff
-        const nextPatternEvent = getNextPatternEvent(patternColumn, previousPatternEvent.time, channel, previousPatternEvent.value);
-        if (nextPatternEvent && nextPatternEvent.data0 === 0) {
+        const nextPatternEvent = getNextPatternEvent(patternColumn, previousPatternEvent.time, channel, previousPatternEvent.value, 0);
+        if (nextPatternEvent) {
             song.deletePatternEvent(patternColumn, nextPatternEvent);
         } else {
             console.warn("Could not find noteoff for previous note. Not shortening")
@@ -427,4 +426,28 @@ export function exportClipboardPattern(renderColumns: RenderColumnInfo[], start:
     }
 
     return clipboardObject;
+}
+
+
+function formatPatternName(i: number) {
+    let name = i.toString(16).toUpperCase();
+    while (name.length < 2)
+        name = "0" + name;
+
+    return name;
+}
+
+function patternNameExists(patterns: PatternDocument[], name: string) {
+    return patterns.findIndex(p => p.name === name) !== -1;
+}
+
+export function getNewPatternName(patterns: PatternDocument[]) {
+    let counter = 0;
+    let name = formatPatternName(counter);
+    while (patternNameExists(patterns, name)) {
+        counter++;
+        name = formatPatternName(counter)
+    }
+
+    return name;
 }

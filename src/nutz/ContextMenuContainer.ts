@@ -7,12 +7,15 @@ export class ContextMenuContainer implements INotify {
     menu: Menu;
     overlay: HTMLDivElement;
     commandHost: ICommandHost;
+    focusElement: HTMLElement;
 
     constructor() {
         this.menu = new Menu(this);
     }
 
     show(app: ICommandHost, x: number, y: number, menu: MenuItem[]) {
+
+        this.focusElement = document.activeElement as HTMLElement;
 
         this.overlay = document.createElement("div");
         this.overlay.className = "relative z-10";
@@ -39,6 +42,7 @@ export class ContextMenuContainer implements INotify {
         this.overlay = null;
         this.commandHost = null;
         this.menu.hide();
+        this.focusElement?.focus();
     }
 
     notify(source: IComponent, eventName: string, ...args: any): void {

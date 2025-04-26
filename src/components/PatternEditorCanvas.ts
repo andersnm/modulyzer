@@ -1,8 +1,9 @@
-import { DragTarget, formatHotkey, IComponent, INotify } from "../nutz";
+import { DragTarget, formatHotkey, ICommandHost, IComponent, INotify } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 import { Appl } from "../App";
-import { InstrumentDocument, PatternColumnDocument, PatternDocument, WaveRange } from "../audio/SongDocument";
+import { InstrumentDocument, PatternDocument } from "../audio/SongDocument";
 import { CursorColumnInfo, deleteValue, editNote, editNoteOff, editValue, editVelocity, formatNote, formatU8, getCursorColumnAt, getCursorColumnAtPosition, getCursorColumnIndex, getCursorColumns, getPatternRenderColumns, getRenderColumnIndex, getRenderColumnPosition, getRenderColumnWidth, RenderColumnInfo } from "./PatternEditorHelper";
+import { patternMenu } from "../menu/menu";
 
 const maxPolyphonic = 8;
 
@@ -176,6 +177,10 @@ export class PatternEditorCanvas implements IComponent {
 
     onContextMenu = (e: MouseEvent) => {
         console.log("onContextMenu")
+        const rc = this.canvas.getBoundingClientRect();
+
+        // TODO: dont cast
+        this.app.contextMenuContainer.show(this.parent as ICommandHost, rc.left + e.offsetX, rc.top + e.offsetY, patternMenu);
         e.preventDefault();
     };
 
@@ -361,6 +366,7 @@ export class PatternEditorCanvas implements IComponent {
         const fontHeight = em.fontBoundingBoxAscent + em.fontBoundingBoxDescent;
 
         const visibleRows = Math.floor(this.canvas.height / fontHeight) - 1;
+        if (visibleRows <= 0) return;
 
         if (this.cursorTime - this.scrollRow > visibleRows) {
             this.scrollRow = this.cursorTime - visibleRows

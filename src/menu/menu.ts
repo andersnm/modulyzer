@@ -167,3 +167,43 @@ export const sequencerMenu: MenuItem[] = [
         action: "show-sequence-properties",
     }
 ];
+
+export const patternMenu: MenuItem[] = [
+    {
+        label: "Add Column...",
+        action: "add-column"
+    },
+    {
+        label: "Duplicate",
+        action: "duplicate-pattern"
+    },
+    {
+        label: "Properties...",
+        action: "edit-pattern"
+    },
+];
+
+export const patternListMenu: MenuItem[] = [
+    {
+        label: "Edit",
+        action: "goto-pattern-editor"
+    },
+    {
+        label: "Delete",
+        action: "delete-pattern"
+    },
+    {
+        label: "Duplicate",
+        action: "duplicate-pattern"
+    },
+    {
+        label: "Properties...",
+        action: "edit-pattern"
+    },
+
+    // separator
+    {
+        label: "Create new",
+        action: "create-pattern"
+    },
+];

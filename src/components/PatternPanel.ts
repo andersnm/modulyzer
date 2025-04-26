@@ -75,7 +75,12 @@ export class PatternPanel extends ViewFrame implements IComponent {
                 type: "button",
                 label: "Edit...",
                 action: "edit-pattern",
-            }
+            },
+            {
+                type: "button",
+                label: "Duplicate",
+                action: "duplicate-pattern",
+            },
         ]));
 
         this.addToolbar(this.octaveInput.getDomNode() as HTMLElement);

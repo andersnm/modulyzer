@@ -1,5 +1,7 @@
 import { Appl } from "../App";
-import { ButtonToolbar, DataTable, IComponent } from "../nutz";
+import { registerPatternListCommands } from "../commands/PatternList/Register";
+import { patternListMenu } from "../menu/menu";
+import { ButtonToolbar, DataTable, IComponent, MenuItem } from "../nutz";
 import { ViewFrame } from "../nutz/ViewFrame";
 import { PatternPanel } from "./PatternPanel";
 
@@ -11,11 +13,14 @@ export class PatternsPanel extends ViewFrame {
         super(app);
         this.app = app;
 
+        registerPatternListCommands(this);
+
         this.list = new DataTable(this);
         this.list.addColumn("Name", "name")
         this.list.addColumn("Cols", "columns")
         this.list.addColumn("Sub.", "subdivision")
         this.list.addColumn("Rows", "rows")
+        this.list.container.addEventListener("contextmenu", this.onContextMenu);
 
         this.addToolbar(ButtonToolbar(this, [
             {
@@ -35,15 +40,30 @@ export class PatternsPanel extends ViewFrame {
         this.bind();
         this.app.song.addEventListener("createPattern", this.onUpdate)
         this.app.song.addEventListener("updatePattern", this.onUpdate)
+        this.app.song.addEventListener("createPatternColumn", this.onUpdate)
+        this.app.song.addEventListener("deletePatternColumn", this.onUpdate)
     };
 
     onUnmounted = async (ev) => {
         this.app.song.removeEventListener("createPattern", this.onUpdate)
         this.app.song.removeEventListener("updatePattern", this.onUpdate)
+        this.app.song.removeEventListener("createPatternColumn", this.onUpdate)
+        this.app.song.removeEventListener("deletePatternColumn", this.onUpdate)
     };
 
     onUpdate = () => {
         this.bind();
+    }
+
+    onContextMenu = (e: MouseEvent) => {
+        e.preventDefault();
+
+        if (this.list.selectedIndex === -1) {
+            return;
+        }
+
+        const rc = (e.target as HTMLElement).getBoundingClientRect();
+        this.app.contextMenuContainer.show(this, rc.left + e.offsetX, rc.top + e.offsetY, patternListMenu);
     }
 
     async bind() {
