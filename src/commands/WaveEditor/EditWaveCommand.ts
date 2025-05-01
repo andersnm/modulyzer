@@ -1,9 +1,9 @@
 import { Appl } from "../../App";
 import { WavePanel } from "../../components/WavePanel";
-import { WavePropertiesPanel } from "../../components/WavePropertiesPanel";
-import { ICommand, IComponent, INotify } from "../../nutz";
+import { showWavePropertiesDialog } from "../../dialogs/WavePropertiesDialog";
+import { ICommand } from "../../nutz";
 
-export class EditWaveCommand implements ICommand, INotify {
+export class EditWaveCommand implements ICommand {
     app: Appl;
 
     constructor(private component: WavePanel) {
@@ -17,23 +17,6 @@ export class EditWaveCommand implements ICommand, INotify {
             return;
         }
 
-        const wavePanel = new WavePropertiesPanel(this.app, this, this.component.document.name, this.component.document.note);
-        const result = await this.app.modalDialogContainer.showModal("Wave Properties", wavePanel);
-
-        if (!result) {
-            return;
-        }
-
-        this.app.song.updateWave(this.component.document, wavePanel.name, wavePanel.note, this.component.document.selection, this.component.document.zoom);
-    }
-
-    notify(source: IComponent, eventName: string, ...args: any): void {
-        if (source instanceof WavePropertiesPanel) {
-            if (eventName === "ok") {
-                this.app.modalDialogContainer.endModal(true);
-            } else if (eventName === "cancel") {
-                this.app.modalDialogContainer.endModal(false);
-            }
-        }
+        await showWavePropertiesDialog(this.app, this.component.document);
     }
 }

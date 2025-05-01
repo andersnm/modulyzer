@@ -2,10 +2,12 @@ import { WaveEditorCanvas } from "./WaveEditorCanvas";
 import { WaveScrollCanvas } from "./WaveScrollCanvas";
 import { Appl } from "../App";
 import { ButtonToolbar, IComponent, StatusBar } from "../nutz";
-import { WaveDocument } from "../audio/SongDocument";
+import { InstrumentDocument, WaveDocument } from "../audio/SongDocument";
 import { registerWaveEditorCommands } from "../commands/WaveEditor/Register";
 import { ViewFrame } from "../nutz/ViewFrame";
 import { formatNote } from "./PatternEditorHelper";
+import { MenuItem as NutzMenuItem } from "../nutz";
+import { showCreateNewWaveDialog } from "../dialogs/CreateNewWaveDialog";
 
 export class WavePanel extends ViewFrame {
     app: Appl;
@@ -93,7 +95,11 @@ export class WavePanel extends ViewFrame {
 
         this.statusBar = new StatusBar();
         this.statusBar.addPart(["w-48"], "Offset: 0")
-        this.statusBar.addPart(["flex-1", "border-l-2", "pl-2", "border-neutral-500"], "No wave selected")
+        this.statusBar.addPart(["w-24"], "---")
+        this.statusBar.addPart(["flex-1", "cursor-pointer"], "No instrument selected")
+        this.statusBar.addPart(["flex-1"], "No wave selected")
+
+        this.statusBar.parts[2].addEventListener("click", this.onStatusBarInstrumentContextMenu);
 
         // NOTE: Adding statusbar in ViewFrame's container
         this.container.appendChild(this.statusBar.getDomNode());
@@ -129,6 +135,65 @@ export class WavePanel extends ViewFrame {
         this.waveScroll.clear();
         this.document = null;
     };
+
+    onStatusBarInstrumentContextMenu = async (ev: MouseEvent) => {
+        const instruments = this.getWaveTableInstruments();
+        const menuItems: NutzMenuItem[] = [];
+        for (let instrument of instruments) {
+
+            const waveItems: NutzMenuItem[] = [
+                {
+                    label: "Create new...",
+                    action: () => this.statusCreateNewAndGotoWave(instrument),
+                }
+            ];
+
+            for (let wave of instrument.waves) {
+                waveItems.push({
+                    label: wave.name,
+                    action: () => this.setWave(wave),
+                    checked: wave === this.document,
+                });
+            }
+
+            menuItems.push({
+                label: instrument.name,
+                checked: instrument === this.document?.instrument,
+                items: waveItems,
+            });
+        }
+
+        const rc = (ev.target as HTMLElement).getBoundingClientRect();
+        const action = await this.app.contextMenuContainer.showPopup(rc.left + ev.offsetX, rc.top + ev.offsetY, menuItems);
+        if (!action) {
+            return false;
+        }
+
+        action();
+
+        return true;
+    };
+
+    async statusCreateNewAndGotoWave(instrument: InstrumentDocument) {
+        const wave = await showCreateNewWaveDialog(this.app, instrument);
+        if (wave) {
+            this.setWave(wave);
+        }
+    }
+
+    getWaveTableInstruments() {
+        const result: InstrumentDocument[] = [];
+        for (let instrument of this.app.song.instruments) {
+            const factory = this.app.player.getInstrumentFactoryById(instrument.instrumentId);
+            if (!factory.useWaveTable) {
+                continue;
+            }
+
+            result.push(instrument);
+        }
+
+        return result;
+    }
 
     notify(source: IComponent, eventName: string, ...args: any): void {
         if (source === this.waveEditor) {
@@ -208,9 +273,13 @@ export class WavePanel extends ViewFrame {
         }
 
         if (wave) {
-            this.statusBar.setText(1, "Wave Table: " + wave.instrument.name + " Wave: " + wave.name + " MIDI Note: " + formatNote(wave.note));
+            this.statusBar.setText(1, formatNote(wave.note));
+            this.statusBar.setText(2, wave.instrument.name + "▾");
+            this.statusBar.setText(3, wave.name);
         } else {
-            this.statusBar.setText(1, "No wave selected");
+            this.statusBar.setText(1, "---");
+            this.statusBar.setText(2, "No instrument selected");
+            this.statusBar.setText(3, "No wave selected");
         }
     }
 

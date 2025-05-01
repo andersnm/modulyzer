@@ -13,8 +13,12 @@ export class CreateWavePanel implements IComponent {
     note: number = 60;
     channels: number = 1;
 
-    constructor(parent: INotify) {
+    constructor(parent: INotify, note?: number) {
         this.parent = parent;
+
+        if (note) {
+            this.note = note;
+        }
 
         this.container= VInset(undefined, [ "flex-1", "gap-1" ]);
         this.container.tabIndex = -1;

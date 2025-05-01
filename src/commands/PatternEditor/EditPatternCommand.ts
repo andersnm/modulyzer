@@ -1,9 +1,9 @@
 import { Appl } from "../../App";
 import { PatternPanel } from "../../components/PatternPanel";
-import { PatternPropertiesPanel } from "../../components/PatternPropertiesPanel";
-import { ICommand, IComponent, INotify } from "../../nutz";
+import { showPatternPropertiesDialog } from "../../dialogs/PatternPropertiesDialog";
+import { ICommand } from "../../nutz";
 
-export class EditPatternCommand implements ICommand, INotify {
+export class EditPatternCommand implements ICommand {
     app: Appl;
 
     constructor(private component: PatternPanel) {
@@ -18,23 +18,6 @@ export class EditPatternCommand implements ICommand, INotify {
             return;
         }
 
-        const patternPanel = new PatternPropertiesPanel(this.app, this, pattern.name, pattern.duration, pattern.subdivision, pattern.swing);
-        const result = await this.app.modalDialogContainer.showModal("Pattern Properties", patternPanel);
-
-        if (!result) {
-            return;
-        }
-
-        this.app.song.updatePattern(pattern, patternPanel.name, patternPanel.length, patternPanel.subdivision, patternPanel.swing);
-    }
-
-    notify(source: IComponent, eventName: string, ...args: any): void {
-        if (source instanceof PatternPropertiesPanel) {
-            if (eventName === "ok") {
-                this.app.modalDialogContainer.endModal(true);
-            } else if (eventName === "cancel") {
-                this.app.modalDialogContainer.endModal(false);
-            }
-        }
+        return await showPatternPropertiesDialog(this.app, pattern);
     }
 }
