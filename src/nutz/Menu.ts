@@ -5,6 +5,7 @@ export interface MenuItem {
     action?: string;
     icon?: string;
     shortcut?: string; //
+    checked?: boolean;
     items?: MenuItem[]; 
 }
 
@@ -53,8 +54,7 @@ export class Menu implements IComponent {
 
                     this.submenu = new Menu(this);
                     this.submenu.bindMenu(item.items);
-                    this.submenu.setPosition(rc.right, rc.top);
-                    this.submenu.show();
+                    this.submenu.show(rc.right, rc.top);
 
                     this.submenuItemIndex = this.selectedIndex;
                     // this.submenuNode = itemOuterNode;
@@ -80,8 +80,21 @@ export class Menu implements IComponent {
         });
     }
 
-    show() {
+    show(x: number, y: number) {
         document.body.appendChild(this.menuContainer);
+
+        const menuRect = this.menuContainer.getBoundingClientRect();
+        if (x + menuRect.width > window.innerWidth) {
+            x = window.innerWidth - menuRect.width - 1;
+        }
+
+        if (y + menuRect.height > window.innerHeight) {
+            y = window.innerHeight - menuRect.height - 1;
+        }
+
+        this.menuContainer.style.left = x + "px";
+        this.menuContainer.style.top = y + "px";
+
         this.menuContainer.focus();
     }
 
@@ -102,11 +115,6 @@ export class Menu implements IComponent {
         }
     }
 
-    setPosition(x, y) {
-        this.menuContainer.style.left = x + "px";
-        this.menuContainer.style.top = y + "px";
-    }
-
     bindMenuItemStyle(itemOuterNode: HTMLElement, itemIndex: number) {
         const open = this.selectedIndex == itemIndex || this.submenuItemIndex == itemIndex; // === item; // !!item.open; // if the flyout; hover
         itemOuterNode.className = "flex flex-row " + (open ? "bg-neutral-200 text-neutral-700" : "");
@@ -123,7 +131,13 @@ export class Menu implements IComponent {
         iconNode.className = "w-6";
 
         const iconSpan = document.createElement("span");
-        iconSpan.className = "hgi-stroke " + item.icon;
+        if (item.checked === true) {
+            iconSpan.className = "hgi-stroke hgi-tick-01";
+        } else if (item.checked === false) {
+            iconSpan.className = "";
+        } else {
+            iconSpan.className = "hgi-stroke " + item.icon;
+        }
 
         iconNode.appendChild(iconSpan);
 
@@ -198,8 +212,7 @@ export class Menu implements IComponent {
 
                     this.submenu = new Menu(this);
                     this.submenu.bindMenu(item.items);
-                    this.submenu.setPosition(rc.right, rc.top);
-                    this.submenu.show();
+                    this.submenu.show(rc.right, rc.top);
 
                     this.submenuItemIndex = itemIndex;
                     // this.submenuNode = itemOuterNode;

@@ -10,6 +10,7 @@ export function convertNutzMenu(app: ICommandHost, menu: MenuItem[]): NutzMenuIt
         action: m.action,
         icon: app.getCommand(m.action)?.icon,
         shortcut: app.getHotkeyForCommand(m.action),
+        checked: m.checked,
         items: m.items ? convertNutzMenu(app, m.items) : null,
     }));
 
@@ -131,8 +132,7 @@ export class MenuBar implements IComponent {
         // translate to menu component's menuitem with shortcut, icon etc from the command
         const nutzMenu = convertNutzMenu(this.app, menu)
         this.menu.bindMenu(nutzMenu);
-        this.menu.setPosition(x, y);
-        this.menu.show();
+        this.menu.show(x, y);
     }
 
     notify(source: IComponent, eventName: string, ...args: any): void {

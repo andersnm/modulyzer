@@ -14,6 +14,10 @@ export class StatusBar implements IComponent {
 
     addPart(classes: string[], text: string) {
         const part = document.createElement("div")
+        if (this.parts.length) {
+            part.classList.add("border-l-2", "pl-2", "border-neutral-500");
+        }
+
         part.classList.add("text-neutral-300", ...classes);
         part.innerText = text;
         this.parts.push(part);
