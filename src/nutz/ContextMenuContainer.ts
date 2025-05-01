@@ -9,7 +9,7 @@ export class ContextMenuContainer implements INotify {
     overlay: HTMLDivElement;
     commandHost: ICommandHost;
     focusElement: HTMLElement;
-    resolve: (item: NutzMenuItem) => void;
+    resolve: (item: any) => void;
 
     constructor() {
         this.menu = new Menu(this);
@@ -20,14 +20,15 @@ export class ContextMenuContainer implements INotify {
 
         this.commandHost = app;
 
-        const result = await this.showPopup(x, y, nutzMenu);
-        if (!result) {
+        const action = await this.showPopup(x, y, nutzMenu);
+        if (!action) {
             return null;
         }
 
-        return await app.executeCommand(result.action);
+        return await app.executeCommand(action);
     }
 
+    // Returns the action property of the selected menu item, or null if canceled
     async showPopup(x: number, y: number, menu: NutzMenuItem[]) {
 
         if (this.resolve) {
@@ -35,7 +36,7 @@ export class ContextMenuContainer implements INotify {
             this.resolve = null;
         }
 
-        return new Promise<NutzMenuItem>((resolve, reject) => {
+        return new Promise<any>((resolve, reject) => {
 
             this.resolve = resolve;
             this.focusElement = document.activeElement as HTMLElement;
@@ -45,7 +46,7 @@ export class ContextMenuContainer implements INotify {
 
             const dialogOuterNode = document.createElement("div");
             dialogOuterNode.className = "fixed inset-0 z-10 w-screen overflow-y-auto";
-            dialogOuterNode.addEventListener("pointerdown", this.onOverlayPointerDown);
+            dialogOuterNode.addEventListener("pointerup", this.onOverlayPointerDown);
 
             this.overlay.appendChild(dialogOuterNode);
             document.body.appendChild(this.overlay);
@@ -55,10 +56,19 @@ export class ContextMenuContainer implements INotify {
         });
     }
 
-    onOverlayPointerDown = () => {
+    onOverlayPointerDown = (ev: PointerEvent) => {
         this.hide();
         this.resolve(null);
         this.resolve = null;
+
+        // const targetElement = document.elementFromPoint(ev.clientX, ev.clientY) as HTMLElement;
+        // if (targetElement) {
+        //     const newEvent = new MouseEvent("click", { bubbles: true, cancelable: true, clientX: ev.clientX, clientY: ev.clientY });
+        //     targetElement.dispatchEvent(newEvent);
+        // }
+
+        ev.stopPropagation(); // dont run global handler
+        ev.preventDefault();
     };
 
     hide() {

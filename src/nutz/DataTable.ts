@@ -120,6 +120,11 @@ export class DataTable implements IComponent {
             this.setSelectedIndex(index);
         });
 
+        row.addEventListener("contextmenu", () => {
+            const index = getChildNodeIndex(this.tbody.childNodes, row);
+            this.setSelectedIndex(index);
+        });
+
         row.addEventListener("dblclick", () => {
             this.parent.notify(this, "dblclick", this.selectedIndex);
         });

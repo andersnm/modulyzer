@@ -2,7 +2,7 @@ import { IComponent, INotify } from "./IComponent";
 
 export interface MenuItem {
     label: string;
-    action?: string;
+    action?: any;
     icon?: string;
     shortcut?: string; //
     checked?: boolean;
