@@ -365,11 +365,12 @@ export class PatternEditorCanvas implements IComponent {
         const em = ctx.measureText("M");
         const fontHeight = em.fontBoundingBoxAscent + em.fontBoundingBoxDescent;
 
-        const visibleRows = Math.floor(this.canvas.height / fontHeight) - 1;
+        const visibleRows = Math.floor(this.canvas.height / fontHeight);
         if (visibleRows <= 0) return;
 
-        if (this.cursorTime - this.scrollRow > visibleRows) {
-            this.scrollRow = this.cursorTime - visibleRows
+        // The +1 is to ensure the whole row is in view
+        if (this.cursorTime + 1 - this.scrollRow > visibleRows) {
+            this.scrollRow = this.cursorTime + 1 - visibleRows
         }
 
         if (this.cursorTime - this.scrollRow < 0) {
@@ -594,7 +595,7 @@ export class PatternEditorCanvas implements IComponent {
         let x = 0;
         let lastInstrument: InstrumentDocument;
 
-        const visibleRows = Math.floor(this.canvas.height / fontHeight) - 1;
+        const visibleRows = Math.floor(this.canvas.height / fontHeight);
         const totalRows = this.pattern?.duration ?? 0;
 
         const rowNumberWidth = this.fontEm.width * 5;
@@ -667,13 +668,13 @@ export class PatternEditorCanvas implements IComponent {
                     if (patternEvent.data0 !== 0) {
                         ctx.fillText(formatNote(patternEvent.value), x, eventScreenTime * fontHeight + this.fontEm.fontBoundingBoxAscent + fontHeight)
                     } else {
-                        ctx.fillText("---", x, eventScreenTime * fontHeight + this.fontEm.fontBoundingBoxAscent + fontHeight)
+                        ctx.fillText("¯¯¯", x, eventScreenTime * fontHeight + this.fontEm.fontBoundingBoxAscent + fontHeight)
                     }
                 } else if (renderColumn.type === "velo") {
                     if (patternEvent.data0 != 0) {
                         ctx.fillText(formatU8(patternEvent.data0), x, eventScreenTime * fontHeight + this.fontEm.fontBoundingBoxAscent + fontHeight)
                     } else {
-                        ctx.fillText("--", x, eventScreenTime * fontHeight + this.fontEm.fontBoundingBoxAscent + fontHeight)
+                        ctx.fillText("¯¯", x, eventScreenTime * fontHeight + this.fontEm.fontBoundingBoxAscent + fontHeight)
                     }
                 } else {
                     const value = patternEvent.value;
@@ -704,8 +705,8 @@ export class PatternEditorCanvas implements IComponent {
         }
 
         // scroll
-        ctx.strokeStyle = "#FFF";
-        ctx.strokeRect(this.canvas.width - 20, 0, 20, this.canvas.height)
+        ctx.fillStyle = "#333";
+        ctx.fillRect(this.canvas.width - 20, 0, 20, this.canvas.height)
 
         const scrollbarHeight = Math.floor((visibleRows / totalRows) * this.canvas.height);
         const scrollbarPosition = Math.floor((this.scrollRow / totalRows) * this.canvas.height);

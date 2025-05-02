@@ -3,6 +3,8 @@ import { IComponent } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 import { PatternPanel } from "./PatternPanel";
 
+const maxSequencerLength = 1024;
+
 export class SequenceEditorCanvas implements IComponent {
     container: HTMLElement;
     canvas: HTMLCanvasElement;
@@ -136,14 +138,16 @@ export class SequenceEditorCanvas implements IComponent {
                 // TODO; cursor in document
                 if (this.cursorTime> 0) {
                     this.cursorTime--;
+                    this.scrollIntoView();
                     this.redrawCanvas();
                     return true;
                 }
                 break;
             case "ArrowDown":
                 // TODO: max sequencer length
-                if (this.cursorTime < 8192) {
+                if (this.cursorTime < maxSequencerLength - 1) {
                     this.cursorTime++;
+                    this.scrollIntoView();
                     this.redrawCanvas();
                     return true;
                 }
@@ -154,6 +158,16 @@ export class SequenceEditorCanvas implements IComponent {
                 return true;
             case "ArrowLeft":
                 this.cursorColumn--;
+                this.redrawCanvas();
+                return true;
+            case "PageUp":
+                this.cursorTime = Math.max(this.cursorTime - 16, 0);
+                this.scrollIntoView();
+                this.redrawCanvas();
+                return true;
+            case "PageDown":
+                this.cursorTime = Math.min(this.cursorTime + 16, maxSequencerLength - 1);
+                this.scrollIntoView();
                 this.redrawCanvas();
                 return true;
             case "Enter":
@@ -167,6 +181,25 @@ export class SequenceEditorCanvas implements IComponent {
             case "5": case "6": case "7": case "8": case "9":
                 this.editPatternIndex(e.key.charCodeAt(0) - 48);
                 return true;
+        }
+    }
+
+    scrollIntoView() {
+        const ctx = this.canvas.getContext("2d");
+        ctx.font = "14px monospace";
+        const em = ctx.measureText("M");
+        const fontHeight = em.fontBoundingBoxAscent + em.fontBoundingBoxDescent;
+
+        const visibleRows = Math.floor(this.canvas.height / fontHeight);
+        if (visibleRows <= 0) return;
+
+        // The +1 is to ensure the whole row is in view
+        if (this.cursorTime + 1 - this.scrollRow >= visibleRows) {
+            this.scrollRow = this.cursorTime + 1 - visibleRows
+        }
+
+        if (this.cursorTime - this.scrollRow < 0) {
+            this.scrollRow = this.cursorTime;
         }
     }
 
@@ -205,6 +238,8 @@ export class SequenceEditorCanvas implements IComponent {
         }
     }
 
+    scrollRow = 0;
+
     redrawCanvas() {
         const ctx = this.canvas.getContext("2d");
 
@@ -213,35 +248,63 @@ export class SequenceEditorCanvas implements IComponent {
 
         const em = ctx.measureText("M");
         const fontHeight = em.fontBoundingBoxAscent + em.fontBoundingBoxDescent;
+        const rowNumberWidth = em.width * 5;
+        const columnWidth = em.width * 8;
+
+        const visibleRows = Math.floor(this.canvas.height / fontHeight);
+        const totalRows = maxSequencerLength;
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#FFF";
+
+        for (let i = 0; i < Math.min(visibleRows, totalRows); i++) {
+            const rowNumber = (this.scrollRow + i);
+            let rowColor: string;
+            if ((rowNumber % 16) === 0) {
+                rowColor = "#201820";
+            } else if ((rowNumber % 4) === 0) {
+                rowColor = "#101010";
+            } else {
+                rowColor = null;
+            }
+
+            let x = 0;
+            if (rowColor) {
+                ctx.fillStyle = rowColor
+                ctx.fillRect(x, (i + 0) * fontHeight, this.canvas.width - x, fontHeight)
+            }
+
+            ctx.fillStyle = "#FFF";
+            ctx.fillText(rowNumber.toString(), x + rowNumberWidth - em.width, (i + 0) * fontHeight + em.fontBoundingBoxAscent);
+        }
+
+        ctx.textAlign = "left";
 
         for (let i = 0; i < this.app.song.sequenceColumns.length; i++) {
             const sequenceColumn = this.app.song.sequenceColumns[i];
-            const sequenceX = i * 150;
+            const sequenceX = rowNumberWidth + i * columnWidth;
 
             ctx.strokeStyle = "#000";
             ctx.beginPath();
-            ctx.moveTo(sequenceX + 150, 0);
-            ctx.lineTo(sequenceX + 150, this.canvas.height);
+            ctx.moveTo(sequenceX + columnWidth, 0);
+            ctx.lineTo(sequenceX + columnWidth, this.canvas.height);
             ctx.stroke();
 
             for (let sequenceEvent of sequenceColumn.events) {
                 const pattern = sequenceEvent.pattern;
-                pattern.name; pattern.duration;
-                sequenceEvent.time;
 
                 const patternBeats = pattern.duration / pattern.subdivision;
 
                 ctx.fillStyle = "#444";
-                ctx.fillRect(sequenceX, sequenceEvent.time * fontHeight, 150 - 1, patternBeats * fontHeight);
+                ctx.fillRect(sequenceX, (sequenceEvent.time - this.scrollRow) * fontHeight, columnWidth - 1, patternBeats * fontHeight);
                 ctx.fillStyle = "#FFF";
-                ctx.fillText(pattern.name, sequenceX, sequenceEvent.time * fontHeight + em.fontBoundingBoxAscent)
+                ctx.fillText(pattern.name, sequenceX, (sequenceEvent.time - this.scrollRow) * fontHeight + em.fontBoundingBoxAscent)
             }
         }
 
         ctx.fillStyle = "#FFF";
         const ori = ctx.globalCompositeOperation;
         ctx.globalCompositeOperation = "difference";
-        ctx.fillRect(this.cursorColumn * 150, this.cursorTime * fontHeight, 150 - 1, fontHeight)
+        ctx.fillRect(rowNumberWidth + this.cursorColumn * columnWidth, (this.cursorTime - this.scrollRow) * fontHeight, columnWidth - 1, fontHeight)
         ctx.globalCompositeOperation = ori;
 
         // play position
@@ -272,6 +335,15 @@ export class SequenceEditorCanvas implements IComponent {
 
         ctx.lineWidth = 1;
 
+        // scroll
+        ctx.fillStyle = "#333";
+        ctx.fillRect(this.canvas.width - 20, 0, 20, this.canvas.height)
+
+        const scrollbarHeight = Math.floor((visibleRows / totalRows) * this.canvas.height);
+        const scrollbarPosition = Math.floor((this.scrollRow / totalRows) * this.canvas.height);
+
+        ctx.fillStyle = "#AAA";
+        ctx.fillRect(this.canvas.width - 20, scrollbarPosition, 20, scrollbarHeight);
     }
 
     getDomNode() {
