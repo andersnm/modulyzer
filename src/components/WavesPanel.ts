@@ -1,6 +1,7 @@
 import { Appl } from "../App";
 import { InstrumentDocument } from "../audio/SongDocument";
 import { registerWaveTableCommands } from "../commands/WaveTable/Register";
+import { waveListMenu } from "../menu/menu";
 import { Button, ButtonToolbar, DataTable, IComponent, INotify } from "../nutz";
 import { ViewFrame } from "../nutz/ViewFrame";
 import { formatNote } from "./PatternEditorHelper";
@@ -84,6 +85,7 @@ export class WavesPanel extends ViewFrame {
         this.list.addColumn("Name", "name")
         this.list.addColumn("Duration", "duration")
         this.list.addColumn("Note", "note")
+        this.list.container.addEventListener("contextmenu", this.onContextMenu);
 
         this.instrumentDropdown = new InstrumentDropdown(this);
         this.addToolbar(this.instrumentDropdown.getDomNode() as HTMLElement);
@@ -153,6 +155,17 @@ export class WavesPanel extends ViewFrame {
                 break;
         }
     };
+
+    onContextMenu = (e: MouseEvent) => {
+        e.preventDefault();
+
+        if (this.list.selectedIndex === -1) {
+            return;
+        }
+
+        const rc = (e.target as HTMLElement).getBoundingClientRect();
+        this.app.contextMenuContainer.show(this, rc.left + e.offsetX, rc.top + e.offsetY, waveListMenu);
+    }
 
     async notify(source: IComponent, eventName: string, ...args: any) {
         if (source === this.list) {

@@ -43,6 +43,10 @@ export const editMenu: MenuItem[] = [
     },
 
     {
+        label: null,
+    },
+
+    {
         label: "Cut",
         action: "cut-selection"
     },
@@ -202,9 +206,44 @@ export const patternListMenu: MenuItem[] = [
         action: "edit-pattern"
     },
 
-    // separator
+    {
+        label: null, // Separator
+    },
+
     {
         label: "Create new",
         action: "create-pattern"
+    },
+];
+
+export const waveListMenu: MenuItem[] = [
+    {
+        label: "Edit",
+        action: "goto-wave-editor"
+    },
+    {
+        label: "Delete",
+        action: "delete-wave"
+    },
+    {
+        label: "Properties...",
+        action: "edit-wave"
+    },
+
+    {
+        label: null, // Separator
+    },
+
+    {
+        label: "Create new...",
+        action: "create-wave"
+    },
+    {
+        label: "Paste new",
+        action: "paste-new-wave"
+    },
+    {
+        label: "Open...",
+        action: "open-wave"
     },
 ];

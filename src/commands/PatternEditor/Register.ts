@@ -12,7 +12,7 @@ import { PasteCommand } from "./PasteCommand";
 
 export function registerPatternEditorCommands(component: PatternPanel) {
     component.registerCommand("add-column", "hgi-stroke hgi-plus-sign", "Add a Column", new AddColumnCommand(component));
-    component.registerCommand("edit-pattern", "hgi-stroke hgi-edit-03", "Edit Pattern Properties", new EditPatternCommand(component));
+    component.registerCommand("edit-pattern", "hgi-stroke hgi-edit-01", "Edit Pattern Properties", new EditPatternCommand(component));
     component.registerCommand("cut", "hgi-stroke hgi-scissor-01", null, new CutCommand(component));
     component.registerCommand("copy", "hgi-stroke hgi-copy-01", null, new CopyCommand(component));
     component.registerCommand("paste", "hgi-stroke hgi-column-insert", null, new PasteCommand(component));

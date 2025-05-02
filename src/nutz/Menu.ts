@@ -116,6 +116,14 @@ export class Menu implements IComponent {
     }
 
     bindMenuItemStyle(itemOuterNode: HTMLElement, itemIndex: number) {
+        const item = this.items[itemIndex];
+        if (item?.label === null) {
+            // is a searator
+            itemOuterNode.classList.remove(...itemOuterNode.classList)
+            itemOuterNode.classList.add("flex", "h-1", "mt-1", "mb-1", "bg-neutral-700");
+            return;
+        }
+
         const open = this.selectedIndex == itemIndex || this.submenuItemIndex == itemIndex; // === item; // !!item.open; // if the flyout; hover
         itemOuterNode.className = "flex flex-row " + (open ? "bg-neutral-200 text-neutral-700" : "");
     }

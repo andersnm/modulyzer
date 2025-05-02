@@ -68,12 +68,12 @@ export class PatternPanel extends ViewFrame implements IComponent {
         this.addToolbar(ButtonToolbar(this, [
             {
                 type: "button",
-                label: "Add Column",
+                label: "Add Column...",
                 action: "add-column",
             },
             {
                 type: "button",
-                label: "Edit...",
+                label: "Properties...",
                 action: "edit-pattern",
             },
             {
@@ -89,8 +89,9 @@ export class PatternPanel extends ViewFrame implements IComponent {
 
         this.statusBar = new StatusBar();
         this.statusBar.addPart(["w-48"], "Row: 0, Track: 0")
-        this.statusBar.addPart(["w-48", "border-l-2", "pl-2", "border-neutral-500"], "Value")
-        this.statusBar.addPart(["flex-1", "border-l-2", "pl-2", "border-neutral-500"], "Parameter description")
+        this.statusBar.addPart(["w-48"], "Value")
+        this.statusBar.addPart(["flex-1"], "Parameter description")
+        this.statusBar.addPart(["w-36"], "--")
 
         // NOTE: Adding statusbar in ViewFrame's container
         this.container.appendChild(this.statusBar.getDomNode());
@@ -107,6 +108,8 @@ export class PatternPanel extends ViewFrame implements IComponent {
     }
 
     updateStatusBar() {
+
+        this.statusBar.setText(3, this.patternEditor.pattern?.name ?? "--");
 
         const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.patternEditor.pattern, 8);
         const cursorColumn = getCursorColumnAt(renderColumns, this.patternEditor.cursorColumn);

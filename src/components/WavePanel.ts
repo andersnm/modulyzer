@@ -83,7 +83,7 @@ export class WavePanel extends ViewFrame {
             },
             {
                 type: "button",
-                label: "Edit...",
+                label: "Properties...",
                 action: "edit-wave",
             },
         ]));
