@@ -16,19 +16,15 @@ export class ModalDialogContainer {
     constructor() {
     }
 
-    async showModal(title: string, content: IComponent) {
+    async showModal(title: string, content: IComponent, closable: boolean = true) {
 
         if (this.modalStack.length === 0) {
             this.focusElement = document.activeElement as HTMLElement;
-            window.addEventListener("keydown", this.onKeyDown);
         }
 
         // insert wrapper in body, render topmost modal
-        //             new NutzElement("div", { className: "relative z-10",
         const wrapperNode = document.createElement("div");
         wrapperNode.className = "relative z-10";
-
-        // overlay = return new NutzElement("div", { className: "fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity",
 
         const dialogOuterNode = document.createElement("div");
         dialogOuterNode.className = "fixed inset-0 z-10 w-screen overflow-y-auto";
@@ -39,13 +35,15 @@ export class ModalDialogContainer {
         const dialogInnerWrapNode = document.createElement("div");
         dialogInnerWrapNode.className = "relative transform overflow-hidden rounded-lg text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg";
 
-        const closeContainer = new DomElement("span", (el) => {
-            el.addEventListener("click", () => {
+        const closeContainer = document.createElement("span");
+        if (closable) {
+            closeContainer.addEventListener("click", () => {
                 this.endModal();
             });
-        }, new DomText("X"));
+            closeContainer.classList.add("hgi-stroke", "hgi-cancel-01", "text-white", "cursor-pointer", "hover:bg-neutral-500");
+        }
 
-        const dialogPanel = new Panel(new DomText(title), closeContainer, content);
+        const dialogPanel = new Panel(new DomText(title), { getDomNode: () => closeContainer } , content);
 
         dialogInnerWrapNode.appendChild(dialogPanel.getDomNode())
         dialogInnerNode.appendChild(dialogInnerWrapNode);
@@ -57,7 +55,7 @@ export class ModalDialogContainer {
 
         (content.getDomNode() as HTMLElement).focus();
 
-        // return promise tat resulves when dialog is closed
+        // return promise that resolves when dialog is closed
         // and the content must be able to endDialog too
         return new Promise((resolve) => {
             this.modalStack.push({
@@ -82,21 +80,9 @@ export class ModalDialogContainer {
                 this.focusElement.focus();
                 this.focusElement = null;
             }
-
-            window.removeEventListener("keydown", this.onKeyDown);
         } else {
             const nextModal = this.modalStack[this.modalStack.length - 1];
             nextModal.content.focus();
         }
     }
-
-    onKeyDown = (e: KeyboardEvent) => {
-        if (e.key === "Escape") {
-            this.endModal(false);
-        } else
-        if (e.key === "Enter") {
-            this.endModal(true);
-        }
-    };
-
 }

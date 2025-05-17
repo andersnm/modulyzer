@@ -141,6 +141,30 @@ export class ModalButtonBar implements IComponent {
 
         this.container.appendChild(this.okButton);
         this.container.appendChild(this.cancelButton);
+
+        this.container.addEventListener("nutz:mounted", this.onMounted);
+        this.container.addEventListener("nutz:unmounted", this.onUnmounted);
+    }
+
+    onMounted = () => {
+        window.addEventListener("keydown", this.onKeyDown)
+    };
+
+    onUnmounted = () => {
+        window.removeEventListener("keydown", this.onKeyDown)
+    };
+
+    onKeyDown = (ev: KeyboardEvent) => {
+        if (ev.key === "Escape") {
+            if (!this.cancelButton.disabled) {
+                this.cancelButton.click();
+            }
+        } else
+        if (ev.key === "Enter") {
+            if (!this.okButton.disabled) {
+                this.okButton.click();
+            }
+        }
     }
 
     getDomNode(): Node {

@@ -91,6 +91,7 @@ export class Appl extends CommandHost implements IComponent {
         registerApplicationCommands(this);
 
         this.song = new SongDocument();
+        this.playerSongAdapter = new PlayerSongAdapter(this.song);
 
         this.device = new AudioDevice();
 
@@ -199,15 +200,11 @@ export class Appl extends CommandHost implements IComponent {
         this.executeCommand("show-sequence-editor");
     }
 
-    async setAudioDevice(outputDeviceId, inputDeviceId) {
+    async setAudioDevice(outputDeviceId: string, inputDeviceId: string) {
         await this.device.create(outputDeviceId, inputDeviceId);
 
-        if (this.playerSongAdapter) {
-            // this.playerSongAdapter.detach();
-        }
-
         this.player = new Player(this.instrumentFactories, this.device.context);
-        this.playerSongAdapter = new PlayerSongAdapter(this.player, this.song);
+        this.playerSongAdapter.attachPlayer(this.player);
     }
 
     render() {

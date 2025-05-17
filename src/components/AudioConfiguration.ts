@@ -17,10 +17,11 @@ function createElement(tagName: string, callback: DomElementCallbackType | null,
 
 export class AudioConfiguration implements IComponent {
     parent: INotify;
-    inputDeviceId;
-    outputDeviceId;
-    currentInputDeviceId;
-    currentOutputDeviceId;
+    // inputDeviceId: string;
+    // outputDeviceId: string;
+    cancelable: boolean = true;
+    currentInputDeviceId: string;
+    currentOutputDeviceId: string;
     microphonePermission: string = "denied";
     inputMode: string = "stereo";
     currentInputSampleRate = 44100;
@@ -33,6 +34,7 @@ export class AudioConfiguration implements IComponent {
     configForm: HTMLElement;
     outputDevicesSelect: HTMLSelectElement;
     inputDevicesSelect: HTMLSelectElement;
+    buttonBar: ModalButtonBar;
 
     constructor(parent: INotify) {
         this.parent = parent;
@@ -66,28 +68,20 @@ export class AudioConfiguration implements IComponent {
     async lod() {
         const mediaDevices = await navigator.mediaDevices.enumerateDevices();
         const inputDevices = mediaDevices.filter(d => d.kind === "audioinput");
-
-        if (!this.inputDeviceId) {
-            // try prop, oterwise 1st
-            const currentDevice = inputDevices.filter(d => d.deviceId === this.currentInputDeviceId)[0];
-            this.inputDeviceId = currentDevice ? currentDevice.deviceId : inputDevices[0].deviceId;
-            this.probeDevice(this.inputDeviceId);
-        }
-
         const outputDevices = mediaDevices.filter(d => d.kind === "audiooutput");
-
-        if (!this.outputDeviceId) {
-            const currentDevice = outputDevices.filter(d => d.deviceId === this.currentOutputDeviceId)[0];
-            this.outputDeviceId = currentDevice ? currentDevice.deviceId : outputDevices[0].deviceId;
-        }
-
         const permission = await navigator.permissions.query({name: "microphone" as PermissionName});
         this.microphonePermission = permission.state;
 
         this.bindOutputDevices(outputDevices)
         this.bindInputDevices(inputDevices)
+        this.bindButtons();
 
         this.bind();
+    }
+
+    bindButtons() {
+        this.buttonBar.cancelButton.disabled = !this.cancelable;
+        this.buttonBar.okButton.disabled = !this.currentOutputDeviceId;
     }
 
     async probeDevice(inputDeviceId) {
@@ -172,6 +166,7 @@ export class AudioConfiguration implements IComponent {
         this.outputDevicesSelect.className = "w-full rounded-lg p-1 bg-neutral-800";
         this.outputDevicesSelect.addEventListener("change", () => {
             this.currentOutputDeviceId = this.outputDevicesSelect.value;
+            this.bindButtons();
         });
 
         const outputGroup = FormGroup("Output Device", this.outputDevicesSelect);
@@ -184,12 +179,12 @@ export class AudioConfiguration implements IComponent {
 
         const inputGroup = FormGroup("Input Device", this.inputDevicesSelect);
 
-        const modalButtonBar = new ModalButtonBar(this, this.parent);
+        this.buttonBar = new ModalButtonBar(this, this.parent);
 
         this.configForm.appendChild(outputGroup);
         this.configForm.appendChild(inputGroup);
 
-        this.configForm.appendChild(modalButtonBar.getDomNode());
+        this.configForm.appendChild(this.buttonBar.getDomNode());
     }
 
     getDomNode(): Node {

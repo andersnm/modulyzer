@@ -25,8 +25,11 @@ export class ShowAudioConfigurationCommand implements INotify {
 
         const audioConfiguration = new AudioConfiguration(this);
         audioConfiguration.setPermission(permission);
+        audioConfiguration.cancelable = !!this.app.device.context;
+        audioConfiguration.currentOutputDeviceId = this.app.device.outputDeviceId;
+        audioConfiguration.currentInputDeviceId = this.app.device.inputDeviceId;
 
-        const result = await this.app.modalDialogContainer.showModal("Audio Configuration", audioConfiguration);
+        const result = await this.app.modalDialogContainer.showModal("Audio Configuration", audioConfiguration, false);
         if (!result) {
             return;
         }

@@ -23,11 +23,17 @@ export class PlayerSongAdapter {
     sequenceEventMap: Map<SequenceEventDocument, SequenceEvent>  = new Map();
     waveMap: Map<WaveDocument, Wave>  = new Map();
 
-    constructor(player: Player, song: SongDocument) {
-        this.player = player;
+    constructor(song: SongDocument) {
         this.song = song;
+    }
 
-        // TODO: removeEventListener at the end of the player lifetime
+    attachPlayer(player: Player) {
+        if (this.player) {
+            this.detachPlayer();
+        }
+
+        this.player = player;
+
         this.song.addEventListener("updateDocument", this.onUpdateDocument);
         this.song.addEventListener("createInstrument", this.onCreateInstrument);
         this.song.addEventListener("deleteInstrument", this.onDeleteInstrument);
@@ -51,19 +57,6 @@ export class PlayerSongAdapter {
 
         this.player.addEventListener("playing", this.onPlaying);
         this.player.addEventListener("stopped", this.onStopped);
-
-        this.attachDocument();
-    }
-
-    onPlaying = () => {
-        this.song.dispatchEvent(new CustomEvent("playing"));
-    };
-
-    onStopped = () => {
-        this.song.dispatchEvent(new CustomEvent("stopped"));
-    };
-
-    attachDocument() {
 
         this.player.bpm = this.song.bpm;
         this.player.loopStart = this.song.loopStart;
@@ -98,6 +91,41 @@ export class PlayerSongAdapter {
             }
         }
     }
+
+    detachPlayer() {
+        this.song.removeEventListener("updateDocument", this.onUpdateDocument);
+        this.song.removeEventListener("createInstrument", this.onCreateInstrument);
+        this.song.removeEventListener("deleteInstrument", this.onDeleteInstrument);
+        this.song.removeEventListener("createConnection", this.onCreateConnection);
+        this.song.removeEventListener("deleteConnection", this.onDeleteConnection);
+        this.song.removeEventListener("createWave", this.onCreateWave);
+        this.song.removeEventListener("updateWave", this.onUpdateWave);
+        this.song.removeEventListener("createPattern", this.onCreatePattern);
+        this.song.removeEventListener("updatePattern", this.onUpdatePattern);
+        this.song.removeEventListener("deletePattern", this.onDeletePattern);
+        this.song.removeEventListener("createPatternColumn", this.onCreatePatternColumn);
+        this.song.removeEventListener("deletePatternColumn", this.onDeletePatternColumn);
+        this.song.removeEventListener("createPatternEvent", this.onCreatePatternEvent);
+        this.song.removeEventListener("updatePatternEvent", this.onUpdatePatternEvent);
+        this.song.removeEventListener("deletePatternEvent", this.onDeletePatternEvent);
+        this.song.removeEventListener("createSequenceColumn", this.onCreateSequenceColumn);
+        this.song.removeEventListener("deleteSequenceColumn", this.onDeleteSequenceColumn);
+        this.song.removeEventListener("createSequenceEvent", this.onCreateSequenceEvent);
+        this.song.removeEventListener("updateSequenceEvent", this.onUpdateSequenceEvent);
+        this.song.removeEventListener("deleteSequenceEvent", this.onDeleteSequenceEvent);
+
+        this.player.removeEventListener("playing", this.onPlaying);
+        this.player.removeEventListener("stopped", this.onStopped);
+        this.player = null;
+    }
+
+    onPlaying = () => {
+        this.song.dispatchEvent(new CustomEvent("playing"));
+    };
+
+    onStopped = () => {
+        this.song.dispatchEvent(new CustomEvent("stopped"));
+    };
 
     onUpdateDocument = (ev: CustomEvent<SongDocument>) => {
         this.player.bpm = ev.detail.bpm;

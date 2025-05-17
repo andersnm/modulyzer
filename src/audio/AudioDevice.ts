@@ -6,7 +6,9 @@ import { Recorder } from "./Recorder.js";
 
 export class AudioDevice {
 
-    context: AudioContext | null;
+    inputDeviceId: string = null;
+    outputDeviceId: string = null;
+    context: AudioContext | null = null;
     inputNode: MediaStreamAudioSourceNode;
     recorder: Recorder;
     inputMode: "stereo" | "left" | "right";
@@ -15,9 +17,15 @@ export class AudioDevice {
         this.inputMode = "stereo";
     }
 
-    async create(outputDeviceId, inputDeviceId) {
+    async create(outputDeviceId: string, inputDeviceId: string) {
 
-        // TODO; should destroy first
+        if (this.context) {
+            await this.context.close();
+            this.context = null;
+        }
+
+        this.outputDeviceId = outputDeviceId;
+        this.inputDeviceId = inputDeviceId;
 
         this.context = new AudioContext({ sinkId: outputDeviceId, latencyHint: .5 } as any);
 
