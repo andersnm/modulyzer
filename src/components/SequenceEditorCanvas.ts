@@ -1,21 +1,77 @@
 import { Appl } from "../App";
-import { IComponent } from "../nutz";
+import { DragTarget, IComponent } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 import { PatternPanel } from "./PatternPanel";
 
 const maxSequencerLength = 1024;
 
+interface SequenceSelection {
+    startColumn: number;
+    endColumn: number;
+    startRow: number;
+    endRow: number;
+}
+
+class DragSelect extends DragTarget {
+    component: SequenceEditorCanvas;
+    startColumn: number;
+    endColumn: number;
+    startRow: number;
+    endRow: number;
+
+    constructor(component: SequenceEditorCanvas, e: PointerEvent) {
+        super();
+
+        this.component = component;
+
+        const fontHeight = this.component.fontEm.fontBoundingBoxAscent + this.component.fontEm.fontBoundingBoxDescent;
+        const columnWidth = this.component.fontEm.width * 8;
+
+        const c = Math.floor((e.offsetX - this.component.rowNumberWidth) / columnWidth);
+        const t = Math.floor(e.offsetY / fontHeight) + this.component.scrollRow;
+
+        this.startColumn = c;
+        this.startRow = t;
+    }
+
+    move(e: PointerEvent) {
+        const fontHeight = this.component.fontEm.fontBoundingBoxAscent + this.component.fontEm.fontBoundingBoxDescent;
+        const columnWidth = this.component.fontEm.width * 8;
+
+        const c = Math.floor((e.offsetX - this.component.rowNumberWidth) / columnWidth);
+        const t = Math.floor(e.offsetY / fontHeight) + this.component.scrollRow;
+
+        this.endColumn = c;
+        this.endRow = t;
+
+        this.component.setSelection(this.startColumn, this.startRow, this.endColumn, this.endRow);
+    }
+
+    up(e: PointerEvent) {
+        const fontHeight = this.component.fontEm.fontBoundingBoxAscent + this.component.fontEm.fontBoundingBoxDescent;
+        const columnWidth = this.component.fontEm.width * 8;
+
+        const c = Math.floor((e.offsetX - this.component.rowNumberWidth) / columnWidth);
+        const t = Math.floor(e.offsetY / fontHeight) + this.component.scrollRow;
+
+        this.component.setCursorPosition(c, t);
+        // this.component.parent.notify(this.component, "cursormove")
+    }
+}
+
 export class SequenceEditorCanvas implements IComponent {
+    app: Appl;
     container: HTMLElement;
     canvas: HTMLCanvasElement;
-    mouseDown: boolean = false;
-    selectionStart: number = 0;
-    selectionEnd: number = 0;
+    dragTarget: DragTarget;
     cursorColumn: number = 0;
     cursorTime: number = 0;
+    scrollRow: number = 0;
     redrawTimer: number = null;
 
-    app: Appl;
+    fontEm: TextMetrics;
+    rowNumberWidth: number;
+    selection: SequenceSelection;
 
     constructor(app: Appl) {
         this.app = app;
@@ -38,6 +94,12 @@ export class SequenceEditorCanvas implements IComponent {
         this.container.addEventListener("nutz:mounted", this.onMounted);
         this.container.addEventListener("nutz:unmounted", this.onUnmounted);
         this.container.addEventListener("keydown", this.onKeyDown);
+
+        const ctx = this.canvas.getContext("2d");
+        ctx.font = "14px monospace";
+
+        this.fontEm = ctx.measureText("M");
+        this.rowNumberWidth = this.fontEm.width * 5;
     }
 
     onMounted = async (ev) => {
@@ -80,36 +142,29 @@ export class SequenceEditorCanvas implements IComponent {
         this.redrawCanvas();
     };
 
-    onMouseDown = (e: MouseEvent) => {
-        // TODO; POINTER EVENTS INSTEAD?? setPointerCapture
-        // console.log("ITS A DOWN")
-
-        if (!this.mouseDown) {
-            if (this.selectionStart !== this.selectionEnd) {
-                // clear selection
-                // this.dispatch(this.props, "select", null);
-            }
-
-            this.mouseDown = true;
-            // this.selectionStart = samplePositionFromPixel(this.canvas, e.offsetX, this.props.zoom, this.props.buffers[0].length);
+    onMouseDown = (e: PointerEvent) => {
+        if (!this.dragTarget) {
+            this.dragTarget = new DragSelect(this, e);
+            this.canvas.setPointerCapture(e.pointerId);
         }
     };
 
-    onMouseUp = (e: MouseEvent) => {
-        // TODO; POINTER EVENTS INSTEAD?? setPointerCapture
-        if (!this.mouseDown) {
+    onMouseUp = (e: PointerEvent) => {
+        if (!this.dragTarget) {
             return;
         }
 
-        this.mouseDown = false;
-        // emit selection changed, if changed
+        this.canvas.releasePointerCapture(e.pointerId);
+        this.dragTarget.up(e);
+        this.dragTarget = null;
     };
 
-    onMouseMove = (e: MouseEvent) => {
-        // TODO; POINTER EVENTS INSTEAD?? setPointerCapture
-        if (!this.mouseDown) {
+    onMouseMove = (e: PointerEvent) => {
+        if (!this.dragTarget) {
             return;
         }
+
+        this.dragTarget.move(e);
     };
 
     onContextMenu = (ev: MouseEvent) => {
@@ -135,40 +190,22 @@ export class SequenceEditorCanvas implements IComponent {
         // console.log("KEYPP", e.key)
         switch (e.key) {
             case "ArrowUp":
-                // TODO; cursor in document
-                if (this.cursorTime> 0) {
-                    this.cursorTime--;
-                    this.scrollIntoView();
-                    this.redrawCanvas();
-                    return true;
-                }
-                break;
+                this.moveCursor(0, -1);
+                return true;
             case "ArrowDown":
-                // TODO: max sequencer length
-                if (this.cursorTime < maxSequencerLength - 1) {
-                    this.cursorTime++;
-                    this.scrollIntoView();
-                    this.redrawCanvas();
-                    return true;
-                }
-                break;
+                this.moveCursor(0, 1);
+                return true;
             case "ArrowRight":
-                this.cursorColumn++;
-                this.redrawCanvas();
+                this.moveCursor(1, 0);
                 return true;
             case "ArrowLeft":
-                this.cursorColumn--;
-                this.redrawCanvas();
+                this.moveCursor(-1, 0);
                 return true;
             case "PageUp":
-                this.cursorTime = Math.max(this.cursorTime - 16, 0);
-                this.scrollIntoView();
-                this.redrawCanvas();
+                this.moveCursor(0, -16);
                 return true;
             case "PageDown":
-                this.cursorTime = Math.min(this.cursorTime + 16, maxSequencerLength - 1);
-                this.scrollIntoView();
-                this.redrawCanvas();
+                this.moveCursor(0, 16);
                 return true;
             case "Enter":
                 // console.log("Enter pattern if event here")
@@ -185,10 +222,7 @@ export class SequenceEditorCanvas implements IComponent {
     }
 
     scrollIntoView() {
-        const ctx = this.canvas.getContext("2d");
-        ctx.font = "14px monospace";
-        const em = ctx.measureText("M");
-        const fontHeight = em.fontBoundingBoxAscent + em.fontBoundingBoxDescent;
+        const fontHeight = this.fontEm.fontBoundingBoxAscent + this.fontEm.fontBoundingBoxDescent;
 
         const visibleRows = Math.floor(this.canvas.height / fontHeight);
         if (visibleRows <= 0) return;
@@ -238,7 +272,44 @@ export class SequenceEditorCanvas implements IComponent {
         }
     }
 
-    scrollRow = 0;
+    setCursorPosition(x: number, y: number) {
+        this.cursorTime = Math.min(Math.max(0, y), maxSequencerLength - 1);
+        this.cursorColumn = Math.min(Math.max(0, x), this.app.song.sequenceColumns.length - 1);
+        this.scrollIntoView();
+        this.redrawCanvas();
+    }
+
+    moveCursor(dx: number, dy: number) {
+        console.log("MOEV", dx, dy)
+        this.cursorTime = Math.min(Math.max(0, this.cursorTime + dy), maxSequencerLength - 1);
+        this.cursorColumn = Math.min(Math.max(0, this.cursorColumn + dx), this.app.song.sequenceColumns.length - 1);
+        this.scrollIntoView();
+        this.redrawCanvas();
+        return true;
+    }
+
+    setSelection(startColumn: number, startRow: number, endColumn: number, endRow: number) {
+        startColumn = Math.min(Math.max(0, startColumn), this.app.song.sequenceColumns.length - 1);
+        endColumn = Math.min(Math.max(0, endColumn), this.app.song.sequenceColumns.length - 1);
+        startRow = Math.min(Math.max(0, startRow), maxSequencerLength - 1);
+        endRow = Math.min(Math.max(0, endRow), maxSequencerLength - 1);
+
+        const x1 = Math.min(startColumn, endColumn);
+        const x2 = Math.max(startColumn, endColumn);
+        const y1 = Math.min(startRow, endRow);
+        const y2 = Math.max(startRow, endRow);
+
+        if (this.selection && 
+            this.selection.startColumn === x1 && this.selection.startRow === y1 &&
+            this.selection.endColumn === x2 && this.selection.endRow === y2)
+        {
+            return;
+        }
+
+        this.selection = { startColumn: x1, startRow: y1, endColumn: x2, endRow: y2 };
+        // console.log("Set selection:", this.selection);
+        this.redrawCanvas();
+    }
 
     redrawCanvas() {
         const ctx = this.canvas.getContext("2d");
@@ -246,10 +317,9 @@ export class SequenceEditorCanvas implements IComponent {
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         ctx.font = "14px monospace";
 
-        const em = ctx.measureText("M");
-        const fontHeight = em.fontBoundingBoxAscent + em.fontBoundingBoxDescent;
-        const rowNumberWidth = em.width * 5;
-        const columnWidth = em.width * 8;
+        const fontHeight = this.fontEm.fontBoundingBoxAscent + this.fontEm.fontBoundingBoxDescent;
+        const rowNumberWidth = this.fontEm.width * 5;
+        const columnWidth = this.fontEm.width * 8;
 
         const visibleRows = Math.floor(this.canvas.height / fontHeight);
         const totalRows = maxSequencerLength;
@@ -274,7 +344,7 @@ export class SequenceEditorCanvas implements IComponent {
             }
 
             ctx.fillStyle = "#FFF";
-            ctx.fillText(rowNumber.toString(), x + rowNumberWidth - em.width, (i + 0) * fontHeight + em.fontBoundingBoxAscent);
+            ctx.fillText(rowNumber.toString(), x + rowNumberWidth - this.fontEm.width, (i + 0) * fontHeight + this.fontEm.fontBoundingBoxAscent);
         }
 
         ctx.textAlign = "left";
@@ -297,15 +367,35 @@ export class SequenceEditorCanvas implements IComponent {
                 ctx.fillStyle = "#444";
                 ctx.fillRect(sequenceX, (sequenceEvent.time - this.scrollRow) * fontHeight, columnWidth - 1, patternBeats * fontHeight);
                 ctx.fillStyle = "#FFF";
-                ctx.fillText(pattern.name, sequenceX, (sequenceEvent.time - this.scrollRow) * fontHeight + em.fontBoundingBoxAscent)
+                ctx.fillText(pattern.name, sequenceX, (sequenceEvent.time - this.scrollRow) * fontHeight + this.fontEm.fontBoundingBoxAscent)
             }
         }
 
+        // Cursor
         ctx.fillStyle = "#FFF";
         const ori = ctx.globalCompositeOperation;
         ctx.globalCompositeOperation = "difference";
         ctx.fillRect(rowNumberWidth + this.cursorColumn * columnWidth, (this.cursorTime - this.scrollRow) * fontHeight, columnWidth - 1, fontHeight)
         ctx.globalCompositeOperation = ori;
+
+        // Selection
+        if (this.selection) {
+            const ori = ctx.globalCompositeOperation;
+            ctx.globalCompositeOperation = "difference";
+
+            let x = rowNumberWidth;
+            const x1 = Math.min(this.selection.startColumn, this.selection.endColumn) * columnWidth;
+            const x2 = (Math.max(this.selection.startColumn, this.selection.endColumn) + 1) * columnWidth;
+
+            let y1 = (Math.min(this.selection.startRow, this.selection.endRow) - this.scrollRow) * fontHeight;
+            let y2 = (Math.max(this.selection.startRow, this.selection.endRow) - this.scrollRow + 1) * fontHeight;
+
+            ctx.fillStyle = "#444";
+            ctx.fillStyle = "#DDD";
+            ctx.fillRect(x + x1, y1, (x2 - x1), y2 - y1);
+
+            ctx.globalCompositeOperation = ori;
+        }
 
         // play position
         const playPos = this.app.player?. currentBeat??0;
