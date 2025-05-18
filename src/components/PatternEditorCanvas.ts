@@ -2,7 +2,7 @@ import { DragTarget, formatHotkey, ICommandHost, IComponent, INotify } from "../
 import { FlexCanvas } from "./FlexCanvas";
 import { Appl } from "../App";
 import { InstrumentDocument, PatternDocument } from "../audio/SongDocument";
-import { CursorColumnInfo, deleteValue, editNote, editNoteOff, editValue, editVelocity, formatNote, formatU8, getCursorColumnAt, getCursorColumnAtPosition, getCursorColumnIndex, getCursorColumns, getPatternRenderColumns, getRenderColumnIndex, getRenderColumnPosition, getRenderColumnWidth, RenderColumnInfo } from "./PatternEditorHelper";
+import { CursorColumnInfo, deleteValue, editNote, editNoteOff, editValue, editVelocity, formatNote, formatU8, getCursorColumnAt, getCursorColumnAtPosition, getCursorColumnIndex, getCursorColumns, getPatternRenderColumns, getRenderColumnPosition, getRenderColumnWidth, RenderColumnInfo } from "./PatternEditorHelper";
 import { patternMenu } from "../menu/menu";
 
 const maxPolyphonic = 8;
@@ -34,7 +34,7 @@ class DragSelect extends DragTarget {
             throw new Error("getCursorColumnAtPosition should always give a match")
         }
 
-        this.startColumn = getRenderColumnIndex(this.component.renderColumns, cursorColumn.renderColumn);
+        this.startColumn = this.component.renderColumns.indexOf(cursorColumn.renderColumn);
         this.startRow = t;
     }
 
@@ -45,7 +45,7 @@ class DragSelect extends DragTarget {
 
         const cursorColumn = getCursorColumnAtPosition(this.component.renderColumns, c);
 
-        this.endColumn = getRenderColumnIndex(this.component.renderColumns, cursorColumn.renderColumn);
+        this.endColumn = this.component.renderColumns.indexOf(cursorColumn.renderColumn);
         this.endRow = t;
 
         this.component.setSelection(this.startColumn, this.startRow, this.endColumn, this.endRow);
@@ -185,7 +185,8 @@ export class PatternEditorCanvas implements IComponent {
 
     onKeyDown = (e: KeyboardEvent) => {
         if (this.editKeyDown(e)) {
-            this.parent.notify(this, "cursormove")
+            this.parent.notify(this, "cursormove");
+            this.parent.notify(this, "selchange");
             e.stopPropagation(); // dont run global handler
             e.preventDefault(); // dont do canvas default
             return;
@@ -211,21 +212,25 @@ export class PatternEditorCanvas implements IComponent {
         if (!this.pattern) {
             return false;
         }
-    
+
         const key = formatHotkey(e);
 
         switch (key) {
             case "ArrowUp":
-                this.moveCursor(0, -1);
+            case "SHIFT+ArrowUp":
+                this.moveCursor(0, -1, e.shiftKey);
                 return true;
             case "ArrowDown":
-                this.moveCursor(0, 1);
+            case "SHIFT+ArrowDown":
+                this.moveCursor(0, 1, e.shiftKey);
                 return true;
             case "ArrowLeft":
-                this.moveCursor(-1, 0);
+            case "SHIFT+ArrowLeft":
+                this.moveCursor(-1, 0, e.shiftKey);
                 return true;
             case "ArrowRight":
-                this.moveCursor(1, 0);
+            case "SHIFT+ArrowRight":
+                this.moveCursor(1, 0, e.shiftKey);
                 return true;
             case "Delete":
                 this.deleteAtCursor();
@@ -249,16 +254,20 @@ export class PatternEditorCanvas implements IComponent {
                 this.movePreviousColumn();
                 return true;
             case "Home":
-                this.moveHome();
+            case "SHIFT+Home":
+                this.moveHome(e.shiftKey);
                 return true;
             case "End":
-                this.moveEnd();
+            case "SHIFT+End":
+                this.moveEnd(e.shiftKey);
                 return true;
             case "PageUp":
-                this.moveCursor(0, -16);
+            case "SHIFT+PageUp":
+                this.moveCursor(0, -16, e.shiftKey);
                 return true;
             case "PageDown":
-                this.moveCursor(0, 16);
+            case "SHIFT+PageDown":
+                this.moveCursor(0, 16, e.shiftKey);
                 return true;
             default:
                 console.log(e);
@@ -290,12 +299,29 @@ export class PatternEditorCanvas implements IComponent {
         }
     };
 
-    moveCursor(dx, dy) {
+    moveCursor(dx: number, dy: number, withSelection: boolean = false) {
+        if (!withSelection) {
+            this.selection = null;
+        } else {
+            if (!this.selection) {
+                const cursorColumn = getCursorColumnAt(this.renderColumns, this.cursorColumn);
+                const renderIndex = this.renderColumns.indexOf(cursorColumn.renderColumn);
+
+                this.setSelection(renderIndex, this.cursorTime, renderIndex, this.cursorTime);
+            }
+        }
+
         const ct = this.cursorTime;
         const cc = this.cursorColumn;
         this.cursorTime = Math.max(Math.min(this.cursorTime + dy, this.pattern.duration - 1), 0);
         this.cursorColumn = Math.max(Math.min(this.cursorColumn + dx, this.cursorColumns.length - 1), 0);
-        
+
+        if (withSelection) {
+            const cursorColumn = getCursorColumnAt(this.renderColumns, this.cursorColumn);
+            const renderIndex = this.renderColumns.indexOf(cursorColumn.renderColumn);
+            this.setSelection(this.selection.startColumn, this.selection.startRow, renderIndex, this.cursorTime);
+        }
+
         this.scrollIntoView();
         this.redrawCanvas();
 
@@ -346,16 +372,13 @@ export class PatternEditorCanvas implements IComponent {
         this.redrawCanvas();
     }
 
-    moveHome() {
-        this.cursorColumn = 0;
-        this.scrollIntoView();
-        this.redrawCanvas();
+    moveHome(withSelection: boolean) {
+        this.moveCursor(-this.cursorColumn, 0, withSelection);
     }
 
-    moveEnd() {
-        this.cursorColumn = this.cursorColumns.length - 1;
-        this.scrollIntoView();
-        this.redrawCanvas();
+    moveEnd(withSelection: boolean) {
+        const dx = this.cursorColumns.length - 1 - this.cursorColumn;
+        this.moveCursor(dx, 0, withSelection);
     }
 
     scrollIntoView() {

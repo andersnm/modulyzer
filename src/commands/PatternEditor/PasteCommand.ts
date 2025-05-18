@@ -1,5 +1,5 @@
 import { Appl } from "../../App";
-import { deletePatternEvents, editNote, editNoteOff, editValue, getRenderColumnIndex } from "../../components/PatternEditorHelper";
+import { deletePatternEvents, editNote, editNoteOff, editValue } from "../../components/PatternEditorHelper";
 import { PatternPanel } from "../../components/PatternPanel";
 import { ICommand } from "../../nutz";
 import { readClipboardPattern } from "./Clipboard";
@@ -26,10 +26,11 @@ export class PasteCommand implements ICommand {
         console.log("Paste buffer", clipboardObject);
 
         // Clear the pasted area, use pe apis to manipulate notes/noteoffs
-        deletePatternEvents(this.app.song, patternEditor.renderColumns, patternEditor.cursorColumn, patternEditor.cursorColumn + clipboardObject.width, patternEditor.cursorTime, patternEditor.cursorTime + clipboardObject.height);
-
         const startCursorColumn = patternEditor.cursorColumns[patternEditor.cursorColumn];
-        let renderIndex = getRenderColumnIndex(patternEditor.renderColumns, startCursorColumn.renderColumn);
+        const renderIndex = patternEditor.renderColumns.indexOf(startCursorColumn.renderColumn);
+
+        deletePatternEvents(this.app.song, patternEditor.renderColumns, renderIndex, renderIndex + clipboardObject.width, patternEditor.cursorTime, patternEditor.cursorTime + clipboardObject.height);
+
         for (let i = 0; i < clipboardObject.width; i++) {
             const renderColumn = patternEditor.renderColumns[renderIndex + i];
             const clipboardColumn = clipboardObject.columns[i];

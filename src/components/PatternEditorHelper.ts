@@ -214,10 +214,6 @@ export function getRenderColumnWidth(type: string) {
     return columnWidth;
 }
 
-export function getRenderColumnIndex(renderColumns: RenderColumnInfo[], column: RenderColumnInfo) {
-    return renderColumns.indexOf(column);
-}
-
 export function getRenderColumnPosition(renderColumns: RenderColumnInfo[], column: RenderColumnInfo) {
     let x = 0;
     for (let renderColumn of renderColumns) {
