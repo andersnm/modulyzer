@@ -40,6 +40,7 @@ export class PatternsPanel extends ViewFrame {
         this.bind();
         this.app.song.addEventListener("createPattern", this.onUpdate)
         this.app.song.addEventListener("updatePattern", this.onUpdate)
+        this.app.song.addEventListener("deletePattern", this.onUpdate)
         this.app.song.addEventListener("createPatternColumn", this.onUpdate)
         this.app.song.addEventListener("deletePatternColumn", this.onUpdate)
     };
@@ -47,6 +48,7 @@ export class PatternsPanel extends ViewFrame {
     onUnmounted = async (ev) => {
         this.app.song.removeEventListener("createPattern", this.onUpdate)
         this.app.song.removeEventListener("updatePattern", this.onUpdate)
+        this.app.song.removeEventListener("deletePattern", this.onUpdate)
         this.app.song.removeEventListener("createPatternColumn", this.onUpdate)
         this.app.song.removeEventListener("deletePatternColumn", this.onUpdate)
     };
