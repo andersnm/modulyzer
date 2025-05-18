@@ -496,10 +496,6 @@ export class PatternEditorCanvas implements IComponent {
         const cursorColumn = getCursorColumnAt(this.renderColumns, this.cursorColumn);
         const patternColumn = cursorColumn.renderColumn.patternColumn;
 
-        // - already noteoff, exit
-        // - TODO: already note = set note-off for previous note here
-        // - else shorten or extend noteoff
-
         editNoteOff(this.app.song, patternColumn, this.cursorTime, cursorColumn.channel);
     }
 
@@ -517,42 +513,19 @@ export class PatternEditorCanvas implements IComponent {
         if (cursorColumn.type === "u4-lower") {
             const patternEvent = patternColumn.events.find(e => e.channel === cursorColumn.channel && e.time == this.cursorTime);
             const newValue = ((patternEvent?.value??0) & 0xF0) | digit;
-
             editValue(this.app.song, patternColumn, this.cursorTime, patternEvent.channel, newValue);
-
-            // if (patternEvent) {
-            //     this.app.song.updatePatternEvent(patternEvent, newValue, patternEvent.data0, patternEvent.data1);
-            // } else {
-            //     this.app.song.createPatternEvent(patternColumn, this.cursorTime, newValue, 0, 0, cursorColumn.channel);
-            // }
         } else if (cursorColumn.type === "u4-upper") {
             const patternEvent = patternColumn.events.find(e => e.channel === cursorColumn.channel && e.time == this.cursorTime);
             const newValue = ((patternEvent?.value??0) & 0x0F) | (digit << 4);
             editValue(this.app.song, patternColumn, this.cursorTime, patternEvent.channel, newValue);
-
-            // if (patternEvent) {
-            //     this.app.song.updatePatternEvent(patternEvent, newValue, patternEvent.data0, patternEvent.data1);
-            // } else {
-            //     this.app.song.createPatternEvent(patternColumn, this.cursorTime, newValue, 0, 0, cursorColumn.channel);
-            // }
         } else if (cursorColumn.type == "u4-velo-lower") {
             const patternEvent = patternColumn.events.find(e => e.channel === cursorColumn.channel && e.time == this.cursorTime && e.data0 !== 0);
             const newValue = ((patternEvent?.data0??0) & 0xF0) | digit;
             editVelocity(this.app.song, patternEvent, newValue);
-            // if (patternEvent) {
-            //     this.app.song.updatePatternEvent(patternEvent, patternEvent.value, newValue, patternEvent.data1);
-            // } else {
-            //     console.log("Cannote change velocity: No note at current position")
-            // }
         } else if (cursorColumn.type == "u4-velo-upper") {
             const patternEvent = patternColumn.events.find(e => e.channel === cursorColumn.channel && e.time == this.cursorTime && e.data0 !== 0);
             const newValue = ((patternEvent?.data0??0) & 0x0F) | (digit << 4);
             editVelocity(this.app.song, patternEvent, newValue);
-            // if (patternEvent) {
-            //     this.app.song.updatePatternEvent(patternEvent, patternEvent.value, newValue, patternEvent.data1);
-            // } else {
-            //     console.log("Cannote change velocity: No note at current position")
-            // }
         }
     }
 
@@ -620,22 +593,6 @@ export class PatternEditorCanvas implements IComponent {
 
         x += rowNumberWidth;
 
-        if (this.selection) {
-            const c1 = Math.min(this.selection.startColumn, this.selection.endColumn);
-            const c2 = Math.max(this.selection.startColumn, this.selection.endColumn);
-            const selectStartColumn = this.renderColumns[c1];
-            const selectEndColumn = this.renderColumns[c2];
-
-            const x1 = getRenderColumnPosition(this.renderColumns, selectStartColumn) * this.fontEm.width;
-            const x2 = (getRenderColumnPosition(this.renderColumns, selectEndColumn) + getRenderColumnWidth(selectEndColumn.type)) * this.fontEm.width;
-
-            let y1 = (Math.min(this.selection.startRow, this.selection.endRow) - this.scrollRow) * fontHeight;
-            let y2 = (Math.max(this.selection.startRow, this.selection.endRow) - this.scrollRow + 1) * fontHeight;
-
-            ctx.fillStyle = "#444";
-            ctx.fillRect(x + x1, fontHeight + y1, (x2 - x1), y2 - y1);
-        }
-
         for (let renderColumn of this.renderColumns) {
             const patternColumn = renderColumn.patternColumn;
 
@@ -697,6 +654,28 @@ export class PatternEditorCanvas implements IComponent {
             ctx.globalCompositeOperation = "difference";
             ctx.fillRect(cursorX, ((this.cursorTime - this.scrollRow) * fontHeight) + fontHeight, cursorWidth, fontHeight)
             ctx.restore();
+        }
+
+        // Selection
+        if (this.selection) {
+            const ori = ctx.globalCompositeOperation;
+            ctx.globalCompositeOperation = "difference";
+
+            const c1 = Math.min(this.selection.startColumn, this.selection.endColumn);
+            const c2 = Math.max(this.selection.startColumn, this.selection.endColumn);
+            const selectStartColumn = this.renderColumns[c1];
+            const selectEndColumn = this.renderColumns[c2];
+
+            const x1 = getRenderColumnPosition(this.renderColumns, selectStartColumn) * this.fontEm.width;
+            const x2 = (getRenderColumnPosition(this.renderColumns, selectEndColumn) + getRenderColumnWidth(selectEndColumn.type)) * this.fontEm.width;
+
+            let y1 = (Math.min(this.selection.startRow, this.selection.endRow) - this.scrollRow) * fontHeight;
+            let y2 = (Math.max(this.selection.startRow, this.selection.endRow) - this.scrollRow + 1) * fontHeight;
+
+            ctx.fillStyle = "#DDD";
+            ctx.fillRect(rowNumberWidth + x1, fontHeight + y1, (x2 - x1), y2 - y1);
+
+            ctx.globalCompositeOperation = ori;
         }
 
         // scroll
