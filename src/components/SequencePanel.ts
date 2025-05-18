@@ -2,11 +2,11 @@ import { Appl } from "../App";
 import { SequenceEditorCanvas } from "./SequenceEditorCanvas";
 import { registerSequenceEditorCommands } from "../commands/SequenceEditor/Register";
 import { ViewFrame } from "../nutz/ViewFrame";
-import { ButtonToolbar } from "../nutz";
+import { CommandButtonBar, IComponent, INotify } from "../nutz";
 
-export class SequencePanel extends ViewFrame {
+export class SequencePanel extends ViewFrame implements INotify {
     app: Appl;
-    toolbar: HTMLElement;
+    actionButtons: CommandButtonBar;
     sequenceEditor: SequenceEditorCanvas;
 
     constructor(app: Appl) {
@@ -15,9 +15,9 @@ export class SequencePanel extends ViewFrame {
 
         registerSequenceEditorCommands(this);
 
-        this.sequenceEditor = new SequenceEditorCanvas(app);
+        this.sequenceEditor = new SequenceEditorCanvas(app, this);
 
-        this.addToolbar(ButtonToolbar(this, [
+        this.actionButtons = new CommandButtonBar(this, [
             {
                 type: "button",
                 label: "Cut",
@@ -41,9 +41,23 @@ export class SequencePanel extends ViewFrame {
                 label: "Add Column",
                 action: "add-column",
             }
-        ]));
+        ]);
 
+        this.addToolbar(this.actionButtons.getDomNode() as HTMLElement);
         this.setView(this.sequenceEditor.getDomNode());
+
+        this.bindButtons();
+    }
+
+    notify(source: IComponent, eventName: string, ...args: any): void {
+        if (eventName === "selchange") {
+            this.bindButtons();
+        }
+    }
+
+    bindButtons() {
+        this.actionButtons.setCommandEnabled("cut", !!this.sequenceEditor.selection);
+        this.actionButtons.setCommandEnabled("copy", !!this.sequenceEditor.selection);
     }
 
     getDomNode(): Node {

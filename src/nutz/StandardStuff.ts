@@ -71,7 +71,7 @@ export interface ButtonToolbarButton {
 
 export type ButtonToolbarType = ButtonToolbarButton|ButtonToolbarSeparator;
 
-function isButtonToolbarButton(b): b is ButtonToolbarButton {
+export function isButtonToolbarButton(b): b is ButtonToolbarButton {
     return b.type === "button";
 }
 

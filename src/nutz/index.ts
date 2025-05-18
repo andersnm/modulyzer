@@ -1,6 +1,7 @@
 export * from "./IComponent.js"
 export * from "./ICommand.js"
 export * from "./CommandHost.js"
+export * from "./CommandButtonBar.js"
 export * from "./GridFrameContainer.js";
 export * from "./TabFrameContainer.js";
 export * from "./Tabs.js";

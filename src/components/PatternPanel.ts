@@ -1,7 +1,7 @@
 import { Appl } from "../App";
 import { PatternDocument } from "../audio/SongDocument";
 import { registerPatternEditorCommands } from "../commands/PatternEditor/Register";
-import { ButtonToolbar, IComponent, StatusBar } from "../nutz";
+import { CommandButtonBar, IComponent, StatusBar } from "../nutz";
 import { ViewFrame } from "../nutz/ViewFrame";
 import { PatternEditorCanvas } from "./PatternEditorCanvas";
 import { formatNote, getCursorColumnAt, getPatternRenderColumns } from "./PatternEditorHelper";
@@ -52,6 +52,7 @@ class OctaveInput implements IComponent {
 
 export class PatternPanel extends ViewFrame implements IComponent {
     app: Appl;
+    actionButtons: CommandButtonBar;
     patternEditor: PatternEditorCanvas;
     octaveInput: OctaveInput;
     statusBar: StatusBar;
@@ -64,8 +65,7 @@ export class PatternPanel extends ViewFrame implements IComponent {
 
         this.patternEditor = new PatternEditorCanvas(app, this);
         this.octaveInput = new OctaveInput(this);
-
-        this.addToolbar(ButtonToolbar(this, [
+        this.actionButtons = new CommandButtonBar(this, [
             {
                 type: "button",
                 label: "Cut",
@@ -99,8 +99,9 @@ export class PatternPanel extends ViewFrame implements IComponent {
                 label: "Duplicate",
                 action: "duplicate-pattern",
             },
-        ]));
+        ]);
 
+        this.addToolbar(this.actionButtons.getDomNode() as HTMLElement);
         this.addToolbar(this.octaveInput.getDomNode() as HTMLElement);
 
         this.setView(this.patternEditor.getDomNode() as HTMLElement);
@@ -113,12 +114,33 @@ export class PatternPanel extends ViewFrame implements IComponent {
 
         // NOTE: Adding statusbar in ViewFrame's container
         this.container.appendChild(this.statusBar.getDomNode());
+
+        this.container.addEventListener("nutz:mounted", this.onMounted);
+        this.container.addEventListener("nutz:unmounted", this.onUnmounted);
+
+        this.bindButtons();
     }
+
+
+    onMounted = () => {
+        this.app.song.addEventListener("deletePattern", this.onDeletePattern);
+    };
+
+    onUnmounted = () => {
+        this.app.song.removeEventListener("deletePattern", this.onDeletePattern);
+    };
+
+    onDeletePattern = (ev: CustomEvent<PatternDocument>) => {
+        if (ev.detail === this.patternEditor.pattern) {
+            this.setPattern(null);
+        }
+    };
 
     setPattern(pattern: PatternDocument) {
         this.patternEditor.setPattern(pattern);
-        this.patternEditor.moveCursor(0, 0);
+        if (pattern) this.patternEditor.moveCursor(0, 0);
         this.updateStatusBar();
+        this.bindButtons();
     }
 
     getDomNode(): Node {
@@ -127,7 +149,15 @@ export class PatternPanel extends ViewFrame implements IComponent {
 
     updateStatusBar() {
 
-        this.statusBar.setText(3, this.patternEditor.pattern?.name ?? "--");
+        if (!this.patternEditor.pattern) {
+            this.statusBar.setText(0, "Row: 0");
+            this.statusBar.setText(1, "");
+            this.statusBar.setText(2, "");
+            this.statusBar.setText(3, "--");
+            return;
+        }
+
+        this.statusBar.setText(3, this.patternEditor.pattern.name);
 
         const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.patternEditor.pattern, 8);
         const cursorColumn = getCursorColumnAt(renderColumns, this.patternEditor.cursorColumn);
@@ -179,6 +209,18 @@ export class PatternPanel extends ViewFrame implements IComponent {
     notify(source: IComponent, eventName: string, ...args: any): void {
         if (eventName === "cursormove") {
             this.updateStatusBar();
+        } else
+        if (eventName === "selchange") {
+            this.bindButtons();
         }
+    }
+
+    bindButtons() {
+        this.actionButtons.setCommandEnabled("paste", !!this.patternEditor.pattern);
+        this.actionButtons.setCommandEnabled("add-column", !!this.patternEditor.pattern);
+        this.actionButtons.setCommandEnabled("edit-pattern", !!this.patternEditor.pattern);
+        this.actionButtons.setCommandEnabled("duplicate-pattern", !!this.patternEditor.pattern);
+        this.actionButtons.setCommandEnabled("cut", this.patternEditor.pattern && !!this.patternEditor.selection);
+        this.actionButtons.setCommandEnabled("copy", this.patternEditor.pattern && !!this.patternEditor.selection);
     }
 }

@@ -49,6 +49,7 @@ class DragSelect extends DragTarget {
         this.endRow = t;
 
         this.component.setSelection(this.startColumn, this.startRow, this.endColumn, this.endRow);
+        this.component.parent.notify(this.component, "selchange")
     }
 
     up(e: PointerEvent) {
@@ -121,7 +122,6 @@ export class PatternEditorCanvas implements IComponent {
     onMounted = () => {
         this.app.song.addEventListener("updateInstrument", this.onResize);
         this.app.song.addEventListener("updatePattern", this.onRebind);
-        this.app.song.addEventListener("deletePattern", this.onDeletePattern);
         this.app.song.addEventListener("createPatternColumn", this.onRebind);
         this.app.song.addEventListener("updatePatternColumn", this.onRebind);
         this.app.song.addEventListener("createPatternEvent", this.onResize);
@@ -132,18 +132,11 @@ export class PatternEditorCanvas implements IComponent {
     onUnmounted = () => {
         this.app.song.removeEventListener("updateInstrument", this.onResize);
         this.app.song.removeEventListener("updatePattern", this.onRebind);
-        this.app.song.removeEventListener("deletePattern", this.onDeletePattern);
         this.app.song.removeEventListener("createPatternColumn", this.onRebind);
         this.app.song.removeEventListener("updatePatternColumn", this.onRebind);
         this.app.song.removeEventListener("createPatternEvent", this.onResize);
         this.app.song.removeEventListener("updatePatternEvent", this.onResize);
         this.app.song.removeEventListener("deletePatternEvent", this.onResize);
-    };
-
-    onDeletePattern = (ev: CustomEvent<PatternDocument>) => {
-        if (ev.detail === this.pattern) {
-            this.setPattern(null);
-        }
     };
 
     onRebind = () => {
@@ -565,6 +558,7 @@ export class PatternEditorCanvas implements IComponent {
 
     setPattern(pattern: PatternDocument) {
         this.pattern = pattern;
+        this.selection = null;
 
         if (this.pattern) {
             this.renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
