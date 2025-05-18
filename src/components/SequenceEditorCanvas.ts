@@ -1,5 +1,5 @@
 import { Appl } from "../App";
-import { DragTarget, IComponent } from "../nutz";
+import { DragTarget, formatHotkey, IComponent } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 import { PatternPanel } from "./PatternPanel";
 
@@ -188,24 +188,31 @@ export class SequenceEditorCanvas implements IComponent {
 
     editKeyDown(e: KeyboardEvent) {
         // console.log("KEYPP", e.key)
-        switch (e.key) {
+        const key = formatHotkey(e)
+        switch (key) {
             case "ArrowUp":
-                this.moveCursor(0, -1);
+            case "SHIFT+ArrowUp":
+                this.moveCursor(0, -1, e.shiftKey);
                 return true;
             case "ArrowDown":
-                this.moveCursor(0, 1);
+            case "SHIFT+ArrowDown":
+                this.moveCursor(0, 1, e.shiftKey);
                 return true;
             case "ArrowRight":
-                this.moveCursor(1, 0);
+            case "SHIFT+ArrowRight":
+                this.moveCursor(1, 0, e.shiftKey);
                 return true;
             case "ArrowLeft":
-                this.moveCursor(-1, 0);
+            case "SHIFT+ArrowLeft":
+                this.moveCursor(-1, 0, e.shiftKey);
                 return true;
             case "PageUp":
-                this.moveCursor(0, -16);
+            case "SHIFT+PageUp":
+                this.moveCursor(0, -16, e.shiftKey);
                 return true;
             case "PageDown":
-                this.moveCursor(0, 16);
+            case "SHIFT+PageDown":
+                this.moveCursor(0, 16, e.shiftKey);
                 return true;
             case "Enter":
                 // console.log("Enter pattern if event here")
@@ -279,13 +286,36 @@ export class SequenceEditorCanvas implements IComponent {
         this.redrawCanvas();
     }
 
-    moveCursor(dx: number, dy: number) {
+    moveCursor(dx: number, dy: number, withSelection: boolean = false) {
         console.log("MOEV", dx, dy)
+
+        if (!withSelection) {
+            this.clearSelection();
+        } else {
+            if (!this.selection) {
+                this.setSelection(this.cursorColumn, this.cursorTime, this.cursorColumn, this.cursorTime);
+            }
+        }
+
         this.cursorTime = Math.min(Math.max(0, this.cursorTime + dy), maxSequencerLength - 1);
         this.cursorColumn = Math.min(Math.max(0, this.cursorColumn + dx), this.app.song.sequenceColumns.length - 1);
+
+        if (withSelection) {
+            this.setSelection(this.selection.startColumn, this.selection.startRow, this.cursorColumn, this.cursorTime);
+        }
+
         this.scrollIntoView();
         this.redrawCanvas();
         return true;
+    }
+
+    clearSelection() {
+        if (!this.selection) {
+            return;
+        }
+
+        this.selection = null;
+        this.redrawCanvas();
     }
 
     setSelection(startColumn: number, startRow: number, endColumn: number, endRow: number) {
@@ -294,19 +324,14 @@ export class SequenceEditorCanvas implements IComponent {
         startRow = Math.min(Math.max(0, startRow), maxSequencerLength - 1);
         endRow = Math.min(Math.max(0, endRow), maxSequencerLength - 1);
 
-        const x1 = Math.min(startColumn, endColumn);
-        const x2 = Math.max(startColumn, endColumn);
-        const y1 = Math.min(startRow, endRow);
-        const y2 = Math.max(startRow, endRow);
-
         if (this.selection && 
-            this.selection.startColumn === x1 && this.selection.startRow === y1 &&
-            this.selection.endColumn === x2 && this.selection.endRow === y2)
+            this.selection.startColumn === startColumn && this.selection.startRow === startRow &&
+            this.selection.endColumn === endColumn && this.selection.endRow === endRow)
         {
             return;
         }
 
-        this.selection = { startColumn: x1, startRow: y1, endColumn: x2, endRow: y2 };
+        this.selection = { startColumn, startRow, endColumn, endRow };
         // console.log("Set selection:", this.selection);
         this.redrawCanvas();
     }

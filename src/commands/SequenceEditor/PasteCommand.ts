@@ -15,16 +15,11 @@ export class PasteCommand implements ICommand {
 
     async handle(...args: any[]) {
         const sequenceEditor = this.component.sequenceEditor;
-        if (!sequenceEditor.selection) {
-            return;
-        }
 
         const clipboardObject = await readClipboardSequence();
         if (!clipboardObject) {
             return;
         }
-
-        console.log(clipboardObject);
 
         const startColumn = sequenceEditor.cursorColumn;
         const endColumn = startColumn + clipboardObject.width - 1;
