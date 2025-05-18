@@ -47,6 +47,9 @@ export class WavePanel extends ViewFrame {
                 action: "paste",
             },
             {
+                type: "separator",
+            },
+            {
                 type: "button",
                 label: "Crop",
                 action: "crop",
@@ -99,7 +102,10 @@ export class WavePanel extends ViewFrame {
         this.statusBar.addPart(["flex-1", "cursor-pointer"], "No instrument selected")
         this.statusBar.addPart(["flex-1"], "No wave selected")
 
+        this.statusBar.parts[1].title = "MIDI Note";
+        this.statusBar.parts[2].title = "Instrument";
         this.statusBar.parts[2].addEventListener("click", this.onStatusBarInstrumentContextMenu);
+        this.statusBar.parts[3].title = "Wave";
 
         // NOTE: Adding statusbar in ViewFrame's container
         this.container.appendChild(this.statusBar.getDomNode());

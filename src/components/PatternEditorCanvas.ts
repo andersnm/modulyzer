@@ -109,6 +109,12 @@ export class PatternEditorCanvas implements IComponent {
         this.container.addEventListener("nutz:mounted", this.onMounted);
         this.container.addEventListener("nutz:unmounted", this.onUnmounted);
 
+        const ctx = this.canvas.getContext("2d");
+        ctx.font = "14px monospace";
+
+        this.fontEm = ctx.measureText("M");
+        this.rowNumberWidth = this.fontEm.width * 5;
+
         this.setPattern(null);
     }
 
@@ -559,11 +565,6 @@ export class PatternEditorCanvas implements IComponent {
 
     setPattern(pattern: PatternDocument) {
         this.pattern = pattern;
-        const ctx = this.canvas.getContext("2d");
-        ctx.font = "14px monospace";
-
-        this.fontEm = ctx.measureText("M");
-        this.rowNumberWidth = this.fontEm.width * 5;
 
         if (this.pattern) {
             this.renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);

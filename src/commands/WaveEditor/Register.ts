@@ -14,17 +14,17 @@ import { ZoomInCommand } from "./ZoomInCommand";
 import { ZoomOutCommand } from "./ZoomOutCommand";
 
 export function registerWaveEditorCommands(component: WavePanel) {
-    component.registerCommand("save-wave", "hgi-stroke hgi-folder", null, new SaveWaveCommand(component));
-    component.registerCommand("edit-wave", "hgi-stroke hgi-edit-01", null, new EditWaveCommand(component));
-    component.registerCommand("cut", "hgi-stroke hgi-scissor-01", null, new CutCommand(component));
-    component.registerCommand("copy", "hgi-stroke hgi-copy-01", null, new CopyCommand(component));
-    component.registerCommand("paste", "hgi-stroke hgi-column-insert", null, new PasteCommand(component));
-    component.registerCommand("crop", "hgi-stroke hgi-crop", null, new CropCommand(component));
-    component.registerCommand("delete", "hgi-stroke hgi-delete-02", null, new DeleteCommand(component));
-    component.registerCommand("zoom", "hgi-stroke hgi-zoom-in-area", null, new ZoomCommand(component));
-    component.registerCommand("zoom-in", "hgi-stroke hgi-zoom-in-area", null, new ZoomInCommand(component));
-    component.registerCommand("zoom-out", "hgi-stroke hgi-zoom-in-area", null, new ZoomOutCommand(component));
-    component.registerCommand("zoom-clear", "hgi-stroke hgi-zoom-in-area", null, new ZoomClearCommand(component));
+    component.registerCommand("save-wave", "hgi-stroke hgi-folder", "Save...", new SaveWaveCommand(component));
+    component.registerCommand("edit-wave", "hgi-stroke hgi-edit-01", "Properties...", new EditWaveCommand(component));
+    component.registerCommand("cut", "hgi-stroke hgi-scissor-01", "Cut", new CutCommand(component));
+    component.registerCommand("copy", "hgi-stroke hgi-copy-01", "Copy", new CopyCommand(component));
+    component.registerCommand("paste", "hgi-stroke hgi-column-insert", "Paste", new PasteCommand(component));
+    component.registerCommand("crop", "hgi-stroke hgi-crop", "Crop", new CropCommand(component));
+    component.registerCommand("delete", "hgi-stroke hgi-delete-02", "Delete", new DeleteCommand(component));
+    component.registerCommand("zoom", "hgi-stroke hgi-zoom-in-area", "Zoom Selection", new ZoomCommand(component));
+    component.registerCommand("zoom-in", "hgi-stroke hgi-zoom-in-area", "Zoom In", new ZoomInCommand(component));
+    component.registerCommand("zoom-out", "hgi-stroke hgi-zoom-in-area", "Zoom Out", new ZoomOutCommand(component));
+    component.registerCommand("zoom-clear", "hgi-stroke hgi-zoom-in-area", "Reset Zoom", new ZoomClearCommand(component));
     component.registerCommand("play-wave", "hgi-stroke hgi-next", "Play Wave", new PlayWaveCommand(component));
 
     component.registerCommand("select-all", null, null, new SelectAllCommand(component));

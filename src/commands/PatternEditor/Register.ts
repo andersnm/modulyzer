@@ -13,9 +13,9 @@ import { PasteCommand } from "./PasteCommand";
 export function registerPatternEditorCommands(component: PatternPanel) {
     component.registerCommand("add-column", "hgi-stroke hgi-plus-sign", "Add a Column", new AddColumnCommand(component));
     component.registerCommand("edit-pattern", "hgi-stroke hgi-edit-01", "Edit Pattern Properties", new EditPatternCommand(component));
-    component.registerCommand("cut", "hgi-stroke hgi-scissor-01", null, new CutCommand(component));
-    component.registerCommand("copy", "hgi-stroke hgi-copy-01", null, new CopyCommand(component));
-    component.registerCommand("paste", "hgi-stroke hgi-column-insert", null, new PasteCommand(component));
+    component.registerCommand("cut", "hgi-stroke hgi-scissor-01", "Cut", new CutCommand(component));
+    component.registerCommand("copy", "hgi-stroke hgi-copy-01", "Copy", new CopyCommand(component));
+    component.registerCommand("paste", "hgi-stroke hgi-column-insert", "Paste", new PasteCommand(component));
 
     component.registerCommand("octave-up", "hgi-stroke hgi-circle-arrow-up-01", null, new OctaveUpCommand(component));
     component.registerCommand("octave-down", "hgi-stroke hgi-circle-arrow-down-01", null, new OctaveDownCommand(component));

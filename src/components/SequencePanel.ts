@@ -20,6 +20,24 @@ export class SequencePanel extends ViewFrame {
         this.addToolbar(ButtonToolbar(this, [
             {
                 type: "button",
+                label: "Cut",
+                action: "cut",
+            },
+            {
+                type: "button",
+                label: "Copy",
+                action: "copy",
+            },
+            {
+                type: "button",
+                label: "Paste",
+                action: "paste",
+            },
+            {
+                type: "separator",
+            },
+            {
+                type: "button",
                 label: "Add Column",
                 action: "add-column",
             }
