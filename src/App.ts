@@ -17,6 +17,7 @@ import { PlayerSongAdapter } from "./audio/PlayerSongAdapter";
 import { WavePlayer } from "./audio/WavePlayer"; 
 import { registerApplicationCommands } from "./commands/Application/Register";
 import { ContextMenuContainer } from "./nutz/ContextMenuContainer";
+import { KickDrumFactory } from "./audio/plugins/KickDrum";
 
 class BpmInput implements IComponent {
 
@@ -84,6 +85,7 @@ export class Appl extends CommandHost implements IComponent {
         new Dx7Factory(),
         new WaveTrackerFactory(),
         new Open303Factory(),
+        new KickDrumFactory()
     ];
 
     constructor() {

@@ -454,7 +454,7 @@ export class PatternEditorCanvas implements IComponent {
             // TODO: stuck notes if canvas loses focus before key up
             const instrument = cursorColumn.renderColumn.patternColumn.instrument;
             const playerInstrument = this.app.playerSongAdapter.instrumentMap.get(instrument);
-            playerInstrument.sendMidi(0, 0x90, note, 127);
+            playerInstrument.sendMidi(this.app.device.context.currentTime, 0x90, note, 127);
             return true;
         }
 
