@@ -2,6 +2,11 @@ import { FormGroup, IComponent, INotify, VInset, ModalButtonBar } from '../nutz'
 
 export type DomElementCallbackType = (el: HTMLElement) => void;
 
+interface DeviceInfo {
+    sampleRate: ULongRange;
+    channelCount: ULongRange;
+}
+
 function createElement(tagName: string, callback: DomElementCallbackType | null, ...contents: Node[]) {
     const node = document.createElement(tagName);
     if (callback) {
@@ -17,8 +22,6 @@ function createElement(tagName: string, callback: DomElementCallbackType | null,
 
 export class AudioConfiguration implements IComponent {
     parent: INotify;
-    // inputDeviceId: string;
-    // outputDeviceId: string;
     cancelable: boolean = true;
     currentInputDeviceId: string;
     currentOutputDeviceId: string;
@@ -26,6 +29,8 @@ export class AudioConfiguration implements IComponent {
     inputMode: string = "stereo";
     currentInputSampleRate = 44100;
     currentInputChannelCount = 2;
+    latencySec = 0.5;
+    deviceCapabilities: Map<string, DeviceInfo> = new Map();
 
     containerElement: HTMLElement;
     deniedForm: HTMLElement;
@@ -34,6 +39,7 @@ export class AudioConfiguration implements IComponent {
     configForm: HTMLElement;
     outputDevicesSelect: HTMLSelectElement;
     inputDevicesSelect: HTMLSelectElement;
+    latencySelect: HTMLSelectElement;
     buttonBar: ModalButtonBar;
 
     constructor(parent: INotify) {
@@ -47,12 +53,14 @@ export class AudioConfiguration implements IComponent {
         this.createForm();
 
         this.bind();
+        this.bindButtons();
 
         this.containerElement.addEventListener("nutz:mounted", this.onMounted);
         this.containerElement.addEventListener("nutz:unmounted", this.onUnmounted);
     }
 
     onMounted = () => {
+        this.bind();
         this.lod();
         navigator.mediaDevices.addEventListener("devicechange", this.onRefresh);
     }
@@ -69,35 +77,67 @@ export class AudioConfiguration implements IComponent {
         const mediaDevices = await navigator.mediaDevices.enumerateDevices();
         const inputDevices = mediaDevices.filter(d => d.kind === "audioinput");
         const outputDevices = mediaDevices.filter(d => d.kind === "audiooutput");
+
+        for (let inputDevice of inputDevices) {
+            const caps = await this.probeDevice(inputDevice.deviceId);
+            this.deviceCapabilities.set(inputDevice.deviceId, caps);
+        }
+
+        for (let outputDevice of outputDevices) {
+            const caps = await this.probeDevice(outputDevice.deviceId);
+            this.deviceCapabilities.set(outputDevice.deviceId, caps);
+        }
+
         const permission = await navigator.permissions.query({name: "microphone" as PermissionName});
         this.microphonePermission = permission.state;
 
         this.bindOutputDevices(outputDevices)
         this.bindInputDevices(inputDevices)
+        this.bindLatency();
         this.bindButtons();
 
         this.bind();
     }
 
     bindButtons() {
-        this.buttonBar.cancelButton.disabled = !this.cancelable;
-        this.buttonBar.okButton.disabled = !this.currentOutputDeviceId;
+        const hasOptions = this.outputDevicesSelect.options.length > 0;
+        this.buttonBar.cancelButton.disabled = !this.cancelable || !hasOptions;
+        this.buttonBar.okButton.disabled = !this.currentOutputDeviceId || !hasOptions;
     }
 
-    async probeDevice(inputDeviceId) {
+    async probeDevice(inputDeviceId: string) {
         const stream = await navigator.mediaDevices.getUserMedia({audio: {advanced: [{ deviceId: inputDeviceId}]}, video: false});
         const tracks = stream.getAudioTracks();
         // console.log("probing", tracks[0], tracks[0].getCapabilities())
         const capabilities = tracks[0].getCapabilities();
-        this.currentInputSampleRate = capabilities.sampleRate.max;
-        this.currentInputChannelCount = capabilities.channelCount.max;
-        // const sampleRate = caps.sampleRate;
+        return {
+            sampleRate: capabilities.sampleRate,
+            channelCount: capabilities.channelCount,
+        } as DeviceInfo;
     };
 
-    setPermission(permission: any) {
-        // show gui for permission
-        this.microphonePermission = permission;
-        this.bind();
+    bindLatency() {
+        while (this.latencySelect.options.length > 0) this.latencySelect.options.remove(0);
+
+        const capabilities = this.deviceCapabilities.get(this.currentOutputDeviceId);
+        const sampleRate = capabilities.sampleRate.max;
+
+        const latencies = [ 128, 256, 512, 1024, 2048, 0.125 * sampleRate, 0.25 * sampleRate, 0.5 * sampleRate ];
+
+        for (let latency of latencies) {
+            const opt = document.createElement("option")
+            opt.value = (latency / sampleRate).toFixed(5);
+            opt.label = (latency / sampleRate * 1000).toFixed(1) + "ms (" + latency + ")";
+
+            this.latencySelect.options.add(opt)
+        }
+
+        this.latencySelect.value = this.latencySec.toFixed(5);
+
+        if (this.latencySelect.options.selectedIndex == -1) {
+            this.latencySelect.options.selectedIndex = 5; // the index of 0.125 in latencies array
+            this.latencySec = 0.125;
+        }
     }
 
     bindOutputDevices(devices: MediaDeviceInfo[]) {
@@ -179,10 +219,19 @@ export class AudioConfiguration implements IComponent {
 
         const inputGroup = FormGroup("Input Device", this.inputDevicesSelect);
 
+        this.latencySelect = document.createElement("select");
+        this.latencySelect.className = "w-full rounded-lg p-1 bg-neutral-800";
+        this.latencySelect.addEventListener("change", () => {
+            this.latencySec = parseFloat(this.latencySelect.value);
+        });
+
+        const latencyGroup = FormGroup("Latency", this.latencySelect);
+
         this.buttonBar = new ModalButtonBar(this, this.parent);
 
         this.configForm.appendChild(outputGroup);
         this.configForm.appendChild(inputGroup);
+        this.configForm.appendChild(latencyGroup);
 
         this.configForm.appendChild(this.buttonBar.getDomNode());
     }

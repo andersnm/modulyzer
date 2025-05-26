@@ -6,6 +6,7 @@ import { Recorder } from "./Recorder.js";
 
 export class AudioDevice {
 
+    latencySec: number = 0.125;
     inputDeviceId: string = null;
     outputDeviceId: string = null;
     context: AudioContext | null = null;
@@ -17,7 +18,7 @@ export class AudioDevice {
         this.inputMode = "stereo";
     }
 
-    async create(outputDeviceId: string, inputDeviceId: string) {
+    async create(outputDeviceId: string, inputDeviceId: string, latencySec: number) {
 
         if (this.context) {
             await this.context.close();
@@ -26,8 +27,9 @@ export class AudioDevice {
 
         this.outputDeviceId = outputDeviceId;
         this.inputDeviceId = inputDeviceId;
+        this.latencySec = latencySec;
 
-        this.context = new AudioContext({ sinkId: outputDeviceId, latencyHint: .5 } as any);
+        this.context = new AudioContext({ sinkId: outputDeviceId, latencyHint: latencySec } as any);
 
         await this.context.audioWorklet.addModule(recorderWorkletUrl);
         await this.context.audioWorklet.addModule(dx7WorkletUrl);

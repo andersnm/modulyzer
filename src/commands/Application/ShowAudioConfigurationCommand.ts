@@ -24,7 +24,8 @@ export class ShowAudioConfigurationCommand implements INotify {
         const permission = await tryGetMicrophonePermission();
 
         const audioConfiguration = new AudioConfiguration(this);
-        audioConfiguration.setPermission(permission);
+        audioConfiguration.microphonePermission = permission;
+        audioConfiguration.latencySec = this.app.device.latencySec;
         audioConfiguration.cancelable = !!this.app.device.context;
         audioConfiguration.currentOutputDeviceId = this.app.device.outputDeviceId;
         audioConfiguration.currentInputDeviceId = this.app.device.inputDeviceId;
@@ -34,6 +35,6 @@ export class ShowAudioConfigurationCommand implements INotify {
             return;
         }
 
-        await this.app.setAudioDevice(audioConfiguration.currentOutputDeviceId, audioConfiguration.currentInputDeviceId);
+        await this.app.setAudioDevice(audioConfiguration.currentOutputDeviceId, audioConfiguration.currentInputDeviceId, audioConfiguration.latencySec);
     }
 }

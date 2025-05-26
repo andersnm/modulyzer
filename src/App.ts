@@ -202,8 +202,8 @@ export class Appl extends CommandHost implements IComponent {
         this.executeCommand("show-sequence-editor");
     }
 
-    async setAudioDevice(outputDeviceId: string, inputDeviceId: string) {
-        await this.device.create(outputDeviceId, inputDeviceId);
+    async setAudioDevice(outputDeviceId: string, inputDeviceId: string, latencySec: number) {
+        await this.device.create(outputDeviceId, inputDeviceId, latencySec);
 
         this.player = new Player(this.instrumentFactories, this.device.context);
         this.playerSongAdapter.attachPlayer(this.player);
