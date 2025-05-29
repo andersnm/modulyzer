@@ -212,6 +212,8 @@ export class SynthUnit {
         return 3;
       }
       return 0; 
+    } else if (cmd_type === 0xC0) {
+      this.ProgramChange(buf[1]);
     }
   }
 }

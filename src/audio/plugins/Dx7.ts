@@ -2,6 +2,8 @@ import { Player } from "../Player";
 import { Instrument, InstrumentFactory, Pin } from "./InstrumentFactory";
 
 export class Dx7Factory extends InstrumentFactory {
+    useSysex = true;
+
     getIdentifier(): string {
         return "@modulyzer/Dx7";
     }
@@ -46,5 +48,10 @@ export class Dx7 extends Instrument {
 
     processMidi(time: any, command: any, value: any, data: any) {
         this.dx7Node.port.postMessage({type:"midi", time, command, value, data});
+    }
+
+    processSysex(bytes: Uint8Array) {
+        const clone = new Uint8Array(bytes);
+        this.dx7Node.port.postMessage({type:"sysex", bytes});
     }
 }

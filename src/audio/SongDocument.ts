@@ -3,6 +3,11 @@ import { getNewPatternName } from '../components/PatternEditorHelper';
 
 function compressFloat32ArrayToBase64(data: Float32Array): string {
     const uint8Array = new Uint8Array(data.buffer);
+    return compressUint8ArrayToBase64(uint8Array);
+}
+
+function compressUint8ArrayToBase64(uint8Array: Uint8Array): string {
+    // const uint8Array = new Uint8Array(data.buffer);
     const compressed = deflate(uint8Array);
 
     let binaryString = "";
@@ -13,6 +18,16 @@ function compressFloat32ArrayToBase64(data: Float32Array): string {
 }
 
 function decompressBase64ToFloat32Array(base64String: string): Float32Array {
+    const buffer = decompressBase64ToArrayBuffer(base64String);
+    return new Float32Array(buffer);
+}
+
+function decompressBase64ToUint8Array(base64String: string): Uint8Array {
+    const buffer = decompressBase64ToArrayBuffer(base64String);
+    return new Uint8Array(buffer);
+}
+
+function decompressBase64ToArrayBuffer(base64String: string): ArrayBufferLike {
     const binaryString = atob(base64String);
 
     const compressed = new Uint8Array(binaryString.length);
@@ -21,7 +36,7 @@ function decompressBase64ToFloat32Array(base64String: string): Float32Array {
     }
 
     const decompressed = inflate(compressed);
-    return new Float32Array(decompressed.buffer);
+    return decompressed.buffer;
 }
 
 export type CcValueDictionary = {[key: number]: number};
@@ -31,6 +46,7 @@ export class InstrumentDocument {
     instrumentId: string;
     x: number = 0;
     y: number = 0;
+    sysex: Uint8Array;
     ccs: CcValueDictionary = {};
     waves: WaveDocument[] = [];
 }
@@ -163,7 +179,7 @@ export class SongDocument extends EventTarget {
     constructor() {
         super();
 
-        this.createInstrument("@modulyzer/Master", "Master", 0, 0, {});
+        this.createInstrument("@modulyzer/Master", "Master", 0, 0, {}, null);
         const sc = this.createSequenceColumn();
         const p = this.createPattern("00", 32, 4);
         this.createSequenceEvent(sc, 0, p);
@@ -190,18 +206,30 @@ export class SongDocument extends EventTarget {
         this.dispatchEvent(new CustomEvent("updateDocument", { detail: this }));
     }
 
-    createInstrument(id: string, name: string, x: number, y: number, ccs: CcValueDictionary) {
+    createInstrument(id: string, name: string, x: number, y: number, ccs: CcValueDictionary, sysex: Uint8Array) {
         const instrument = new InstrumentDocument();
         instrument.instrumentId = id;
         instrument.name = name;
         instrument.x = x;
         instrument.y = y;
         instrument.ccs = { ... ccs };
+        instrument.sysex = new Uint8Array(sysex);
         this.instruments.push(instrument);
 
         this.dispatchEvent(new CustomEvent("createInstrument", { detail: instrument }));
 
         return instrument;
+    }
+
+    updateInstrument(instrument: InstrumentDocument, name: string, x: number, y: number, ccs: CcValueDictionary, sysex: Uint8Array) {
+        instrument.name = name;
+        instrument.x = x;
+        instrument.y = y;
+        instrument.ccs = { ... ccs };
+        instrument.sysex = new Uint8Array(sysex);
+        console.log("document instru", instrument, sysex)
+
+        this.dispatchEvent(new CustomEvent("updateInstrument", { detail: instrument }));
     }
 
     deleteInstrument(instrument: InstrumentDocument) {
@@ -498,6 +526,7 @@ export class SongDocument extends EventTarget {
                 ref: instrument.instrumentId,
                 x: instrument.x,
                 y: instrument.y,
+                sysex: instrument.sysex ? compressUint8ArrayToBase64(instrument.sysex) : undefined,
                 ccs: instrument.ccs,
                 waves: instrument.waves.map(wave => ({
                     name: wave.name,
@@ -552,7 +581,8 @@ export class SongDocument extends EventTarget {
         }
 
         for (let jsonInstrument of json.instruments) {
-            const i = this.createInstrument(jsonInstrument.ref, jsonInstrument.name, jsonInstrument.x, jsonInstrument.y, jsonInstrument.ccs || {});
+            const sysex = jsonInstrument.sysex ? decompressBase64ToUint8Array(jsonInstrument.sysex) : null;
+            const i = this.createInstrument(jsonInstrument.ref, jsonInstrument.name, jsonInstrument.x, jsonInstrument.y, jsonInstrument.ccs || {}, sysex);
 
             if (Array.isArray(jsonInstrument.waves)) {
                 for (let jsonWave of jsonInstrument.waves) {

@@ -52,7 +52,12 @@ export abstract class Instrument extends EventTarget {
         this.processMidi(time, command, value, data);
     }
 
+    sendSysex(bytes: Uint8Array) {
+        this.processSysex(bytes);
+    }
+
     protected abstract processMidi(time: number, command: number, value: number, data: number): void;
+    protected processSysex(bytes: Uint8Array): void {}
 
     connect(destination: Instrument) {
         this.outputNode.connect(destination.inputNode);
@@ -65,6 +70,7 @@ export abstract class Instrument extends EventTarget {
 
 export abstract class InstrumentFactory {
     useWaveTable: boolean = false;
+    useSysex: boolean = false;
     abstract getIdentifier(): string;
     abstract getInputChannelCount(): number;
     abstract getOutputChannelCount(): number;

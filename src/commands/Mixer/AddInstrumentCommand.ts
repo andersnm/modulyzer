@@ -20,7 +20,7 @@ export class AddInstrumentCommand implements ICommand, INotify {
         const factory = this.app.instrumentFactories[instrumentFactoryPicker.instrumentFactoryIndex];
         const instrumentId = factory.getIdentifier();
 
-        const instrument = this.app.song.createInstrument(instrumentId, this.getInstrumentName(instrumentId), 0, 0, {});
+        const instrument = this.app.song.createInstrument(instrumentId, this.getInstrumentName(instrumentId), 0, 0, {}, null);
     }
 
     getInstrumentName(instrumentId: string): string {

@@ -36,6 +36,7 @@ export class PlayerSongAdapter {
 
         this.song.addEventListener("updateDocument", this.onUpdateDocument);
         this.song.addEventListener("createInstrument", this.onCreateInstrument);
+        this.song.addEventListener("updateInstrument", this.onUpdateInstrument);
         this.song.addEventListener("deleteInstrument", this.onDeleteInstrument);
         this.song.addEventListener("createConnection", this.onCreateConnection);
         this.song.addEventListener("deleteConnection", this.onDeleteConnection);
@@ -95,6 +96,7 @@ export class PlayerSongAdapter {
     detachPlayer() {
         this.song.removeEventListener("updateDocument", this.onUpdateDocument);
         this.song.removeEventListener("createInstrument", this.onCreateInstrument);
+        this.song.removeEventListener("updateInstrument", this.onUpdateInstrument);
         this.song.removeEventListener("deleteInstrument", this.onDeleteInstrument);
         this.song.removeEventListener("createConnection", this.onCreateConnection);
         this.song.removeEventListener("deleteConnection", this.onDeleteConnection);
@@ -147,6 +149,10 @@ export class PlayerSongAdapter {
         this.player.instruments.push(instrument);
         this.instrumentMap.set(i, instrument);
 
+        if (factory.useSysex && i.sysex) {
+            instrument.sendSysex(i.sysex);
+        }
+
         // Set CCs for all controller pins to initial or default
         const pins = factory.getPins();
         for (let pin of pins) {
@@ -175,6 +181,21 @@ export class PlayerSongAdapter {
 
         // NOTE/TODO?: No dispatch here, PinsPanel subscribes to ccchange too
         instrument.ccs[ev.detail.value] = ev.detail.data;
+    };
+
+    onUpdateInstrument = (ev: CustomEvent<InstrumentDocument>) => {
+        const i = ev.detail;
+        const factory = this.player.getInstrumentFactoryById(i.instrumentId);
+        if (!factory) {
+            console.error("Unknown instrument " + i.instrumentId, i);
+            return;
+        }
+
+        const instrument = this.instrumentMap.get(i);
+
+        if (factory.useSysex && i.sysex) {
+            instrument.sendSysex(i.sysex);
+        }
     };
 
     onDeleteInstrument = (ev: CustomEvent<InstrumentDocument>) => {
