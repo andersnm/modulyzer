@@ -447,3 +447,20 @@ export function getNewPatternName(patterns: PatternDocument[]) {
 
     return name;
 }
+
+export function getNoteForKey(code: string, octave: number) {
+    const kbTop = [ "KeyQ", "Digit2", "KeyW", "Digit3", "KeyE", "KeyR", "Digit5", "KeyT", "Digit6", "KeyY", "Digit7", "KeyU", ];
+    const kbBottom = [ "KeyZ", "KeyS", "KeyX", "KeyD", "KeyC", "KeyV", "KeyG", "KeyB", "KeyH", "KeyN", "KeyJ", "KeyM", ];
+
+    const t = kbTop.findIndex(k => k === code);
+    if (t !== -1) {
+        return (octave + 1) * 12 + t;
+    }
+
+    const b = kbBottom.findIndex(k => k === code);
+    if (b !== -1) {
+        return octave * 12 + b;
+    }
+
+    return -1;
+}

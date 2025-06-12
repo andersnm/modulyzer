@@ -4,6 +4,7 @@ import { Appl } from "../App";
 import { ConnectionDocument, InstrumentDocument } from "../audio/SongDocument";
 import { PinsPanel } from "./PinsPanel";
 import { MenuItem } from "../menu/menu";
+import { getNoteForKey } from "./PatternEditorHelper";
 
 const boxWidth = 100;
 const boxHeight = 61; // 1.618
@@ -117,14 +118,14 @@ export class MixerCanvas implements IComponent {
         this.canvas.addEventListener("pointermove", this.onMouseMove);
         this.canvas.addEventListener("contextmenu", this.onContextMenu);
         this.canvas.addEventListener("dblclick", this.onDblClick);
-
         this.canvas.addEventListener("resize", this.onResize);
-        // this.canvas.addEventListener("keydown", this.onKeyDown);
-        
+
         this.container.appendChild(this.canvas);
 
         this.container.addEventListener("nutz:mounted", this.onMounted);
         this.container.addEventListener("nutz:unmounted", this.onUnmounted);
+        this.container.addEventListener("keydown", this.onKeyDown);
+        this.container.addEventListener("keyup", this.onKeyUp);
     }
 
     onMounted = () => {
@@ -146,6 +147,49 @@ export class MixerCanvas implements IComponent {
     onResize = () => {
         this.redrawCanvas();
     };
+
+    onKeyDown = (e: KeyboardEvent) => {
+        if (this.editNoteKeyDown(e)) {
+            return;
+        }
+    };
+
+    onKeyUp = (e: KeyboardEvent) => {
+        if (this.editNoteKeyUp(e)) {
+            return;
+        }
+    };
+
+    private editNoteKeyDown(ev: KeyboardEvent) {
+
+        if (ev.repeat) {
+            return false;
+        }
+
+        const note = getNoteForKey(ev.code, 4);
+        console.log("key down note " + note)
+        if (note !== -1) {
+            // Send midi to instrumnt
+            // TODO: stuck notes if canvas loses focus before key up
+            const playerInstrument = this.app.playerSongAdapter.instrumentMap.get(this.selectedInstrument);
+            playerInstrument.sendMidi(this.app.device.context.currentTime, 0x90, note, 127);
+            return true;
+        }
+
+        return false;
+    }
+
+    editNoteKeyUp(ev: KeyboardEvent) {
+        const note = getNoteForKey(ev.code, 4);
+        console.log("key up note " + note)
+        if (note !== -1) {
+            const playerInstrument = this.app.playerSongAdapter.instrumentMap.get(this.selectedInstrument);
+            playerInstrument.sendMidi(0, 0x90, note, 0);
+            return true;
+        }
+
+        return false;
+    }
 
     onMouseDown = (e: PointerEvent) => {
         if (!this.dragTarget) {

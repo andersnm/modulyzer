@@ -2,7 +2,7 @@ import { DragTarget, formatHotkey, ICommandHost, IComponent, INotify } from "../
 import { FlexCanvas } from "./FlexCanvas";
 import { Appl } from "../App";
 import { InstrumentDocument, PatternDocument } from "../audio/SongDocument";
-import { CursorColumnInfo, deleteValue, editNote, editNoteOff, editValue, editVelocity, formatNote, formatU8, getCursorColumnAt, getCursorColumnAtPosition, getCursorColumnIndex, getCursorColumns, getPatternRenderColumns, getRenderColumnPosition, getRenderColumnWidth, RenderColumnInfo } from "./PatternEditorHelper";
+import { CursorColumnInfo, deleteValue, editNote, editNoteOff, editValue, editVelocity, formatNote, formatU8, getCursorColumnAt, getCursorColumnAtPosition, getCursorColumnIndex, getCursorColumns, getNoteForKey, getPatternRenderColumns, getRenderColumnPosition, getRenderColumnWidth, RenderColumnInfo } from "./PatternEditorHelper";
 import { patternMenu } from "../menu/menu";
 
 const maxPolyphonic = 8;
@@ -423,30 +423,13 @@ export class PatternEditorCanvas implements IComponent {
         return events.length === 0;
     }
 
-    getNoteForKey(code: string) {
-        const kbTop = [ "KeyQ", "Digit2", "KeyW", "Digit3", "KeyE", "KeyR", "Digit5", "KeyT", "Digit6", "KeyY", "Digit7", "KeyU", ];
-        const kbBottom = [ "KeyZ", "KeyS", "KeyX", "KeyD", "KeyC", "KeyV", "KeyG", "KeyB", "KeyH", "KeyN", "KeyJ", "KeyM", ];
-
-        const t = kbTop.findIndex(k => k === code);
-        if (t !== -1) {
-            return (this.octave + 1) * 12 + t;
-        }
-
-        const b = kbBottom.findIndex(k => k === code);
-        if (b !== -1) {
-            return this.octave * 12 + b;
-        }
-
-        return -1;
-    }
-
     private editNoteKeyDown(ev: KeyboardEvent, cursorColumn: CursorColumnInfo) {
 
         if (ev.repeat) {
             return false;
         }
 
-        const note = this.getNoteForKey(ev.code);
+        const note = getNoteForKey(ev.code, this.octave);
         if (note !== -1) {
             this.editNoteAtCursor(note);
 
@@ -468,7 +451,7 @@ export class PatternEditorCanvas implements IComponent {
     }
 
     editNoteKeyUp(ev: KeyboardEvent, cursorColumn: CursorColumnInfo) {
-        const note = this.getNoteForKey(ev.code);
+        const note = getNoteForKey(ev.code, this.octave);
         if (note !== -1) {
             const instrument = cursorColumn.renderColumn.patternColumn.instrument;
             const playerInstrument = this.app.playerSongAdapter.instrumentMap.get(instrument);
