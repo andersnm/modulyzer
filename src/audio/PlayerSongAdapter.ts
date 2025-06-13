@@ -42,6 +42,7 @@ export class PlayerSongAdapter {
         this.song.addEventListener("deleteConnection", this.onDeleteConnection);
         this.song.addEventListener("createWave", this.onCreateWave);
         this.song.addEventListener("updateWave", this.onUpdateWave);
+        this.song.addEventListener("deleteWave", this.onDeleteWave);
         this.song.addEventListener("createPattern", this.onCreatePattern);
         this.song.addEventListener("updatePattern", this.onUpdatePattern);
         this.song.addEventListener("deletePattern", this.onDeletePattern);
@@ -94,6 +95,36 @@ export class PlayerSongAdapter {
     }
 
     detachPlayer() {
+
+        for (let sc of this.song.sequenceColumns) {
+            for (let se of sc.events) {
+                this.onDeleteSequenceEvent(new CustomEvent("deleteSequenceEvent", { detail: se }));
+            }
+            this.onDeleteSequenceColumn(new CustomEvent("deleteSequenceColumn", { detail: sc }));
+        }
+
+        for (let p of this.song.patterns) {
+            for (let pc of p.columns) {
+                for (let pe of pc.events) {
+                   this.onDeletePatternEvent(new CustomEvent("deletePatternEvent", { detail: pe }));
+                }
+                this.onDeletePatternColumn(new CustomEvent("deletePatternColumn", { detail: pc }));
+            }
+            this.onDeletePattern(new CustomEvent("deletePattern", { detail: p }));
+        }
+
+        for (let c of this.song.connections) {
+            this.onDeleteConnection(new CustomEvent("deleteConnection", { detail: c }));
+        }
+
+        for (let i of this.song.instruments) {
+            for (let w of i.waves) {
+                this.onDeleteWave(new CustomEvent("deleteWave", { detail: w }));
+            }
+
+            this.onDeleteInstrument(new CustomEvent("deleteInstrument", { detail: i }));
+        }
+
         this.song.removeEventListener("updateDocument", this.onUpdateDocument);
         this.song.removeEventListener("createInstrument", this.onCreateInstrument);
         this.song.removeEventListener("updateInstrument", this.onUpdateInstrument);
@@ -102,6 +133,7 @@ export class PlayerSongAdapter {
         this.song.removeEventListener("deleteConnection", this.onDeleteConnection);
         this.song.removeEventListener("createWave", this.onCreateWave);
         this.song.removeEventListener("updateWave", this.onUpdateWave);
+        this.song.removeEventListener("deleteWave", this.onDeleteWave);
         this.song.removeEventListener("createPattern", this.onCreatePattern);
         this.song.removeEventListener("updatePattern", this.onUpdatePattern);
         this.song.removeEventListener("deletePattern", this.onDeletePattern);
@@ -281,6 +313,18 @@ export class PlayerSongAdapter {
                 buffer.set(w.buffers[i]);
             }
         }
+    };
+
+    onDeleteWave = (ev: CustomEvent<WaveDocument>) => {
+        const wave = ev.detail;
+        const w = this.waveMap.get(wave);
+
+        const i = this.instrumentMap.get(wave.instrument);
+
+        const index = i.waves.findIndex(e => e === w);
+        i.waves.splice(index, 1);
+
+        this.waveMap.delete(wave);
     };
 
     onCreatePattern = (ev: CustomEvent<PatternDocument>) => {
