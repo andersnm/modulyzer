@@ -19,6 +19,7 @@ import { Exp2 } from "./Exp2";
 import { FmCore, FmOpParams } from "./FmCore"
 import { Freqlut } from "./Freqlut";
 import { PitchEnv } from "./PitchEnv"
+import { Dx7Patch } from "./Dx7Patch";
 
 // This is the logic to put together a note from the MIDI description
 // and run the low-level modules.
@@ -134,58 +135,40 @@ const pitchmodsenstab = [
 ];
 
 export class Dx7Note {
- 
-  init(patch: Int8Array, midinote: number, velocity: number) {
-    const rates = [0,0,0,0]; //new Int32Array(4);
-    const levels = [0,0,0,0]; //new Int32Array(4);
+
+  init(patch: Dx7Patch, midinote: number, velocity: number) {
+
     for (let op = 0; op < 6; op++) {
-      const off = op * 21;
-      for (let i = 0; i < 4; i++) {
-        rates[i] = patch[off + i];
-        levels[i] = patch[off + 4 + i];
-      }
-      let outlevel = patch[off + 16];
+      const pop = patch.ops[op];
+
+      let outlevel = pop.outlevel;
       outlevel = Env.scaleoutlevel(outlevel);
   
-  //     for (int j = 8; j < 12; j++) {
-  //       cout << (int)patch[off + j] << " ";
-  //     }
-  
-      const level_scaling = ScaleLevel(midinote, patch[off + 8], patch[off + 9],
-          patch[off + 10], patch[off + 11], patch[off + 12]);
+      const level_scaling = ScaleLevel(midinote, pop.break_pt, pop.left_depth, pop.right_depth, pop.left_curve, pop.right_curve);
       outlevel += level_scaling;
       outlevel = Math.min(127, outlevel);
-  
-      // cout << op << ": " << level_scaling << " " << outlevel << endl;
-  
+
       outlevel = outlevel << 5;
-      outlevel += ScaleVelocity(velocity, patch[off + 15]);
+      outlevel += ScaleVelocity(velocity, pop.velo_sens);
       outlevel = Math.max(0, outlevel);
 
-      const rate_scaling = ScaleRate(midinote, patch[off + 13]);
-      this.env_[op].init(rates, levels, outlevel, rate_scaling);
-  
-      const mode = patch[off + 17];
-      const coarse = patch[off + 18];
-      const fine = patch[off + 19];
-      const detune = patch[off + 20];
-      const freq = osc_freq(midinote, mode, coarse, fine, detune);
+      const rate_scaling = ScaleRate(midinote, pop.rate_scale);
+      this.env_[op].init(pop.rates, pop.levels, outlevel, rate_scaling);
+
+      const freq = osc_freq(midinote, pop.osc_mode, pop.freq_coarse, pop.freq_fine, pop.detune);
       this.basepitch_[op] = freq;
-      // cout << op << " freq: " << freq << endl;
+
       this.params_[op].phase = 0;
       this.params_[op].gain[1] = 0;
     }
-    // console.log("BPBPBPBPBPBP", this.basepitch_, midinote);
-    for (let i = 0; i < 4; i++) {
-      rates[i] = patch[126 + i];
-      levels[i] = patch[130 + i];
-    }
-    this.pitchenv_.set(rates, levels);
-    this.algorithm_ = patch[134];
-    const feedback = patch[135];
+
+    this.pitchenv_.set(patch.pitch_rates, patch.pitch_levels);
+
+    this.algorithm_ = patch.algorithm;
+    const feedback = patch.feedback;
     this.fb_shift_ = feedback != 0 ? 8 - feedback : 16;
-    this.pitchmoddepth_ = (patch[139] * 165) >> 6;
-    this.pitchmodsens_ = pitchmodsenstab[patch[143] & 7]; 
+    this.pitchmoddepth_ = (patch.lfo_pt_mod_dep * 165) >> 6;
+    this.pitchmodsens_ = pitchmodsenstab[patch.lfo_pt_mod_sns & 7]; 
   }
 
   // Note: this _adds_ to the buffer. Interesting question whether it's

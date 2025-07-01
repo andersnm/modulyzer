@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { Dx7Patch } from "./Dx7Patch";
 import { Sin } from "./Sin";
 
 // Low frequency oscillator, compatible with DX7
@@ -40,12 +41,12 @@ export class Lfo {
   }
 
   // params[6]
-  reset(params: Int8Array) {
-    const rate = params[0];  // 0..99
+  reset(patch: Dx7Patch) {
+    const rate = patch.lfo_speed;  // 0..99
     let sr = rate == 0 ? 1 : (165 * rate) >> 6;
     sr *= sr < 160 ? 11 : (11 + ((sr - 160) >> 4));
     this.delta_ = Lfo.unit_ * sr;
-    let a = 99 - params[1];  // LFO delay
+    let a = 99 - patch.lfo_delay; // LFO delay
     if (a == 99) {
       console.log("THIS IS PROBABLY WRONG")
       this.delayinc_ = 0xffffffff; // ~0u; <- was uint32_t
@@ -57,8 +58,8 @@ export class Lfo {
       a = Math.max(0x80, a);
       this.delayinc2_ = Lfo.unit_ * a;
     }
-    this.waveform_ = params[5];
-    this.sync_ = params[4] != 0;
+    this.waveform_ = patch.wave;
+    this.sync_ = patch.sync != 0;
   }
 
   getsample(): number {

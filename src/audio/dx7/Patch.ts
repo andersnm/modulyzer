@@ -14,45 +14,69 @@
  * limitations under the License.
  */
 
-function memcpy(dst: Int8Array, dstofs, src: Int8Array, srcofs, cnt) {
-    for (let i = 0; i < cnt; i++) {
-        dst[dstofs + i] = src[srcofs + i];
+import { Dx7Patch } from "./Dx7Patch";
+
+export function ParseSysex(bulk: ArrayLike<number>): Dx7Patch {
+
+  // https://homepages.abdn.ac.uk/d.j.benson/pages/dx7/sysex-format.txt
+  const patch = new Dx7Patch();
+
+  for (let op = 0; op < 6; op++) {
+    const off = op * 17;
+
+    const pop = patch.ops[op];
+
+    for (let i = 0; i < 4; i++) {
+      pop.rates[i] = bulk[off + i];
+      pop.levels[i] = bulk[off + 4 + i];
     }
+
+    pop.break_pt = bulk[off + 8];
+    pop.left_depth = bulk[off + 9];
+    pop.right_depth = bulk[off + 10];
+
+    const leftrightcurves = bulk[op * 17 + 11];
+    pop.left_curve = leftrightcurves & 3;
+    pop.right_curve = (leftrightcurves >> 2) & 3;
+
+    const detune_rs = bulk[op * 17 + 12];
+    pop.rate_scale = detune_rs & 7;
+    pop.detune = detune_rs >> 3;
+
+    const kvs_ams = bulk[op * 17 + 13];
+    pop.mod_sens = kvs_ams & 3;
+    pop.velo_sens = kvs_ams >> 2;
+
+    pop.outlevel = bulk[off + 14];
+
+    const fcoarse_mode = bulk[op * 17 + 15];
+    pop.osc_mode = fcoarse_mode & 1;
+    pop.freq_coarse = fcoarse_mode >> 1;
+
+    pop.freq_fine = bulk[off + 16];
+  }
+
+  for (let i = 0; i < 4; i++) {
+    patch.pitch_rates[i] = bulk[102 + i];
+    patch.pitch_levels[i] = bulk[102 + 4 + i];
+  }
+
+  patch.algorithm = bulk[110];
+
+  const oks_fb = bulk[111];
+  patch.key_sync = oks_fb >> 3;
+  patch.feedback = oks_fb & 7;
+
+  patch.lfo_speed = bulk[112];
+  patch.lfo_delay = bulk[113];
+  patch.lfo_pt_mod_dep = bulk[114];
+  patch.lfo_am_mod_dep = bulk[115];
+
+  const lpms_lfw_lks = bulk[116];
+  patch.lfo_pt_mod_sns = lpms_lfw_lks >> 4;
+  patch.wave = (lpms_lfw_lks >> 1) & 7;
+  patch.sync = lpms_lfw_lks & 1;
+  patch.transpose = bulk[117];
+
+  return patch;
 }
-
-export function UnpackPatch(bulk: Int8Array, patch: Int8Array) {
-
-	for (let op = 0; op < 6; op++) {
-		// eg rate and level, brk pt, depth, scaling
-		memcpy(patch, op * 21, bulk, op * 17, 11);
-		// memcpy(patch + op * 21, bulk + op * 17, 11);
-		const leftrightcurves = bulk[op * 17 + 11];
-		patch[op * 21 + 11] = leftrightcurves & 3;
-		patch[op * 21 + 12] = (leftrightcurves >> 2) & 3;
-		const detune_rs = bulk[op * 17 + 12];
-		patch[op * 21 + 13] = detune_rs & 7;
-		patch[op * 21 + 20] = detune_rs >> 3;
-		const kvs_ams = bulk[op * 17 + 13];
-		patch[op * 21 + 14] = kvs_ams & 3;
-		patch[op * 21 + 15] = kvs_ams >> 2;
-		patch[op * 21 + 16] = bulk[op * 17 + 14];  // output level
-		const fcoarse_mode = bulk[op * 17 + 15];
-		patch[op * 21 + 17] = fcoarse_mode & 1;
-		patch[op * 21 + 18] = fcoarse_mode >> 1;
-		patch[op * 21 + 19] = bulk[op * 17 + 16];  // fine freq
-	}
-	memcpy(patch, 126, bulk, 102, 9);  // pitch env, algo
-	// memcpy(patch + 126, bulk + 102, 9);  // pitch env, algo
-	const oks_fb = bulk[111];
-	patch[135] = oks_fb & 7;
-	patch[136] = oks_fb >> 3;
-	memcpy(patch, 137, bulk, 112, 4);  // lfo
-	// memcpy(patch + 137, bulk + 112, 4);  // lfo
-	const lpms_lfw_lks = bulk[116];
-	patch[141] = lpms_lfw_lks & 1;
-	patch[142] = (lpms_lfw_lks >> 1) & 7;
-	patch[143] = lpms_lfw_lks >> 4;
-	memcpy(patch, 144, bulk, 117, 11);  // transpose, name
-	// memcpy(patch + 144, bulk + 117, 11);  // transpose, name
-	patch[155] = 0x3f;  // operator on/off
-} 

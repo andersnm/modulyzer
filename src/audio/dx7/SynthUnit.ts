@@ -15,10 +15,11 @@
  */
 
 import { Dx7Note } from "./Dx7Note";
+import { Dx7Patch } from "./Dx7Patch";
 import { Exp2 } from "./Exp2";
 import { Freqlut } from "./Freqlut";
 import { Lfo } from "./Lfo";
-import { UnpackPatch } from "./Patch";
+import { ParseSysex } from "./Patch";
 import { PitchEnv } from "./PitchEnv";
 import { ResoFilter } from "./ResoFilter";
 
@@ -55,9 +56,7 @@ export class SynthUnit {
   active_note_: ActiveNote[];
   current_note_: number;
 
-  patch_data_ = new Int8Array(4096);
-  current_patch_: number;
-  unpacked_patch_ = new Int8Array(156);
+  parsed_patch: Dx7Patch;
 
   // The original DX7 had one single LFO. Later units had an LFO per note. 
   lfo_: Lfo = new Lfo();
@@ -97,11 +96,10 @@ export class SynthUnit {
       };
     }
     
-    for (let i = 0; i < epiano.length; i++) {
-      this.patch_data_[i] = epiano[i];
-    }
 
-    this.ProgramChange(0);
+    this.parsed_patch = ParseSysex(epiano);
+    this.lfo_.reset(this.parsed_patch);
+
     this.current_note_ = 0;
     this.filter_control_[0] = 258847126;
     this.filter_control_[1] = 0;
@@ -169,51 +167,29 @@ export class SynthUnit {
     return -1;
   }
 
-  ProgramChange(p: number) {
-    this.current_patch_ = p;
-    const patch = this.patch_data_.subarray(128 * this.current_patch_, 128);
-    UnpackPatch(patch, this.unpacked_patch_);
-    this.lfo_.reset(this.unpacked_patch_.subarray(137));
+  noteOn(note: number, velocity: number) {
+    const note_ix = this.AllocateNote();
+    if (note_ix >= 0) {
+      this.lfo_.keydown();  // TODO: should only do this if # keys down was 0
+      this.active_note_[note_ix].midi_note = note;
+      this.active_note_[note_ix].keydown = true;
+      this.active_note_[note_ix].sustained = this.sustain_;
+      this.active_note_[note_ix].live = true;
+      this.active_note_[note_ix].dx7_note.init(this.parsed_patch, note, velocity);
+    }
   }
 
-  ProcessMidiMessage(buf, buf_size) {
-    const cmd = buf[0];
-    const cmd_type = cmd & 0xf0;
-    //LOGI("got %d midi: %02x %02x %02x", buf_size, buf[0], buf[1], buf[2]);
-    if (cmd_type == 0x80 || (cmd_type == 0x90 && buf[2] == 0)) {
-      if (buf_size >= 3) {
-        // note off
-        for (let note = 0; note < max_active_notes; ++note) {
-          if (this.active_note_[note].midi_note == buf[1] && 
-              this.active_note_[note].keydown) {
-            if (this.sustain_) {
-              this.active_note_[note].sustained = true;
-            } else {
-              this.active_note_[note].dx7_note.keyup();
-            }
-            this.active_note_[note].keydown = false;
-          }
+  noteOff(midinote: number) {
+    for (let note = 0; note < max_active_notes; ++note) {
+      if (this.active_note_[note].midi_note == midinote && 
+          this.active_note_[note].keydown) {
+        if (this.sustain_) {
+          this.active_note_[note].sustained = true;
+        } else {
+          this.active_note_[note].dx7_note.keyup();
         }
-        return 3;
+        this.active_note_[note].keydown = false;
       }
-      return 0;
-    } else if (cmd_type == 0x90) {
-      if (buf_size >= 3) {
-        // note on
-        const note_ix = this.AllocateNote();
-        if (note_ix >= 0) {
-          this.lfo_.keydown();  // TODO: should only do this if # keys down was 0
-          this.active_note_[note_ix].midi_note = buf[1];
-          this.active_note_[note_ix].keydown = true;
-          this.active_note_[note_ix].sustained = this.sustain_;
-          this.active_note_[note_ix].live = true;
-          this.active_note_[note_ix].dx7_note.init(this.unpacked_patch_, buf[1], buf[2]);
-        }
-        return 3;
-      }
-      return 0; 
-    } else if (cmd_type === 0xC0) {
-      this.ProgramChange(buf[1]);
     }
   }
 }

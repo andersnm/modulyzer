@@ -1,5 +1,6 @@
+import { parameterDescriptors } from "../dx7/Dx7Parameters";
 import { Player } from "../Player";
-import { Instrument, InstrumentFactory, Pin } from "./InstrumentFactory";
+import { Instrument, InstrumentFactory, Pin, WebAudioParameter } from "./InstrumentFactory";
 
 export class Dx7Factory extends InstrumentFactory {
     useSysex = true;
@@ -44,6 +45,14 @@ export class Dx7 extends Instrument {
         this.dx7Node = new AudioWorkletNode(context, "dx7");
 
         this.outputNode = this.dx7Node;
+
+        this.parameters = [];
+
+        // Enumerate parameters in well-known midi CC order
+        for (let parameterDescriptor of parameterDescriptors) {
+            const parameter = this.dx7Node.parameters.get(parameterDescriptor.name);
+            this.parameters.push(new WebAudioParameter(parameterDescriptor.name, parameter, "linear"));
+        }
     }
 
     processMidi(time: any, command: any, value: any, data: any) {
