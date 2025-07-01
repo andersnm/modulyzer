@@ -1,6 +1,6 @@
 import { linToLin } from "../open303/Functions";
 import { Player } from "../Player";
-import { Instrument, InstrumentFactory, Pin } from "./InstrumentFactory";
+import { describeUnit, Instrument, InstrumentFactory, Parameter, Pin, VirtualParameter, WebAudioParameter } from "./InstrumentFactory";
 
 function debounce<T extends (...args: any[]) => void>(func: T, wait: number): (...args: Parameters<T>) => void {
     let timer: number | undefined;
@@ -107,6 +107,23 @@ export class Reverb extends Instrument {
 
         this.inputNode = this.inputGainNode;
         this.outputNode = this.outputGainNode;
+
+        this.parameters = [
+            new WebAudioParameter("Dry", this.dryGainNode.gain, "linear", describeUnit("%", 100), 0, 1),
+            new WebAudioParameter("Wet", this.wetGainNode.gain, "linear", describeUnit("%", 100), 0, 1),
+            new VirtualParameter("Duration", 0.1, 5, 0.5, "linear", (time, value) => {
+                this.reverbDuration = value;
+                this.regenerateImpulseResponse();
+            }),
+            new VirtualParameter("Decay", 0.1, 5, 0.5, "linear", (time, value) => {
+                this.reverbDecay = value;
+                this.regenerateImpulseResponse();
+            }),
+            new VirtualParameter("Stereo", 0.5, 2, 0.5, "linear", (time, value) => {
+                this.reverbWidth = value;
+                this.regenerateImpulseResponse();
+            }),
+        ]
     }
 
     regenerateImpulseResponse = debounce(() => {

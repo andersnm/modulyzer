@@ -29,6 +29,7 @@ export class Master extends Instrument {
         super(factory);
         this.outputNode = null;
         this.inputNode = context.destination;
+        this.parameters = [];
     }
 
     processMidi(time: any, command: any, value: any, data: any) {

@@ -1,6 +1,7 @@
 import { expToLin, linToExp, linToLin } from "../open303/Functions";
+import { parameterDescriptors } from "../open303/Open303Parameters";
 import { Player } from "../Player";
-import { Instrument, InstrumentFactory, Pin } from "./InstrumentFactory";
+import { Instrument, InstrumentFactory, Pin, WebAudioParameter } from "./InstrumentFactory";
 
 export class Open303Factory extends InstrumentFactory {
     getIdentifier(): string {
@@ -89,6 +90,16 @@ export class Open303 extends Instrument {
         this.open303Node = new AudioWorkletNode(context, "open303");
 
         this.outputNode = this.open303Node;
+
+        this.parameters = [];
+
+        // Enumerate parameters in well-known midi CC order
+        // TODO: cutoff and decay to be exponential
+        for (let parameterDescriptor of parameterDescriptors) {
+            const parameter = this.open303Node.parameters.get(parameterDescriptor.name);
+            this.parameters.push(new WebAudioParameter(parameterDescriptor.name, parameter, "linear"));
+        }
+
     }
 
     processMidi(time: number, command: number, value: number, data: number) {

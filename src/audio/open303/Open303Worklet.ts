@@ -1,5 +1,6 @@
 import { linToExp, linToLin } from "./Functions";
 import { Open303 } from "./Open303";
+import { parameterDescriptors } from "./Open303Parameters";
 
 interface MidiMessage {
     time: number;
@@ -12,6 +13,10 @@ class Open303Processor extends AudioWorkletProcessor {
   synthUnit: Open303;
 
   midiInput: MidiMessage[] = [];
+
+  static get parameterDescriptors(): AudioParamDescriptor[] {
+    return parameterDescriptors;
+  }
 
   constructor() {
     super();
@@ -37,6 +42,14 @@ class Open303Processor extends AudioWorkletProcessor {
     if (!outputs.length || !outputs[0].length) {
       return true;
     }
+
+    this.synthUnit.setCutoff(parameters["cutoff"][0]);
+    this.synthUnit.setResonance(parameters["resonance"][0]);
+    this.synthUnit.setEnvMod(parameters["envMod"][0]);
+    this.synthUnit.setWaveform(parameters["waveform"][0]);
+    this.synthUnit.setDecay(parameters["decay"][0]);
+    this.synthUnit.setAccentDecay(parameters["decay"][0]);
+    this.synthUnit.setAccent(parameters["accent"][0]);
 
     const outputSamples = outputs[0][0].length;
     const outputTime = outputs[0][0].length / sampleRate;

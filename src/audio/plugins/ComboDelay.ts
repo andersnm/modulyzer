@@ -1,7 +1,7 @@
 // Inspired by HD's Combo Delay
 import { linToExp, linToLin } from "../open303/Functions";
 import { Player } from "../Player";
-import { Instrument, InstrumentFactory, Pin } from "./InstrumentFactory";
+import { describeUnit, Instrument, InstrumentFactory, Pin, WebAudioParameter } from "./InstrumentFactory";
 
 export class ComboDelayFactory extends InstrumentFactory {
     getIdentifier(): string {
@@ -143,6 +143,17 @@ export class ComboDelay extends Instrument {
         // The thru/dry signal
         this.inputNode.connect(this.dryGainNode);
         this.dryGainNode.connect(this.outputNode);
+
+        this.parameters = [
+            new WebAudioParameter("Predelay (ms)", this.predelayNode.delayTime, "linear", describeUnit("ms", 1000), 0, 1),
+            new WebAudioParameter("Left Delay (ms)", this.delayLNode.delayTime, "linear", describeUnit("ms", 1000), 0.1, 5),
+            new WebAudioParameter("Left Delay (ms)", this.delayRNode.delayTime, "linear", describeUnit("ms", 1000), 0.1, 5),
+            new WebAudioParameter("Dry", this.dryGainNode.gain, "linear", describeUnit("%", 100), 0, 1),
+            new WebAudioParameter("Feedback", this.feedbackGainNode.gain, "linear", describeUnit("%", 100), 0, 1),
+            new WebAudioParameter("Lowpass Cutoff", this.lowpassFilterNode.frequency, "exponential", describeUnit("hz")),
+            new WebAudioParameter("Lowpass Cutoff", this.highpassFilterNode.frequency, "exponential", describeUnit("hz")),
+            new WebAudioParameter("Wet", this.wetGainNode.gain, "linear", describeUnit("%", 100), 0, 1),
+        ];
     }
 
     processMidi(time: number, command: number, value: number, data: number) {

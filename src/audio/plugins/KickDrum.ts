@@ -1,6 +1,6 @@
 import { linToLin } from "../open303/Functions";
 import { Player } from "../Player";
-import { Instrument, InstrumentFactory, Pin } from "./InstrumentFactory";
+import { describeUnit, Instrument, InstrumentFactory, Pin, VirtualParameter, WebAudioParameter } from "./InstrumentFactory";
 
 const oscTypeTable: OscillatorType[] = [ "sine", "square", "sawtooth", "triangle" ];
 
@@ -152,6 +152,29 @@ export class KickDrum extends Instrument {
         this.clickGain.connect(this.outputNode);
 
         this.oscNode.start(0);
+
+        this.parameters = [
+            new VirtualParameter("Pitch", 1, 4, 1, "linear", (time, value) => {
+                this.pitch = value;
+            }),
+            new VirtualParameter("Duration", 0, 0.25, 0.1, "linear", (time, value) => {
+                this.pitchDuration = value;
+            }),
+            new VirtualParameter("Decay", 0, 1, 0.5, "linear", (time, value) => {
+                this.decay = value;
+            }),
+            new VirtualParameter("Click", 0, 0.5, 0.25, "linear", (time, value) => {
+                this.clickIntensity = value;
+            }),
+            new WebAudioParameter("Level", this.outputGain.gain, "linear", describeUnit("%", 100), 0, 1),
+            new VirtualParameter("Buzz", 0, 1, 0.5, "linear", (time, value) => {
+                this.waveShaper.curve = generateWaveShaperCurve(1024, value);
+            }),
+            new VirtualParameter("Waveform", 0, oscTypeTable.length - 1, 0, "linear", (time, value) => {
+                // description: "sine, square, sawtooth, triangle",
+                this.oscNode.type = oscTypeTable[Math.round(value)];
+            }),
+        ];
     }
 
     processMidi(time: number, command: number, value: number, data: number): void {
