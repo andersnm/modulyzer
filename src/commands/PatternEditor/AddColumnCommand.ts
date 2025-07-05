@@ -18,7 +18,7 @@ export class AddColumnCommand implements ICommand, INotify {
         }
 
         const instrument = this.app.song.instruments[instrumentPinPicker.instrumentIndex];
-        this.app.song.createPatternColumn(this.component.patternEditor.pattern, instrument, instrumentPinPicker.pinIndex);
+        this.app.song.createPatternColumn(this.component.patternEditor.pattern, instrument, instrumentPinPicker.type, instrumentPinPicker.parameterName);
     }
 
     notify(source: IComponent, eventName: string, ...args: any): void {

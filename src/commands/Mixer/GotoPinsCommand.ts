@@ -18,6 +18,6 @@ export class GotoPinsCommand implements ICommand {
         }
 
         const panel = await this.app.executeCommand("show-pins") as PinsPanel;
-        panel.bindInstrument(instrument);
+        await panel.bindInstrument(instrument);
     }
 }

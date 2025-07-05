@@ -1,5 +1,5 @@
 import { InstrumentFactory } from "../audio/plugins/InstrumentFactory";
-import { InstrumentDocument, PatternColumnDocument, PatternDocument, PatternEventDocument, SongDocument } from "../audio/SongDocument";
+import { InstrumentDocument, PatternColumnDocument, PatternColumnType, PatternDocument, PatternEventDocument, SongDocument } from "../audio/SongDocument";
 import { ClipboardMidiEvent, ClipboardPattern } from "../commands/PatternEditor/Clipboard";
 
 export function formatNote(note: number) {
@@ -117,21 +117,11 @@ export function getPatternRenderColumns(instrumentFactories: InstrumentFactory[]
     let position = 0;
     let tabStep = 0;
     let previousInstrument: InstrumentDocument;
-    let previousColumnType: "controller" | "note";
+    let previousColumnType: PatternColumnType;
 
     for (let patternColumn of pattern.columns) {
 
-        const factory = instrumentFactories.find(f => f.getIdentifier() === patternColumn.instrument.instrumentId);
-        const pins = factory.getPins();
-        const pin = pins[patternColumn.pin];
-
-        if (!pin) {
-            console.log(pins)
-            console.log(factory)
-            console.log(patternColumn)
-        }
-
-        if (pin.type === "note") {
+        if (patternColumn.type === "midinote") {
 
             // increment tabStep if already added columns for instrument, and need new tabStep for notes
             if (previousInstrument === patternColumn.instrument) {
@@ -170,9 +160,9 @@ export function getPatternRenderColumns(instrumentFactories: InstrumentFactory[]
                 tabStep++;
             }
 
-        } else {
+        } else if (patternColumn.type === "midiparameter") {
             // increment tabStep if first column from an instrument - except if previous were note from any instrument
-            if (previousInstrument !== patternColumn.instrument && previousColumnType !== "note") {
+            if (previousInstrument !== patternColumn.instrument && previousColumnType !== "midinote") {
                 tabStep++;
             }
 
@@ -187,10 +177,12 @@ export function getPatternRenderColumns(instrumentFactories: InstrumentFactory[]
             // value lower hex
             cursorColumns.push({ type: "u4-lower", position, tabStep, size: 1, renderColumn, channel: 0 })
             position += 1 + 1; // + spacer
+        } else {
+            throw new Error("Unknown column type " + patternColumn.type);
         }
 
         previousInstrument = patternColumn.instrument;
-        previousColumnType = pin.type;
+        previousColumnType = patternColumn.type;
     }
 
     return renderColumns;

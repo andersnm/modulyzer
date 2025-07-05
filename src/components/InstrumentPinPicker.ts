@@ -1,5 +1,6 @@
 import { Appl } from "../App";
-import { FormGroup, IComponent, INotify, VInset, ModalButtonBar } from "../nutz";
+import { PatternColumnType } from "../audio/SongDocument";
+import { FormGroup, IComponent, INotify, VInset, ModalButtonBar, FormGroupRadio } from "../nutz";
 
 export class InstrumentPinPicker implements IComponent {
     app: Appl;
@@ -11,7 +12,8 @@ export class InstrumentPinPicker implements IComponent {
     pinSelect: HTMLSelectElement;
 
     instrumentIndex: number = -1;
-    pinIndex: number = -1;
+    type: PatternColumnType = "midiparameter";
+    parameterName: string = null;
 
     constructor(app: Appl, parent: INotify) {
         this.app = app;
@@ -29,20 +31,31 @@ export class InstrumentPinPicker implements IComponent {
 
         const instrumentGroup = FormGroup("Instrument", this.instrumentSelect);
 
+        const noteRadio = new FormGroupRadio("type0", "type", "midinote", "Note", this.type === "midinote");
+        noteRadio.input.addEventListener("change", () => {
+            this.type = noteRadio.input.value as PatternColumnType;
+            this.pinSelect.disabled = true;
+        });
+
+        const midiParameterRadio = new FormGroupRadio("type1", "type", "midiparameter", "Parameter", this.type === "midiparameter");
+        midiParameterRadio.input.addEventListener("change", () => {
+            this.type = noteRadio.input.value as PatternColumnType;
+            this.pinSelect.disabled = false;
+        });
+
+
         this.pinSelect = document.createElement("select");
         this.pinSelect.className = "w-full rounded-lg p-1 bg-neutral-800";
         this.pinSelect.addEventListener("change", () => {
-            this.pinIndex = parseInt(this.pinSelect.value)
-            // this.currentOutputDeviceId = this.instrumentSelect.value;
-            // console.log("VVout", this.currentOutputDeviceId)
+            this.parameterName = this.pinSelect.value;
         });
 
-        const pinGroup = FormGroup("Pin", this.pinSelect);
+        const parameterGroup = FormGroup("Column", [ noteRadio.getDomNode(), midiParameterRadio.getDomNode(), this.pinSelect ]);
 
         const modalButtonBar = new ModalButtonBar(this, this.parent);
 
         this.container.appendChild(instrumentGroup);
-        this.container.appendChild(pinGroup);
+        this.container.appendChild(parameterGroup);
         this.container.appendChild(modalButtonBar.getDomNode());
 
         this.container.addEventListener("nutz:mounted", this.onMounted);
@@ -68,19 +81,19 @@ export class InstrumentPinPicker implements IComponent {
             return;
         }
 
-        const factory = this.app.instrumentFactories.find(f => f.getIdentifier() === instrument.instrumentId);
-        const pins = factory.getPins();
+        const playerInstrument = this.app.playerSongAdapter.instrumentMap.get(instrument);
+        const pins = playerInstrument.parameters;
 
-        if (pins.length > 0 && this.pinIndex === -1) {
-            this.pinIndex = 0;
+        if (pins.length > 0 && !this.parameterName) {
+            this.parameterName = pins[0].name;
         }
 
         let index = 0;
         for (let pin of pins) {
             const option = document.createElement("option");
             option.text = pin.name;
-            option.value = index.toString();
-            option.selected = index === this.pinIndex;
+            option.value = pin.name;
+            option.selected = pin.name === this.parameterName;
 
             this.pinSelect.options.add(option);
             index++;

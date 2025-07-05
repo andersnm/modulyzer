@@ -1,10 +1,12 @@
 import { Instrument, InstrumentFactory } from "./plugins/InstrumentFactory";
+import { PatternColumnType } from "./SongDocument";
 
 const SCHEDULE_INTERVAL = 0.5;
 
 export class PatternColumn {
     instrument: Instrument;
-    pin: number;
+    type: "midinote" | "midiparameter";
+    parameterName?: string; // if type == "midiparameter"
     events: PatternEvent[] = [];
 }
 
@@ -54,7 +56,8 @@ export class Wave {
 interface PatternPlayerEvent {
     instrument: Instrument;
     time: number;
-    command: number;
+    type: PatternColumnType;
+    parameterName?: string;
     value: number;
     data0: number;
 }
@@ -86,27 +89,15 @@ class PatternPlayer {
     process(durationBeats: number, result: PatternPlayerEvent[]) {
         for (let column of this.pattern.columns) {
             const instrument = column.instrument;
-            const pins = instrument.factory.getPins();
-            const pin = pins[column.pin];
 
             for (let event of column.events) {
                 const eventTime = this.getSwingTime(event.time / this.pattern.subdivision);
 
                 if (eventTime >= this.currentBeat && eventTime < this.currentBeat + durationBeats) {
                     const deltaBeats = eventTime - this.currentBeat;
-                    if (pin.type === "controller") {
-                        // console.log("Sending controller", column, eventTime, pin.value, event.value, 0);
-                        result.push({
-                            instrument, time: deltaBeats, command: 0xB0, value: pin.value, data0: event.value,
-                        });
-                    } else if (pin.type === "note") {
-                        // console.log("Sending note", column, eventTime, event.value, event.data0);
-                        result.push({
-                            instrument, time: deltaBeats, command: 0x90, value: event.value, data0: event.data0,
-                        });
-                    } else {
-                        console.error("Unknown pin type" + pin.type);
-                    }
+                    result.push({
+                        instrument, time: deltaBeats, type: column.type, parameterName: column.parameterName, value: event.value, data0: event.data0
+                    });
                 }
             }
         }
@@ -248,7 +239,20 @@ export class Player extends EventTarget {
 
         for (let ev of patternEvents) {
             const evTime = ev.time * (durationSec / durationBeats);
-            ev.instrument.sendMidi(this.startTime + this.currentTime + evTime, ev.command, ev.value, ev.data0);
+            const playTime = this.startTime + this.currentTime + evTime;
+            if (ev.type === "midinote") {
+                ev.instrument.sendMidi(playTime, 0x90, ev.value, ev.data0);
+            } else if (ev.type === "midiparameter") {
+                const parameter = ev.instrument.parameters.find(p => p.name === ev.parameterName);
+                if (!parameter) {
+                    throw new Error("Unknown parameter " + ev.parameterName);
+                }
+
+                const value = Math.floor(parameter.convertMidiToValue(ev.value));
+                parameter.setValue(playTime, value);
+            } else {
+                throw new Error("Unknown pattern event type " + ev.type);
+            }
         }
 
         this.currentTime += durationSec;

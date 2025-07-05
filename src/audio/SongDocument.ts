@@ -40,14 +40,20 @@ function decompressBase64ToArrayBuffer(base64String: string): ArrayBufferLike {
 }
 
 export type CcValueDictionary = {[key: number]: number};
+export type ParameterValueDictionary = {[key: string]: number};
+
+export interface SetInstrumentParameterDetail {
+    instrument: InstrumentDocument;
+    parameterName: string;
+    value: number;
+}
 
 export class InstrumentDocument {
     name: string;
     instrumentId: string;
     x: number = 0;
     y: number = 0;
-    sysex: Uint8Array;
-    ccs: CcValueDictionary = {};
+    parameterValues: ParameterValueDictionary = {};
     waves: WaveDocument[] = [];
 }
 
@@ -69,10 +75,13 @@ export class PatternEventDocument {
     }
 }
 
+export type PatternColumnType = "midinote" | "midiparameter";
+
 export class PatternColumnDocument {
     pattern: PatternDocument;
     instrument: InstrumentDocument;
-    pin: number;
+    type: PatternColumnType;
+    parameterName?: string; // used with type="midiparameter" | "parameter"
     events: PatternEventDocument[] = [];
 
     constructor(pattern: PatternDocument) {
@@ -179,7 +188,7 @@ export class SongDocument extends EventTarget {
     constructor() {
         super();
 
-        this.createInstrument("@modulyzer/Master", "Master", 0, 0, {}, null);
+        this.createInstrument("@modulyzer/Master", "Master", 0, 0, {});
         const sc = this.createSequenceColumn();
         const p = this.createPattern("00", 32, 4);
         this.createSequenceEvent(sc, 0, p);
@@ -206,14 +215,13 @@ export class SongDocument extends EventTarget {
         this.dispatchEvent(new CustomEvent("updateDocument", { detail: this }));
     }
 
-    createInstrument(id: string, name: string, x: number, y: number, ccs: CcValueDictionary, sysex: Uint8Array) {
+    createInstrument(id: string, name: string, x: number, y: number, parameterValues: ParameterValueDictionary) {
         const instrument = new InstrumentDocument();
         instrument.instrumentId = id;
         instrument.name = name;
         instrument.x = x;
         instrument.y = y;
-        instrument.ccs = { ... ccs };
-        instrument.sysex = new Uint8Array(sysex);
+        instrument.parameterValues = { ... parameterValues };
         this.instruments.push(instrument);
 
         this.dispatchEvent(new CustomEvent("createInstrument", { detail: instrument }));
@@ -221,13 +229,10 @@ export class SongDocument extends EventTarget {
         return instrument;
     }
 
-    updateInstrument(instrument: InstrumentDocument, name: string, x: number, y: number, ccs: CcValueDictionary, sysex: Uint8Array) {
+    updateInstrument(instrument: InstrumentDocument, name: string, x: number, y: number) {
         instrument.name = name;
         instrument.x = x;
         instrument.y = y;
-        instrument.ccs = { ... ccs };
-        instrument.sysex = new Uint8Array(sysex);
-        console.log("document instru", instrument, sysex)
 
         this.dispatchEvent(new CustomEvent("updateInstrument", { detail: instrument }));
     }
@@ -256,6 +261,12 @@ export class SongDocument extends EventTarget {
 
         this.instruments.splice(index, 1);
         this.dispatchEvent(new CustomEvent("deleteInstrument", { detail: instrument }));
+    }
+
+    setInstrumentParameter(instrument: InstrumentDocument, parameterName: string, value: number) {
+        instrument.parameterValues[parameterName] = value;
+
+        this.dispatchEvent(new CustomEvent<SetInstrumentParameterDetail>("setInstrumentParameter", { detail: { instrument, parameterName, value } }));
     }
 
     createConnection(from: InstrumentDocument, to: InstrumentDocument) {
@@ -315,14 +326,15 @@ export class SongDocument extends EventTarget {
         this.dispatchEvent(new CustomEvent("deletePattern", { detail: pattern }));
     }
 
-    createPatternColumn(pattern: PatternDocument, instrument: InstrumentDocument, pin: number) {
+    createPatternColumn(pattern: PatternDocument, instrument: InstrumentDocument, type: PatternColumnType, parameterName?: string) {
         if (!instrument) {
             throw new Error("createPatternColumn: Invalid instrument");
         }
 
         const pc = new PatternColumnDocument(pattern);
         pc.instrument = instrument;
-        pc.pin = pin;
+        pc.type = type;
+        pc.parameterName = parameterName;
 
         pattern.columns.push(pc);
 
@@ -494,7 +506,7 @@ export class SongDocument extends EventTarget {
 
         const p = this.createPattern(name, pattern.duration, pattern.subdivision);
         for (let column of pattern.columns) {
-            const pc = this.createPatternColumn(p, column.instrument, column.pin);
+            const pc = this.createPatternColumn(p, column.instrument, column.type, column.parameterName);
 
             for (let event of column.events) {
                 const pe = this.createPatternEvent(pc, event.time, event.value, event.data0, event.data1, event.channel);
@@ -526,8 +538,7 @@ export class SongDocument extends EventTarget {
                 ref: instrument.instrumentId,
                 x: instrument.x,
                 y: instrument.y,
-                sysex: instrument.sysex ? compressUint8ArrayToBase64(instrument.sysex) : undefined,
-                ccs: instrument.ccs,
+                parameterValues: instrument.parameterValues,
                 waves: instrument.waves.map(wave => ({
                     name: wave.name,
                     note: wave.note,
@@ -548,7 +559,8 @@ export class SongDocument extends EventTarget {
                 subdivision: pattern.subdivision,
                 columns: pattern.columns.map(column => ({
                     instrument: this.instruments.indexOf(column.instrument),
-                    pin: column.pin,
+                    type: column.type,
+                    parameterName: column.parameterName,
                     events: column.events.map(event => ({
                         time: event.time,
                         value: event.value,
@@ -582,7 +594,7 @@ export class SongDocument extends EventTarget {
 
         for (let jsonInstrument of json.instruments) {
             const sysex = jsonInstrument.sysex ? decompressBase64ToUint8Array(jsonInstrument.sysex) : null;
-            const i = this.createInstrument(jsonInstrument.ref, jsonInstrument.name, jsonInstrument.x, jsonInstrument.y, jsonInstrument.ccs || {}, sysex);
+            const i = this.createInstrument(jsonInstrument.ref, jsonInstrument.name, jsonInstrument.x, jsonInstrument.y, jsonInstrument.parameterValues);
 
             if (Array.isArray(jsonInstrument.waves)) {
                 for (let jsonWave of jsonInstrument.waves) {
@@ -616,7 +628,7 @@ export class SongDocument extends EventTarget {
                     throw new Error("Invalid or missing events in pattern column");
                 }
 
-                const pc = this.createPatternColumn(p, instrument, jsonColumn.pin);
+                const pc = this.createPatternColumn(p, instrument, jsonColumn.type, jsonColumn.parameterName);
 
                 for (let jsonEvent of jsonColumn.events) {
                     this.createPatternEvent(pc, jsonEvent.time, jsonEvent.value, jsonEvent.data0, jsonEvent.data1, jsonEvent.channel);

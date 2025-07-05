@@ -1,15 +1,6 @@
 import { Connection, Pattern, PatternColumn, PatternEvent, Player, SequenceColumn, SequenceEvent, Wave } from "./Player";
-import { CcChangeDetail, Instrument } from "./plugins/InstrumentFactory";
-import { ConnectionDocument, InstrumentDocument, PatternColumnDocument, PatternDocument, PatternEventDocument, SequenceColumnDocument, SequenceEventDocument, SongDocument, WaveDocument } from "./SongDocument";
-
-function findByValue<K, V>(map: Map<K, V>, value: V): K | undefined {
-    for (const entry of map.entries()) {
-        if (entry[1] === value) {
-            return entry[0];
-        }
-    }
-    return undefined;
-}
+import { Instrument, Parameter } from "./plugins/InstrumentFactory";
+import { ConnectionDocument, InstrumentDocument, PatternColumnDocument, PatternDocument, PatternEventDocument, SequenceColumnDocument, SequenceEventDocument, SetInstrumentParameterDetail, SongDocument, WaveDocument } from "./SongDocument";
 
 export class PlayerSongAdapter {
     player: Player; 
@@ -38,6 +29,7 @@ export class PlayerSongAdapter {
         this.song.addEventListener("createInstrument", this.onCreateInstrument);
         this.song.addEventListener("updateInstrument", this.onUpdateInstrument);
         this.song.addEventListener("deleteInstrument", this.onDeleteInstrument);
+        this.song.addEventListener("setInstrumentParameter", this.onSetInstrumentParameter);
         this.song.addEventListener("createConnection", this.onCreateConnection);
         this.song.addEventListener("deleteConnection", this.onDeleteConnection);
         this.song.addEventListener("createWave", this.onCreateWave);
@@ -129,6 +121,7 @@ export class PlayerSongAdapter {
         this.song.removeEventListener("createInstrument", this.onCreateInstrument);
         this.song.removeEventListener("updateInstrument", this.onUpdateInstrument);
         this.song.removeEventListener("deleteInstrument", this.onDeleteInstrument);
+        this.song.removeEventListener("setInstrumentParameter", this.onSetInstrumentParameter);
         this.song.removeEventListener("createConnection", this.onCreateConnection);
         this.song.removeEventListener("deleteConnection", this.onDeleteConnection);
         this.song.removeEventListener("createWave", this.onCreateWave);
@@ -153,6 +146,11 @@ export class PlayerSongAdapter {
         this.player = null;
     }
 
+    getParameter(instrument: InstrumentDocument, parameterName: string): Parameter {
+        const playerInstrument = this.instrumentMap.get(instrument);
+        return playerInstrument.parameters.find(p => p.name === parameterName);
+    }
+
     onPlaying = () => {
         this.song.dispatchEvent(new CustomEvent("playing"));
     };
@@ -167,6 +165,13 @@ export class PlayerSongAdapter {
         this.player.loopEnd = ev.detail.loopEnd;
     };
 
+    onSetInstrumentParameter = (ev: CustomEvent<SetInstrumentParameterDetail>) => {
+        const parameterName = ev.detail.parameterName;
+        const playerInstrument = this.instrumentMap.get(ev.detail.instrument);
+        const parameter = playerInstrument.parameters.find(p => p.name === parameterName);
+        parameter.setValue(0, ev.detail.value);
+    };
+
     onCreateInstrument = (ev: CustomEvent<InstrumentDocument>) => {
         const i = ev.detail;
         const factory = this.player.getInstrumentFactoryById(i.instrumentId);
@@ -176,65 +181,30 @@ export class PlayerSongAdapter {
         }
 
         const instrument = factory.createInstrument(this.player.context, this.player);
-        instrument.addEventListener("ccchange", this.onInstrumentCcChange);
 
         this.player.instruments.push(instrument);
         this.instrumentMap.set(i, instrument);
 
-        if (factory.useSysex && i.sysex) {
-            instrument.sendSysex(i.sysex);
-        }
-
-        // Set CCs for all controller pins to initial or default
-        const pins = factory.getPins();
-        for (let pin of pins) {
-            if (pin.type !== "controller" || pin.value === undefined) {
-                continue;
+        // Initialize player instrument parameter values, also initialize document-side parameters with defaults if not set
+        for (let parameter of instrument.parameters) {
+            if (!i.parameterValues.hasOwnProperty(parameter.name)) {
+                i.parameterValues[parameter.name] = parameter.defaultValue;
             }
 
-            const ccValue = i.ccs[pin.value];
-            if (ccValue !== undefined) {
-                instrument.sendMidi(0, 0xB0, pin.value, ccValue);
-            } else {
-                const pinDefault = pin.default ?? 64;
-                instrument.sendMidi(0, 0xB0, pin.value, pinDefault);
-            }
+            parameter.setValue(0, i.parameterValues[parameter.name]);
         }
-    };
-
-    onInstrumentCcChange = (ev: CustomEvent<CcChangeDetail>) => {
-        // Only called for CCs with a pin
-        // TODO: reverse instrument map
-        const instrument = findByValue(this.instrumentMap, ev.detail.instrument);
-        if (!instrument) {
-            console.error("Document/player out of sync", ev.detail.instrument)
-            return;
-        }
-
-        // NOTE/TODO?: No dispatch here, PinsPanel subscribes to ccchange too
-        instrument.ccs[ev.detail.value] = ev.detail.data;
     };
 
     onUpdateInstrument = (ev: CustomEvent<InstrumentDocument>) => {
-        const i = ev.detail;
-        const factory = this.player.getInstrumentFactoryById(i.instrumentId);
-        if (!factory) {
-            console.error("Unknown instrument " + i.instrumentId, i);
-            return;
-        }
-
-        const instrument = this.instrumentMap.get(i);
-
-        if (factory.useSysex && i.sysex) {
-            instrument.sendSysex(i.sysex);
-        }
+        // const i = ev.detail;
+        // const instrument = this.instrumentMap.get(i);
+        // instrument.name = i.name;
     };
 
     onDeleteInstrument = (ev: CustomEvent<InstrumentDocument>) => {
         const i = ev.detail;
 
         const instrument = this.instrumentMap.get(i);
-        instrument.removeEventListener("ccchange", this.onInstrumentCcChange);
 
         const ix = this.player.instruments.indexOf(instrument);
         this.player.instruments.splice(ix, 1);
@@ -364,7 +334,8 @@ export class PlayerSongAdapter {
 
         const pc = new PatternColumn();
         pc.instrument = this.instrumentMap.get(patternColumn.instrument);
-        pc.pin = patternColumn.pin;
+        pc.type = patternColumn.type;
+        pc.parameterName = patternColumn.parameterName;
         p.columns.push(pc);
 
         this.patternColumnMap.set(patternColumn, pc);

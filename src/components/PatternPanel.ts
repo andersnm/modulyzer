@@ -171,9 +171,6 @@ export class PatternPanel extends ViewFrame implements IComponent {
         const patternColumn = cursorColumn.renderColumn.patternColumn;
 
         const instrument = cursorColumn.renderColumn.patternColumn.instrument;
-        const playerInstrument = this.app.playerSongAdapter.instrumentMap.get(instrument);
-        const pins = playerInstrument.factory.getPins();
-        const pin = pins[cursorColumn.renderColumn.patternColumn.pin];
 
         if (cursorColumn.renderColumn.type === "note" || cursorColumn.renderColumn.type === "velo") {
             this.statusBar.setText(0, "Row: " + this.patternEditor.cursorTime + ", Track: " + cursorColumn.channel)
@@ -197,13 +194,15 @@ export class PatternPanel extends ViewFrame implements IComponent {
             const event = patternColumn.events.find(e => e.time === this.patternEditor.cursorTime && e.channel === cursorColumn.channel);
 
             if (event) {
-                this.statusBar.setText(1, event.value.toString(16).toUpperCase() + " (" + event.value + ") " + playerInstrument.factory.describeCcValue(pin.value, event.value));
+                const parameter = this.app.playerSongAdapter.getParameter(instrument, patternColumn.parameterName);
+                const description = parameter.describeValue(event.value);
+                this.statusBar.setText(1, event.value.toString(16).toUpperCase() + " (" + event.value + ") ") + description;
             } else {
                 this.statusBar.setText(1, "---");
             }
         }
 
-        this.statusBar.setText(2, pin.name);
+        this.statusBar.setText(2, patternColumn.parameterName);
     }
 
     notify(source: IComponent, eventName: string, ...args: any): void {
