@@ -1,15 +1,19 @@
-export function domAppendNodes(domElement: ChildNode, childNodes: Node|Node[]) {
+type DeepArray<T> = T | DeepArray<T>[];
+
+export function domAppendNodes(domElement: ChildNode, childNodes: DeepArray<Node>): Node {
     if (childNodes === undefined || childNodes === null) {
         return;
     }
 
     if (Array.isArray(childNodes)) {
         for (let childNode of childNodes) {
-            domElement.appendChild(childNode);
+            domAppendNodes(domElement, childNode);
         }
     } else {
         domElement.appendChild(childNodes);
     }
+
+    return domElement;
 }
 
 export function domAfterNodes(domElement: ChildNode, childNodes: ChildNode[]) {

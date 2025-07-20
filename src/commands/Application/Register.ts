@@ -13,9 +13,11 @@ import { StopSongCommand } from './StopSongCommand';
 import { CreatePatternCommand } from './CreatePatternCommand';
 import { ShowMixerCommand } from './ShowMixerCommand';
 import { ShowPinsCommand } from './ShowPinsCommand';
+import { ShowFileSystemConfigurationCommand } from './ShowFileSystemConfigurationCommand';
 
 export function registerApplicationCommands(app: Appl) {
     app.registerCommand("show-audio-configuration", null, null, new ShowAudioConfigurationCommand(app));
+    app.registerCommand("show-filesystem-configuration", null, null, new ShowFileSystemConfigurationCommand(app));
     app.registerCommand("show-waves", null, null, new ShowWavesCommand(app));
     app.registerCommand("show-patterns", null, null, new ShowPatternsCommand(app));
     app.registerCommand("show-pattern-editor", null, null, new ShowPatternEditorCommand(app));

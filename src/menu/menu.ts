@@ -129,8 +129,12 @@ export const viewMenu: MenuItem[] = [
         action: "show-wave-editor"
     },
     {
-        label: "Audio Configuration",
+        label: "Audio Configuration...",
         action: "show-audio-configuration",
+    },
+    {
+        label: "Home Directory...",
+        action: "show-filesystem-configuration",
     },
     {
         label: "Sidebar",
@@ -245,5 +249,20 @@ export const waveListMenu: MenuItem[] = [
     {
         label: "Open...",
         action: "open-wave"
+    },
+];
+
+export const presetMenu: MenuItem[] = [
+    {
+        label: "Load local bank...",
+        action: "import-local-bank",
+    },
+    {
+        label: "Import DX7 sysex...",
+        action: "import-dx7-sysex-bank",
+    },
+    {
+        label: "Save local bank...",
+        action: "save-local-bank",
     },
 ];

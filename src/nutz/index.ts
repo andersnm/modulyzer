@@ -16,3 +16,4 @@ export * from "./DragTarget.js";
 export * from "./RectUtil.js";
 export * from "./ScrollableFlexContainer.js";
 export * from "./StatusBar.js";
+export * from "./FileUtil.js";

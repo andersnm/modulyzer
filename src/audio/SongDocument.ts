@@ -48,6 +48,16 @@ export interface SetInstrumentParameterDetail {
     value: number;
 }
 
+export class Preset {
+    name: string;
+    parameters: ParameterValueDictionary;
+}
+
+export class Bank {
+    name: string = "default";
+    presets: Preset[] = [];
+}
+
 export class InstrumentDocument {
     name: string;
     instrumentId: string;
@@ -55,6 +65,7 @@ export class InstrumentDocument {
     y: number = 0;
     parameterValues: ParameterValueDictionary = {};
     waves: WaveDocument[] = [];
+    bank: Bank = new Bank();
 }
 
 export class ConnectionDocument {
@@ -267,6 +278,11 @@ export class SongDocument extends EventTarget {
         instrument.parameterValues[parameterName] = value;
 
         this.dispatchEvent(new CustomEvent<SetInstrumentParameterDetail>("setInstrumentParameter", { detail: { instrument, parameterName, value } }));
+    }
+
+    setInstrumentBank(instrument: InstrumentDocument, bank: Bank) {
+        instrument.bank = bank;
+        this.dispatchEvent(new CustomEvent<{instrument, bank}>("setInstrumentBank", { detail: { instrument, bank } }));
     }
 
     createConnection(from: InstrumentDocument, to: InstrumentDocument) {

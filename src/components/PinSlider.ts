@@ -23,11 +23,11 @@ export class PinSlider implements IComponent {
         nameValueDiv.classList.add("flex", "flex-row");
 
         const nameDiv = document.createElement("div");
-        nameDiv.classList.add("flex-1")
+        nameDiv.classList.add("flex-1", "text-neutral-300")
         nameDiv.innerText = parameterName;
 
         this.valueDiv = document.createElement("div");
-        this.valueDiv.classList.add("flex-1", "text-right");
+        this.valueDiv.classList.add("flex-1", "text-right", "text-neutral-300");
 
         nameValueDiv.appendChild(nameDiv);
         nameValueDiv.appendChild(this.valueDiv);

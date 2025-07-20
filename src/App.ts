@@ -18,6 +18,7 @@ import { WavePlayer } from "./audio/WavePlayer";
 import { registerApplicationCommands } from "./commands/Application/Register";
 import { ContextMenuContainer } from "./nutz/ContextMenuContainer";
 import { KickDrumFactory } from "./audio/plugins/KickDrum";
+import { IndexedDBMap } from "./IndexedDBMap";
 
 class BpmInput implements IComponent {
 
@@ -71,6 +72,7 @@ export class Appl extends CommandHost implements IComponent {
     player: Player;
     playerSongAdapter: PlayerSongAdapter;
     wavePlayer: WavePlayer;
+    homeDir: FileSystemDirectoryHandle;
 
     modalDialogContainer: ModalDialogContainer;
     contextMenuContainer: ContextMenuContainer;
@@ -191,7 +193,6 @@ export class Appl extends CommandHost implements IComponent {
         this.executeCommand("show-pins");
 
         // Default main views
-        this.executeCommand("show-audio-configuration");
         this.executeCommand("show-sequence-editor");
         this.executeCommand("show-pattern-editor");
         this.executeCommand("show-wave-editor");
@@ -200,6 +201,30 @@ export class Appl extends CommandHost implements IComponent {
         // re-focus
         this.executeCommand("show-patterns");
         this.executeCommand("show-sequence-editor");
+
+        // Initialize filesystem
+        this.homeDir = await this.readSetting<FileSystemDirectoryHandle>("HomeHandle");
+        const permission = await this.homeDir?.queryPermission()
+        if (permission !== "granted") {
+            await this.executeCommand("show-filesystem-configuration");
+        }
+
+        // Initialize audio
+        this.device.outputDeviceId = await this.readSetting<string>("OutputDevice") ?? null;
+        this.device.inputDeviceId = await this.readSetting<string>("InputDevice") ?? null;
+        this.device.latencySec = await this.readSetting<number>("Latency") ?? 125;
+
+        await this.executeCommand("show-audio-configuration");
+    }
+
+    async readSetting<T>(key: string) {
+        const handleMap = new IndexedDBMap("settings");
+        return await handleMap.get<T>(key);
+    }
+
+    async writeSetting<T>(key: string, value: T) {
+        const handleMap = new IndexedDBMap("settings");
+        await handleMap.set(key, value);
     }
 
     async setAudioDevice(outputDeviceId: string, inputDeviceId: string, latencySec: number) {
@@ -207,6 +232,10 @@ export class Appl extends CommandHost implements IComponent {
 
         this.player = new Player(this.instrumentFactories, this.device.context);
         this.playerSongAdapter.attachPlayer(this.player);
+
+        await this.writeSetting("OutputDevice", outputDeviceId);
+        await this.writeSetting("InputDevice", inputDeviceId);
+        await this.writeSetting("Latency", latencySec);
     }
 
     render() {
