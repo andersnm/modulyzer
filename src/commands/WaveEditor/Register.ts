@@ -14,7 +14,7 @@ import { ZoomInCommand } from "./ZoomInCommand";
 import { ZoomOutCommand } from "./ZoomOutCommand";
 
 export function registerWaveEditorCommands(component: WavePanel) {
-    component.registerCommand("save-wave", "hgi-stroke hgi-folder", "Save...", new SaveWaveCommand(component));
+    component.registerCommand("save-wave", "hgi-stroke hgi-folder-02", "Save...", new SaveWaveCommand(component));
     component.registerCommand("edit-wave", "hgi-stroke hgi-edit-01", "Properties...", new EditWaveCommand(component));
     component.registerCommand("cut", "hgi-stroke hgi-scissor-01", "Cut", new CutCommand(component));
     component.registerCommand("copy", "hgi-stroke hgi-copy-01", "Copy", new CopyCommand(component));
