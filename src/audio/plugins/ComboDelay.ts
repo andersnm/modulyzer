@@ -145,14 +145,14 @@ export class ComboDelay extends Instrument {
         this.dryGainNode.connect(this.outputNode);
 
         this.parameters = [
-            new WebAudioParameter("Predelay (ms)", this.predelayNode.delayTime, "linear", describeUnit("ms", 1000), 0, 1),
-            new WebAudioParameter("Left Delay (ms)", this.delayLNode.delayTime, "linear", describeUnit("ms", 1000), 0.1, 5),
-            new WebAudioParameter("Left Delay (ms)", this.delayRNode.delayTime, "linear", describeUnit("ms", 1000), 0.1, 5),
-            new WebAudioParameter("Dry", this.dryGainNode.gain, "linear", describeUnit("%", 100), 0, 1),
-            new WebAudioParameter("Feedback", this.feedbackGainNode.gain, "linear", describeUnit("%", 100), 0, 1),
-            new WebAudioParameter("Lowpass Cutoff", this.lowpassFilterNode.frequency, "exponential", describeUnit("hz")),
-            new WebAudioParameter("Lowpass Cutoff", this.highpassFilterNode.frequency, "exponential", describeUnit("hz")),
-            new WebAudioParameter("Wet", this.wetGainNode.gain, "linear", describeUnit("%", 100), 0, 1),
+            new WebAudioParameter("Predelay", this.predelayNode.delayTime, "linear", describeUnit("ms", 1000), 0, 1, 0.2),
+            new WebAudioParameter("Left Delay", this.delayLNode.delayTime, "linear", describeUnit("ms", 1000), 0.1, 5, 0.4),
+            new WebAudioParameter("Right Delay", this.delayRNode.delayTime, "linear", describeUnit("ms", 1000), 0.1, 5, 0.5),
+            new WebAudioParameter("Dry", this.dryGainNode.gain, "linear", describeUnit("%", 100), 0, 1, 0.5),
+            new WebAudioParameter("Feedback", this.feedbackGainNode.gain, "linear", describeUnit("%", 100), 0, 1, 0.5),
+            new WebAudioParameter("Lowpass Cutoff", this.lowpassFilterNode.frequency, "exponential", describeUnit("hz"), 100, 5000, 200),
+            new WebAudioParameter("Highpass Cutoff", this.highpassFilterNode.frequency, "exponential", describeUnit("hz"), 100, 5000, 1000),
+            new WebAudioParameter("Wet", this.wetGainNode.gain, "linear", describeUnit("%", 100), 0, 1, 0.5),
         ];
     }
 

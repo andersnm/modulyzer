@@ -166,7 +166,7 @@ export class KickDrum extends Instrument {
             new VirtualParameter("Click", 0, 0.5, 0.25, "linear", (time, value) => {
                 this.clickIntensity = value;
             }),
-            new WebAudioParameter("Level", this.outputGain.gain, "linear", describeUnit("%", 100), 0, 1),
+            new WebAudioParameter("Level", this.outputGain.gain, "linear", describeUnit("%", 100), 0, 1, 1),
             new VirtualParameter("Buzz", 0, 1, 0.5, "linear", (time, value) => {
                 this.waveShaper.curve = generateWaveShaperCurve(1024, value);
             }),

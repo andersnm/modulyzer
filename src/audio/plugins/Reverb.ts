@@ -109,8 +109,8 @@ export class Reverb extends Instrument {
         this.outputNode = this.outputGainNode;
 
         this.parameters = [
-            new WebAudioParameter("Dry", this.dryGainNode.gain, "linear", describeUnit("%", 100), 0, 1),
-            new WebAudioParameter("Wet", this.wetGainNode.gain, "linear", describeUnit("%", 100), 0, 1),
+            new WebAudioParameter("Dry", this.dryGainNode.gain, "linear", describeUnit("%", 100), 0, 1, 0.7),
+            new WebAudioParameter("Wet", this.wetGainNode.gain, "linear", describeUnit("%", 100), 0, 1, 0.5),
             new VirtualParameter("Duration", 0.1, 5, 0.5, "linear", (time, value) => {
                 this.reverbDuration = value;
                 this.regenerateImpulseResponse();

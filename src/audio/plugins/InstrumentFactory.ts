@@ -24,11 +24,19 @@ export abstract class Parameter {
     abstract getValue(): number;
 
     convertValueToMidi(value: number) {
-        return (value - this.minValue) / (this.maxValue - this.minValue) * 127;
+        if (this.ccCurve === "exponential") {
+            return Math.log(value / this.minValue) / Math.log(this.maxValue / this.minValue) * 127 + 0;
+        } else {
+            return (value - this.minValue) / (this.maxValue - this.minValue) * 127;
+        }
     }
 
     convertMidiToValue(value: number) {
-        return (value / 127) * (this.maxValue - this.minValue) + this.minValue;
+        if (this.ccCurve === "exponential") {
+            return this.minValue * Math.exp(value / 127 * Math.log(this.maxValue / this.minValue));
+        } else {
+            return (value / 127) * (this.maxValue - this.minValue) + this.minValue;
+        }
     }
 
     describeValue(value: number) {
@@ -40,9 +48,10 @@ export class WebAudioParameter extends Parameter {
     name: string;
     minValue: number;
     maxValue: number;
+    defaultValue: number;
     audioParam: AudioParam;
 
-    constructor(name: string, audioParam: AudioParam, ccCurve: ParameterCurveType, describer?: DescriberType, minValue?: number, maxValue?: number) {
+    constructor(name: string, audioParam: AudioParam, ccCurve: ParameterCurveType, describer?: DescriberType, minValue?: number, maxValue?: number, defaultValue?: number) {
         super();
         this.name = name;
         this.audioParam = audioParam;
@@ -50,10 +59,7 @@ export class WebAudioParameter extends Parameter {
         this.describer = describer || this.describer;
         this.minValue = minValue !== undefined ? minValue : audioParam.minValue;
         this.maxValue = maxValue !== undefined ? maxValue : audioParam.maxValue;
-    }
-
-    get defaultValue() {
-        return this.audioParam.defaultValue;
+        this.defaultValue = defaultValue !== undefined ? defaultValue : audioParam.defaultValue;
     }
 
     setValue(time: any, value: any) {
