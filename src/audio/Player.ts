@@ -42,6 +42,7 @@ export class Sequence {
 export class Connection {
     from: Instrument;
     to: Instrument;
+    gainNode: GainNode;
 }
 
 export class Wave {

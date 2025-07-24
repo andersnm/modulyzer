@@ -71,6 +71,7 @@ export class InstrumentDocument {
 export class ConnectionDocument {
     from: InstrumentDocument;
     to: InstrumentDocument;
+    gain: number = 1;
 }
 
 export class PatternEventDocument {
@@ -285,15 +286,21 @@ export class SongDocument extends EventTarget {
         this.dispatchEvent(new CustomEvent<{instrument, bank}>("setInstrumentBank", { detail: { instrument, bank } }));
     }
 
-    createConnection(from: InstrumentDocument, to: InstrumentDocument) {
+    createConnection(from: InstrumentDocument, to: InstrumentDocument, gain: number = 1) {
         const connection = new ConnectionDocument();
         connection.from = from;
         connection.to = to;
+        connection.gain = gain;
         this.connections.push(connection);
 
         this.dispatchEvent(new CustomEvent("createConnection", { detail: connection }));
 
         return connection;
+    }
+
+    updateConnection(connection: ConnectionDocument, gain: number) {
+        connection.gain = gain; // 0..2
+        this.dispatchEvent(new CustomEvent("updateConnection", { detail: connection }));
     }
 
     deleteConnection(connection: ConnectionDocument) {
@@ -568,6 +575,7 @@ export class SongDocument extends EventTarget {
             connections: this.connections.map(connection => ({
                 from: this.instruments.indexOf(connection.from),
                 to: this.instruments.indexOf(connection.to),
+                gain: connection.gain,
             })),
             patterns: this.patterns.map(pattern => ({
                 name: pattern.name,
@@ -628,7 +636,7 @@ export class SongDocument extends EventTarget {
                 throw new Error("Invalid connection " + JSON.stringify(jsonConnection));
             }
 
-            this.createConnection(from, to);
+            this.createConnection(from, to, jsonConnection.gain??1);
         }
 
         for (let jsonPattern of json.patterns) {

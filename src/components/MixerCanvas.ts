@@ -9,6 +9,10 @@ import { getNoteForKey } from "./PatternEditorHelper";
 const boxWidth = 100;
 const boxHeight = 61; // 1.618
 const arrowSize = 10;
+const connectionGainHeight = 150;
+const connectionGainWidth = 32;
+const connectionGainHandleHeight = 24;
+
 const instrumentMenu: MenuItem[] = [
     {
         label: "Pins",
@@ -89,6 +93,38 @@ class DragConnect extends DragTarget {
     }
 }
 
+class DragConnectionGain extends DragTarget {
+    component: MixerCanvas;
+    startY: number;
+    startGain: number;
+    connection: ConnectionDocument;
+
+    constructor(component: MixerCanvas, connection: ConnectionDocument, e: PointerEvent) {
+        super();
+
+        this.component = component;
+        this.connection = connection;
+        this.startY = e.offsetY;
+        this.startGain = connection.gain;
+
+        const handlePosition = (1 - (connection.gain / 2)) * (connectionGainHeight - connectionGainHandleHeight);
+
+        this.component.drawConnectionPosition = [ e.offsetX - (connectionGainWidth / 2), e.offsetY - handlePosition - (connectionGainHandleHeight / 2) ];
+    }
+
+    move(e: PointerEvent) {
+        const deltaGain = (this.startY - e.offsetY) / (connectionGainHeight - connectionGainHandleHeight) * 2;
+        const gain = Math.max(0, Math.min(2, this.startGain + deltaGain));
+        this.component.app.song.updateConnection(this.connection, gain);
+        this.component.redrawCanvas(); // TODO: on update event
+    }
+
+    up(e: PointerEvent) {
+        this.component.drawConnectionPosition = null;
+        this.component.redrawCanvas();
+    }
+}
+
 export class MixerCanvas implements IComponent {
     app: Appl;
     commandHost: ICommandHost
@@ -102,6 +138,8 @@ export class MixerCanvas implements IComponent {
 
     selectedInstrument: InstrumentDocument;
     selectedConnection: ConnectionDocument;
+
+    drawConnectionPosition: PointType | null = null;
 
     constructor(app: Appl, commandHost: ICommandHost) {
         this.app = app;
@@ -200,6 +238,7 @@ export class MixerCanvas implements IComponent {
                 if (connection) {
                     this.selectedInstrument = null;
                     this.selectedConnection = connection;
+                    this.dragTarget = new DragConnectionGain(this, connection, e);
                     this.redrawCanvas();
                 }
 
@@ -444,6 +483,20 @@ export class MixerCanvas implements IComponent {
 
         }
 
+        if (this.drawConnectionPosition) {
+            // Fill outside rectangle
+            ctx.fillStyle = "#FFF";
+            ctx.fillRect(this.drawConnectionPosition[0], this.drawConnectionPosition[1], connectionGainWidth, connectionGainHeight);
+
+            // Draw outside rectangle border
+            ctx.strokeStyle = "#000";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(this.drawConnectionPosition[0], this.drawConnectionPosition[1], connectionGainWidth, connectionGainHeight);
+
+            // Draw handle 0..2
+            const handlePosition = (1 - (this.selectedConnection.gain / 2)) * (connectionGainHeight - connectionGainHandleHeight);
+            ctx.strokeRect(this.drawConnectionPosition[0], this.drawConnectionPosition[1] + handlePosition, connectionGainWidth, connectionGainHandleHeight);
+        }
     }
 
     getDomNode(): Node {

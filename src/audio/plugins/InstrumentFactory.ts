@@ -121,12 +121,12 @@ export abstract class Instrument extends EventTarget {
 
     protected abstract processMidi(time: number, command: number, value: number, data: number): void;
 
-    connect(destination: Instrument) {
-        this.outputNode.connect(destination.inputNode);
+    connect(destination: AudioNode) {
+        this.outputNode.connect(destination);
     }
 
-    disconnect(destination: Instrument) {
-        this.outputNode.disconnect(destination.inputNode);
+    disconnect(destination: AudioNode) {
+        this.outputNode.disconnect(destination);
     }
 }
 

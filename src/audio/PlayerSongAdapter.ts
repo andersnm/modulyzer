@@ -31,6 +31,7 @@ export class PlayerSongAdapter {
         this.song.addEventListener("deleteInstrument", this.onDeleteInstrument);
         this.song.addEventListener("setInstrumentParameter", this.onSetInstrumentParameter);
         this.song.addEventListener("createConnection", this.onCreateConnection);
+        this.song.addEventListener("updateConnection", this.onUpdateConnection);
         this.song.addEventListener("deleteConnection", this.onDeleteConnection);
         this.song.addEventListener("createWave", this.onCreateWave);
         this.song.addEventListener("updateWave", this.onUpdateWave);
@@ -123,6 +124,7 @@ export class PlayerSongAdapter {
         this.song.removeEventListener("deleteInstrument", this.onDeleteInstrument);
         this.song.removeEventListener("setInstrumentParameter", this.onSetInstrumentParameter);
         this.song.removeEventListener("createConnection", this.onCreateConnection);
+        this.song.removeEventListener("updateConnection", this.onUpdateConnection);
         this.song.removeEventListener("deleteConnection", this.onDeleteConnection);
         this.song.removeEventListener("createWave", this.onCreateWave);
         this.song.removeEventListener("updateWave", this.onUpdateWave);
@@ -218,19 +220,28 @@ export class PlayerSongAdapter {
         const connection = new Connection();
         connection.from = this.instrumentMap.get(c.from);
         connection.to = this.instrumentMap.get(c.to);
+        connection.gainNode = this.player.context.createGain();
+        connection.gainNode.gain.setValueAtTime(c.gain, 0);
 
-        connection.from.connect(connection.to);
+        connection.from.connect(connection.gainNode);
+        connection.gainNode.connect(connection.to.inputNode);
         this.player.connections.push(connection);
 
         this.connectionMap.set(c, connection);
     };
+
+    onUpdateConnection = (ev: CustomEvent<ConnectionDocument>) => {
+        const connection = this.connectionMap.get(ev.detail);
+        connection.gainNode.gain.linearRampToValueAtTime(ev.detail.gain, this.player.context.currentTime + 0.050);
+    }; 
 
     onDeleteConnection = (ev: CustomEvent<ConnectionDocument>) => {
         const c = ev.detail;
 
         const connection = this.connectionMap.get(c);
 
-        connection.from.disconnect(connection.to);
+        connection.from.disconnect(connection.gainNode);
+        connection.gainNode.disconnect(connection.to.inputNode);
 
         const i = this.player.connections.indexOf(connection);
         this.player.connections.splice(i, 1);
