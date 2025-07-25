@@ -1,6 +1,6 @@
 import { parameterDescriptors } from "../dx7/Dx7Parameters";
 import { Player } from "../Player";
-import { Instrument, InstrumentFactory, Pin, WebAudioParameter } from "./InstrumentFactory";
+import { Instrument, InstrumentFactory, WebAudioParameter } from "./InstrumentFactory";
 
 export class Dx7Factory extends InstrumentFactory {
     useSysex = true;
@@ -9,25 +9,8 @@ export class Dx7Factory extends InstrumentFactory {
         return "@modulyzer/Dx7";
     }
 
-    getInputChannelCount(): number {
-        return 1;
-    }
-
-    getOutputChannelCount(): number {
-        return 1;
-    }
-
     getPolyphony() {
         return 16;
-    }
-
-    getPins(): Pin[] {
-        return [
-            {
-                type: "note",
-                name: "Note",
-            },
-        ];
     }
 
     createInstrument(context: AudioContext, player: Player): Instrument {
@@ -57,10 +40,5 @@ export class Dx7 extends Instrument {
 
     processMidi(time: any, command: any, value: any, data: any) {
         this.dx7Node.port.postMessage({type:"midi", time, command, value, data});
-    }
-
-    processSysex(bytes: Uint8Array) {
-        const clone = new Uint8Array(bytes);
-        this.dx7Node.port.postMessage({type:"sysex", bytes});
     }
 }

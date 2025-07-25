@@ -1,6 +1,5 @@
-import { linToLin } from "../open303/Functions";
 import { Player } from "../Player";
-import { describeUnit, Instrument, InstrumentFactory, Parameter, Pin, VirtualParameter, WebAudioParameter } from "./InstrumentFactory";
+import { describeUnit, Instrument, InstrumentFactory, VirtualParameter, WebAudioParameter } from "./InstrumentFactory";
 
 function debounce<T extends (...args: any[]) => void>(func: T, wait: number): (...args: Parameters<T>) => void {
     let timer: number | undefined;
@@ -15,41 +14,8 @@ export class ReverbFactory extends InstrumentFactory {
         return "@modulyzer/Reverb";
     }
 
-    getInputChannelCount(): number {
-        return 1;
-    }
-
-    getOutputChannelCount(): number {
-        return 1;
-    }
-
-    getPins(): Pin[] {
-        return [
-            { type: "controller", name: "Dry Gain", value: 0, default: 64 },
-            { type: "controller", name: "Wet Gain", value: 1, default: 64 },
-            { type: "controller", name: "Reverb Duration", value: 2, default: 20 },
-            { type: "controller", name: "Decay Factor", value: 3, default: 16 },
-            { type: "controller", name: "Stereo Width", value: 4, default: 32 },
-        ];
-    }
-
     createInstrument(context: AudioContext, player: Player): Instrument {
         return new Reverb(context, this);
-    }
-
-    describeCcValue(cc: number, value: number): string {
-        switch (cc) {
-            case 0: // Dry Gain
-            case 1: // Wet Gain
-                return linToLin(value, 0, 127, 0, 1).toFixed(2);
-            case 2: // Reverb Duration
-                return linToLin(value, 0, 127, 0.1, 5).toFixed(2) + "s";
-            case 3: // Decay Factor
-                return linToLin(value, 0, 127, 0.1, 5).toFixed(2);
-            case 4: // Stereo Width
-                return linToLin(value, 0, 127, 0.5, 2).toFixed(2);
-        }
-        return super.describeCcValue(cc, value);
     }
 }
 
@@ -131,27 +97,5 @@ export class Reverb extends Instrument {
     }, 200);
 
     processMidi(time: any, command: any, value: any, data: any) {
-        if (command === 0xB0) {
-            switch (value) {
-                case 0: // Dry gain
-                    this.dryGainNode.gain.setValueAtTime(linToLin(data, 0, 127, 0, 1), time);
-                    break;
-                case 1: // Wet gain
-                    this.wetGainNode.gain.setValueAtTime(linToLin(data, 0, 127, 0, 1), time);
-                    break;
-                case 2: // Reverb Duration
-                    this.reverbDuration = linToLin(data, 0, 127, 0.1, 5);
-                    this.regenerateImpulseResponse();
-                    break;
-                case 3: // Decay Factor
-                    this.reverbDecay = linToLin(data, 0, 127, 0.1, 5);
-                    this.regenerateImpulseResponse();
-                    break;
-                case 4: // Stereo Width
-                    this.reverbWidth = linToLin(data, 0, 127, 0.5, 2);
-                    this.regenerateImpulseResponse();
-                    break;
-            }
-        }
     }
 }

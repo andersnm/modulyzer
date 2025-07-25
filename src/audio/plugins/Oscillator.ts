@@ -1,5 +1,5 @@
 import { Player } from "../Player";
-import { Instrument, InstrumentFactory, Pin, VirtualParameter, WebAudioParameter } from "./InstrumentFactory";
+import { Instrument, InstrumentFactory, VirtualParameter } from "./InstrumentFactory";
 
 function noteToFreq(note) {
     let a = 440; //frequency of A (coomon value is 440Hz)
@@ -18,41 +18,8 @@ export class OscillatorFactory extends InstrumentFactory {
         return "@modulyzer/Oscillator";
     }
 
-    getInputChannelCount(): number {
-        return 0;
-    }
-
-    getOutputChannelCount(): number {
-        return 1;
-    }
-
-    getPins(): Pin[] {
-        return [
-            {
-                type: "note",
-                name: "Note",
-            },
-            {
-                type: "controller",
-                name: "Type",
-                description: "sine, square, sawtooth, triangle",
-                value: 0,
-                default: 64,
-            },
-        ];
-    }
-
     createInstrument(context: AudioContext, player: Player): Instrument {
         return new Oscillator(context, this);
-    }
-
-    describeCcValue(pinIndex: number, value: number): string {
-        switch (pinIndex) {
-            case 0: // typ
-                return getOscType(value);
-        }
-
-        return super.describeCcValue(pinIndex, value);
     }
 }
 
@@ -96,13 +63,6 @@ export class Oscillator extends Instrument {
                 // note off
                 console.log("osc note off, ", time)
                 this.gainNode.gain.setTargetAtTime(0, time, 0.02)
-            }
-        } else if (command === 0xB0) {
-            switch (value) {
-                case 0:
-                    // controller #1; the type
-                    this.oscNode.type = oscTypeTable[data];
-                    break;
             }
         }
     }

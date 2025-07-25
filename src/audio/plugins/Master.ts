@@ -1,20 +1,8 @@
-import { Instrument, InstrumentFactory, Pin } from "./InstrumentFactory";
+import { Instrument, InstrumentFactory } from "./InstrumentFactory";
 
 export class MasterFactory extends InstrumentFactory {
     getIdentifier(): string {
         return "@modulyzer/Master";
-    }
-
-    getInputChannelCount(): number {
-        return 1;
-    }
-
-    getOutputChannelCount(): number {
-        return 0;
-    }
-
-    getPins(): Pin[] {
-        return [];
     }
 
     createInstrument(context: AudioContext): Instrument {

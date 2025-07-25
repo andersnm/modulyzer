@@ -1,6 +1,5 @@
-import { linToLin } from "../open303/Functions";
 import { Player } from "../Player";
-import { describeUnit, Instrument, InstrumentFactory, Pin, VirtualParameter, WebAudioParameter } from "./InstrumentFactory";
+import { describeUnit, Instrument, InstrumentFactory, VirtualParameter, WebAudioParameter } from "./InstrumentFactory";
 
 const oscTypeTable: OscillatorType[] = [ "sine", "square", "sawtooth", "triangle" ];
 
@@ -14,93 +13,8 @@ export class KickDrumFactory extends InstrumentFactory {
         return "@modulyzer/KickDrum";
     }
 
-    getInputChannelCount(): number {
-        return 0;
-    }
-
-    getOutputChannelCount(): number {
-        return 1;
-    }
-
-    getPins(): Pin[] {
-        return [
-            {
-                type: "note",
-                name: "Note"
-            },
-            {
-                type: "controller",
-                name: "Wave",
-                description: "sine, square, sawtooth, triangle",
-                value: 6,
-                default: 0
-            },
-            {
-                type: "controller",
-                name: "Pitch",
-                description: "Pitch",
-                value: 0,
-                default: 64
-            },
-            {
-                type: "controller",
-                name: "Pitch Duration",
-                description: "Pitch Duration",
-                value: 4,
-                default: 64
-            },
-            {
-                type: "controller",
-                name: "Buzz",
-                description: "Shape the wave by amount",
-                value: 5,
-                default: 16
-            },
-            {
-                type: "controller",
-                name: "Decay",
-                description: "Controls fade-out duration",
-                value: 1,
-                default: 64
-            },
-            {
-                type: "controller",
-                name: "Click",
-                description: "Controls transient click",
-                value: 2,
-                default: 64
-            },
-            {
-                type: "controller",
-                name: "Level",
-                description: "Output gain",
-                value: 3,
-                default: 127
-            },
-        ];
-    }
-
     createInstrument(context: AudioContext, player: Player): Instrument {
         return new KickDrum(context, this);
-    }
-
-    describeCcValue(pinIndex: number, value: number): string {
-        switch (pinIndex) {
-            case 6: // type
-                return oscTypeTable[Math.round(value / 127 * (oscTypeTable.length - 1))];
-            case 1: // decay
-                return (value / 127).toFixed(3) + "s";
-            case 4: // pitch duration
-                return (value / 127 / 4).toFixed(3) + "s";
-            case 5: // buzz
-                return linToLin(value, 0.0, 127.0, 0.0, 100.0).toFixed(0) + "%";
-            case 2: // click
-                return linToLin(value, 0.0, 127.0, 0.0, 100.0).toFixed(0) + "%";
-            case 3: // level
-                return linToLin(value, 0.0, 127.0, 0.0, 100.0).toFixed(0) + "%";
-        }
-
-        return super.describeCcValue(pinIndex, value);
     }
 }
 
@@ -208,31 +122,6 @@ export class KickDrum extends Instrument {
 
                 noiseNode.connect(this.noiseFilter);
                 noiseNode.start(time);
-            }
-        } else if (command === 0xB0) {
-            switch (value) {
-                case 0: // pitch
-                    this.pitch = ((data / 127) * 3) + 1; // scale by 1..4 octaves
-                    break;
-                case 4: // pitch duration
-                    this.pitchDuration = (data / 127) / 4; // 0..0.25 sec
-                    break;
-                case 1: // Decay
-                    this.decay = (data / 127) * 1; // up to 1 second decay
-                    break;
-                case 2: // Click
-                    this.clickIntensity = (data / 127) * 0.5;
-                    break;
-                case 3: // Level
-                    this.level = data / 127;
-                    this.outputGain.gain.setValueAtTime(this.level, time);
-                    break;
-                case 5: // Buzz
-                    this.waveShaper.curve = generateWaveShaperCurve(1024, data / 127);
-                    break;
-                case 6:
-                    this.oscNode.type = oscTypeTable[Math.round(data / 127 * (oscTypeTable.length - 1))];
-                    break;
             }
         }
     }

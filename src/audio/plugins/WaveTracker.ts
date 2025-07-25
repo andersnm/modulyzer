@@ -1,30 +1,11 @@
 import { Player, Wave } from "../Player";
-import { Instrument, InstrumentFactory, Pin } from "./InstrumentFactory";
+import { Instrument, InstrumentFactory } from "./InstrumentFactory";
 
 export class WaveTrackerFactory extends InstrumentFactory {
     useWaveTable = true;
 
     getIdentifier(): string {
         return "@modulyzer/WaveTracker";
-    }
-
-    getInputChannelCount(): number {
-        return 0;
-    }
-
-    getOutputChannelCount(): number {
-        return 2;
-    }
-
-    getPins(): Pin[] {
-        return [
-            {
-                type: "note",
-                name: "Wave",
-                description: "Notes are mapped in the wave table.",
-                value: 0,
-            },
-        ];
     }
 
     createInstrument(context: AudioContext, player: Player): Instrument {
@@ -51,6 +32,8 @@ export class WaveTracker extends Instrument {
         this.gainNode = new GainNode(context, {});
 
         this.outputNode = this.gainNode;
+
+        this.parameters = [];
     }
 
     getWaveByNote(note: number) {

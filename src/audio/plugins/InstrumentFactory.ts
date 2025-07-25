@@ -1,9 +1,5 @@
 import { Player, Wave } from "../Player";
 
-export interface Pin {
-    // TODO: unused, remove from all instruments
-}
-
 export type ParameterCurveType = "linear" | "exponential";
 export type DescriberType = (value: number) => string;
 
@@ -134,12 +130,5 @@ export abstract class InstrumentFactory {
     useWaveTable: boolean = false;
     useSysex: boolean = false;
     abstract getIdentifier(): string;
-    abstract getInputChannelCount(): number;
-    abstract getOutputChannelCount(): number;
-    abstract getPins(): Pin[];
     abstract createInstrument(context: AudioContext, player: Player): Instrument;
-
-    describeCcValue(cc: number, value: number) {
-        return value.toString();
-    }
 }
