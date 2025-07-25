@@ -1,9 +1,8 @@
 import { Appl } from "../App";
-import { FormGroup, IComponent, INotify, VInset, ModalButtonBar } from "../nutz";
+import { FormGroup, IComponent, VInset, ModalButtonBar } from "../nutz";
 
 export class PatternPropertiesPanel implements IComponent {
     app: Appl;
-    parent: INotify;
     container: HTMLElement;
     buttonBar: HTMLElement;
 
@@ -17,9 +16,8 @@ export class PatternPropertiesPanel implements IComponent {
     subdivision: number = 4;
     swing: number = 50;
 
-    constructor(app: Appl, parent: INotify, name: string, length: number, subdivision: number, swing: number) {
+    constructor(app: Appl, name: string, length: number, subdivision: number, swing: number) {
         this.app = app;
-        this.parent = parent;
         this.name = name;
         this.length = length;
         this.subdivision = subdivision;
@@ -73,7 +71,7 @@ export class PatternPropertiesPanel implements IComponent {
 
         const swingGroup = FormGroup("Swing", this.swingInput);
 
-        const modalButtonBar = new ModalButtonBar(this, this.parent);
+        const modalButtonBar = new ModalButtonBar(this.app);
 
         this.container.appendChild(nameGroup);
         this.container.appendChild(lengthGroup);

@@ -1,4 +1,4 @@
-import { DragTarget, ICommandHost, IComponent, INotify, Menu, PointType, ptInRect, rectCenter, RectType } from "../nutz";
+import { DragTarget, ICommandHost, IComponent, PointType, ptInRect, rectCenter, RectType } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 import { Appl } from "../App";
 import { ConnectionDocument, InstrumentDocument } from "../audio/SongDocument";

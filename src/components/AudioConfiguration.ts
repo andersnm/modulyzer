@@ -1,4 +1,5 @@
-import { FormGroup, IComponent, INotify, VInset, ModalButtonBar } from '../nutz';
+import { Appl } from '../App';
+import { FormGroup, IComponent, VInset, ModalButtonBar } from '../nutz';
 
 export type DomElementCallbackType = (el: HTMLElement) => void;
 
@@ -21,7 +22,7 @@ function createElement(tagName: string, callback: DomElementCallbackType | null,
 }
 
 export class AudioConfiguration implements IComponent {
-    parent: INotify;
+    app: Appl;
     cancelable: boolean = true;
     currentInputDeviceId: string;
     currentOutputDeviceId: string;
@@ -42,8 +43,8 @@ export class AudioConfiguration implements IComponent {
     latencySelect: HTMLSelectElement;
     buttonBar: ModalButtonBar;
 
-    constructor(parent: INotify) {
-        this.parent = parent;
+    constructor(app: Appl) {
+        this.app = app;
         this.containerElement = VInset(undefined, "flex-1");
         this.containerElement.tabIndex = -1;
 
@@ -227,7 +228,7 @@ export class AudioConfiguration implements IComponent {
 
         const latencyGroup = FormGroup("Latency", this.latencySelect);
 
-        this.buttonBar = new ModalButtonBar(this, this.parent);
+        this.buttonBar = new ModalButtonBar(this.app);
 
         this.configForm.appendChild(outputGroup);
         this.configForm.appendChild(inputGroup);

@@ -2,10 +2,10 @@ import { Appl } from "../../App";
 import { Bank, Preset } from "../../audio/SongDocument";
 import { InstrumentFactoryPicker } from "../../components/InstrumentFactoryPicker";
 import { MixerPanel } from "../../components/MixerPanel";
-import { getOrCreateDirectory, ICommand, IComponent, INotify } from "../../nutz";
+import { getOrCreateDirectory, ICommand, IComponent } from "../../nutz";
 import { importJsonPreset } from "../../presetfile/JsonPreset";
 
-export class AddInstrumentCommand implements ICommand, INotify {
+export class AddInstrumentCommand implements ICommand {
     app: Appl;
 
     constructor(private component: MixerPanel) {
@@ -13,7 +13,7 @@ export class AddInstrumentCommand implements ICommand, INotify {
     }
 
     async handle(...args: any[]) {
-        const instrumentFactoryPicker = new InstrumentFactoryPicker(this.app, this);
+        const instrumentFactoryPicker = new InstrumentFactoryPicker(this.app);
         const result = await this.app.modalDialogContainer.showModal("Select Instrument", instrumentFactoryPicker)
         if (!result) {
             return;
@@ -51,18 +51,5 @@ export class AddInstrumentCommand implements ICommand, INotify {
 
     instrumentNameExists(name: string) {
         return this.app.song.instruments.findIndex(i => i.name === name) !== -1;
-    }
-
-    notify(source: IComponent, eventName: string, ...args: any): void {
-        if (source instanceof InstrumentFactoryPicker) {
-            console.log("NOTIFY FROM MODAL")
-            if (eventName === "ok") {
-                // this resolves await showModal
-                this.app.modalDialogContainer.endModal(true);
-            } else if (eventName === "cancel") {
-                // this resolves await showModal
-                this.app.modalDialogContainer.endModal(false);
-            }
-        }
     }
 }

@@ -2,12 +2,10 @@ import { Appl } from "../App";
 import { InstrumentDocument } from "../audio/SongDocument";
 import { findAvailableNote } from "../commands/WaveTable/PasteNewWaveCommand";
 import { CreateWavePanel } from "../components/CreateWavePanel";
-import { ModalOkCancelResolver } from "../nutz/ModalOkCancelResolver";
 
 export async function showCreateNewWaveDialog(app: Appl, instrument: InstrumentDocument) {
-    const resolver = new ModalOkCancelResolver(app.modalDialogContainer);
     const note = findAvailableNote(instrument.waves);
-    const panel = new CreateWavePanel(resolver, note);
+    const panel = new CreateWavePanel(app, note);
 
     const result = await app.modalDialogContainer.showModal("Create Wave", panel);
     if (!result) {

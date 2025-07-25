@@ -1,3 +1,4 @@
+import { Appl } from "../App";
 import { ICommandHost } from "./CommandHost";
 import { domAppendNodes } from "./DomUtil";
 import { IComponent, INotify } from "./IComponent";
@@ -123,21 +124,22 @@ export function ButtonToolbar(app: ICommandHost, buttonToolbarButtons: (ButtonTo
 }
 
 export class ModalButtonBar implements IComponent {
+    app: Appl;
     container: HTMLDivElement;
     okButton: HTMLButtonElement;
     cancelButton: HTMLButtonElement;
 
-    constructor(sender: IComponent, parent: INotify) {
-
+    constructor(app: Appl) {
+        this.app = app;
         this.container = HFlex(null, "gap-1");
 
         this.okButton = Button();
         this.okButton.innerText = "OK";
-        this.okButton.addEventListener("click", () => parent.notify(sender, "ok"));
+        this.okButton.addEventListener("click", this.onOK);
 
         this.cancelButton = Button();
         this.cancelButton.innerText = "Cancel";
-        this.cancelButton.addEventListener("click", () => parent.notify(sender, "cancel"));
+        this.cancelButton.addEventListener("click", this.onCancel);
 
         this.container.appendChild(this.okButton);
         this.container.appendChild(this.cancelButton);
@@ -166,6 +168,14 @@ export class ModalButtonBar implements IComponent {
             }
         }
     }
+
+    onOK = () => {
+        this.app.modalDialogContainer.endModal(true);
+    };
+
+    onCancel = () => {
+        this.app.modalDialogContainer.endModal(false);
+    };
 
     getDomNode(): Node {
         return this.container;

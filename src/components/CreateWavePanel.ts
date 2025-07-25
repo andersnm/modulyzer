@@ -1,8 +1,9 @@
-import { FormGroup, FormGroupRadio, IComponent, INotify, VInset, ModalButtonBar } from "../nutz";
+import { Appl } from "../App";
+import { FormGroup, FormGroupRadio, IComponent, VInset, ModalButtonBar } from "../nutz";
 import { bindNoteDropdown } from "./PatternEditorHelper";
 
 export class CreateWavePanel implements IComponent {
-    parent: INotify;
+    app: Appl;
     container: HTMLElement;
     nameInput: HTMLInputElement;
     durationInput: HTMLInputElement;
@@ -13,8 +14,8 @@ export class CreateWavePanel implements IComponent {
     note: number = 60;
     channels: number = 1;
 
-    constructor(parent: INotify, note?: number) {
-        this.parent = parent;
+    constructor(app: Appl, note?: number) {
+        this.app = app;
 
         if (note) {
             this.note = note;
@@ -65,7 +66,7 @@ export class CreateWavePanel implements IComponent {
 
         const modeGroup = FormGroup("Mode", [ monoRadio.getDomNode(), stereoRadio.getDomNode() ]);
 
-        const modalButtonBar = new ModalButtonBar(this, this.parent);
+        const modalButtonBar = new ModalButtonBar(this.app);
 
         this.container.appendChild(nameGroup);
         this.container.appendChild(durationGroup);

@@ -1,9 +1,8 @@
 import { Appl } from "../App";
-import { FormGroup, IComponent, INotify, VInset, ModalButtonBar } from "../nutz";
+import { FormGroup, IComponent, VInset, ModalButtonBar } from "../nutz";
 
 export class SaveAsPanel implements IComponent {
     app: Appl;
-    parent: INotify;
     container: HTMLElement;
     buttonBar: HTMLElement;
 
@@ -11,9 +10,8 @@ export class SaveAsPanel implements IComponent {
 
     name: string;
 
-    constructor(app: Appl, parent: INotify, name: string) {
+    constructor(app: Appl, name: string) {
         this.app = app;
-        this.parent = parent;
         this.name = name;
 
         this.container = VInset(undefined, [ "flex-1" , "gap-1"]);
@@ -28,7 +26,7 @@ export class SaveAsPanel implements IComponent {
 
         const nameGroup = FormGroup("Filename", this.nameInput);
 
-        const modalButtonBar = new ModalButtonBar(this, this.parent);
+        const modalButtonBar = new ModalButtonBar(this.app);
 
         this.container.appendChild(nameGroup);
         this.container.appendChild(modalButtonBar.getDomNode());

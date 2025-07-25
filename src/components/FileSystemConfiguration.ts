@@ -1,6 +1,6 @@
 import { Appl } from '../App';
 import { IndexedDBMap } from '../IndexedDBMap';
-import { FormGroup, IComponent, VInset, ModalButtonBar, Button, HFlex, INotify, domAppendNodes } from '../nutz';
+import { FormGroup, IComponent, VInset, ModalButtonBar, Button, HFlex, domAppendNodes } from '../nutz';
 
 function copyOnClick(e: HTMLElement): HTMLElement {
     e.classList.add("hover:cursor-copy");
@@ -20,7 +20,6 @@ function copyOnClick(e: HTMLElement): HTMLElement {
 
 export class FileSystemConfiguration implements IComponent {
     app: Appl;
-    parent: INotify;
     cancelable: boolean = true;
     homeDir: FileSystemDirectoryHandle | null;
     permission: PermissionState | null;
@@ -30,9 +29,8 @@ export class FileSystemConfiguration implements IComponent {
     homeDirInput: HTMLInputElement;
     homeDirButton: HTMLButtonElement;
 
-    constructor(app: Appl, parent: INotify, homeDir: FileSystemDirectoryHandle | null) {
+    constructor(app: Appl, homeDir: FileSystemDirectoryHandle | null) {
         this.app = app;
-        this.parent = parent;
         this.homeDir = homeDir;
         this.cancelable = !!homeDir;
         this.containerElement = VInset(undefined, ["flex-1", "gap-1"]);
@@ -60,7 +58,7 @@ export class FileSystemConfiguration implements IComponent {
         const homeDirBar = HFlex([this.homeDirInput, this.homeDirButton], "gap-1");
         const homeDirGroup = FormGroup("Directory", homeDirBar);
 
-        this.buttonBar = new ModalButtonBar(this, this.parent);
+        this.buttonBar = new ModalButtonBar(this.app);
 
         this.containerElement.appendChild((VInset(infoP)));
         this.containerElement.appendChild(homeDirGroup);

@@ -1,9 +1,8 @@
 import { Appl } from "../App";
-import { FormGroup, IComponent, INotify, VInset, ModalButtonBar } from "../nutz";
+import { FormGroup, IComponent, VInset, ModalButtonBar } from "../nutz";
 
 export class InstrumentFactoryPicker implements IComponent {
     app: Appl;
-    parent: INotify;
     container: HTMLElement;
     buttonBar: HTMLElement;
 
@@ -12,9 +11,8 @@ export class InstrumentFactoryPicker implements IComponent {
 
     instrumentFactoryIndex: number = -1;
 
-    constructor(app: Appl, parent: INotify) {
+    constructor(app: Appl) {
         this.app = app;
-        this.parent = parent;
         this.container = VInset(undefined, [ "flex-1", "gap-1" ]);
         this.container.tabIndex = -1;
 
@@ -26,7 +24,7 @@ export class InstrumentFactoryPicker implements IComponent {
 
         const instrumentGroup = FormGroup("Instrument", this.instrumentSelect);
 
-        const modalButtonBar = new ModalButtonBar(this, this.parent);
+        const modalButtonBar = new ModalButtonBar(this.app);
 
         this.container.appendChild(instrumentGroup);
         this.container.appendChild(modalButtonBar.getDomNode());

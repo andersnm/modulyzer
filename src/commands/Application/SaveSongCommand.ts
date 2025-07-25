@@ -1,24 +1,13 @@
 import { Appl } from "../../App";
 import { SaveAsPanel } from "../../components/SaveAsPanel";
-import { IComponent, INotify } from "../../nutz";
 
-export class SaveSongCommand implements INotify {
+export class SaveSongCommand {
     constructor(private app: Appl) {
-    }
-
-    notify(source: IComponent, eventName: string, ...args: any): void {
-        if (source instanceof SaveAsPanel) {
-            if (eventName === "ok") {
-                this.app.modalDialogContainer.endModal(true);
-            } else if (eventName === "cancel") {
-                this.app.modalDialogContainer.endModal(false);
-            }
-        }
     }
 
     async handle() {
 
-        const savePanel = new SaveAsPanel(this.app, this, this.app.song.name + ".json");
+        const savePanel = new SaveAsPanel(this.app, this.app.song.name + ".json");
 
         const result = await this.app.modalDialogContainer.showModal("Save As", savePanel);
 

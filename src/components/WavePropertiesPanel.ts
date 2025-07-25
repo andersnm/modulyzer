@@ -1,10 +1,9 @@
 import { Appl } from "../App";
-import { FormGroup, IComponent, INotify, VInset, ModalButtonBar } from "../nutz";
+import { FormGroup, IComponent, VInset, ModalButtonBar } from "../nutz";
 import { bindNoteDropdown } from "./PatternEditorHelper";
 
 export class WavePropertiesPanel implements IComponent {
     app: Appl;
-    parent: INotify;
     container: HTMLElement;
     buttonBar: HTMLElement;
 
@@ -14,9 +13,8 @@ export class WavePropertiesPanel implements IComponent {
     name: string;
     note: number;
 
-    constructor(app: Appl, parent: INotify, name: string, note: number) {
+    constructor(app: Appl, name: string, note: number) {
         this.app = app;
-        this.parent = parent;
         this.name = name;
         this.note = note;
 
@@ -42,7 +40,7 @@ export class WavePropertiesPanel implements IComponent {
 
         const noteGroup = FormGroup("Note", this.noteSelect);
 
-        const modalButtonBar = new ModalButtonBar(this, this.parent);
+        const modalButtonBar = new ModalButtonBar(this.app);
 
         this.container.appendChild(nameGroup);
         this.container.appendChild(noteGroup);

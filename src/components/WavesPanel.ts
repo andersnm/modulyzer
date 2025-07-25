@@ -2,7 +2,7 @@ import { Appl } from "../App";
 import { InstrumentDocument } from "../audio/SongDocument";
 import { registerWaveTableCommands } from "../commands/WaveTable/Register";
 import { waveListMenu } from "../menu/menu";
-import { Button, ButtonToolbar, DataTable, IComponent, INotify } from "../nutz";
+import { Button, ButtonToolbar, DataTable, IComponent } from "../nutz";
 import { ViewFrame } from "../nutz/ViewFrame";
 import { formatNote } from "./PatternEditorHelper";
 import { WavePanel } from "./WavePanel";
@@ -14,23 +14,16 @@ function formatTime(sec: number): string {
 }
 
 export class InstrumentDropdown implements IComponent {
-    panel: INotify;
     container: HTMLDivElement;
     instrumentSelect: HTMLSelectElement;
     instrument: InstrumentDocument;
 
-    constructor(panel: INotify) {
-        this.panel = panel;
+    constructor() {
         this.container = document.createElement("div");
         this.container.classList.add("flex", "gap-1", "items-center", "flex-1");
 
         this.instrumentSelect = document.createElement("select");
         this.instrumentSelect.className = "flex-1 rounded-lg p-1 text-neutral-300 bg-neutral-600";
-        this.instrumentSelect.addEventListener("change", () => {
-            const name = this.instrumentSelect.value;
-            this.panel.notify(this, "change", name);
-        });
-
         this.container.appendChild(this.instrumentSelect);
     }
 
@@ -87,7 +80,9 @@ export class WavesPanel extends ViewFrame {
         this.list.addColumn("Note", "note")
         this.list.container.addEventListener("contextmenu", this.onContextMenu);
 
-        this.instrumentDropdown = new InstrumentDropdown(this);
+        this.instrumentDropdown = new InstrumentDropdown();
+        this.instrumentDropdown.instrumentSelect.addEventListener("change", this.onChangeInstrument);
+
         this.addToolbar(this.instrumentDropdown.getDomNode() as HTMLElement);
 
         this.addToolbar(ButtonToolbar(this, [
@@ -167,6 +162,12 @@ export class WavesPanel extends ViewFrame {
         this.app.contextMenuContainer.show(this, rc.left + e.offsetX, rc.top + e.offsetY, waveListMenu);
     }
 
+    onChangeInstrument = () => {
+        const name = this.instrumentDropdown.instrumentSelect.value;
+        const instrument = this.app.song.instruments.find(i => i.name === name);
+        this.setInstrument(instrument);
+    }
+
     async notify(source: IComponent, eventName: string, ...args: any) {
         if (source === this.list) {
             if (eventName === "dblclick") {
@@ -174,12 +175,6 @@ export class WavesPanel extends ViewFrame {
                 const wave = this.instrument.waves[index];
                 const panel = await this.app.executeCommand("show-wave-editor", wave) as WavePanel;
                 panel.setWave(wave);
-            }
-        } else if (source === this.instrumentDropdown) {
-            if (eventName === "change") {
-                const name = args[0];
-                const instrument = this.app.song.instruments.find(i => i.name === name);
-                this.setInstrument(instrument);
             }
         }
     }

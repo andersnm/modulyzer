@@ -1,10 +1,9 @@
 import { Appl } from "../App";
 import { PatternColumnType } from "../audio/SongDocument";
-import { FormGroup, IComponent, INotify, VInset, ModalButtonBar, FormGroupRadio } from "../nutz";
+import { FormGroup, IComponent, VInset, ModalButtonBar, FormGroupRadio } from "../nutz";
 
 export class InstrumentPinPicker implements IComponent {
     app: Appl;
-    parent: INotify;
     container: HTMLElement;
     buttonBar: HTMLElement;
 
@@ -15,9 +14,8 @@ export class InstrumentPinPicker implements IComponent {
     type: PatternColumnType = "midiparameter";
     parameterName: string = null;
 
-    constructor(app: Appl, parent: INotify) {
+    constructor(app: Appl) {
         this.app = app;
-        this.parent = parent;
         this.container = VInset(undefined, [ "flex-1", "gap-1" ]);
         this.container.tabIndex = -1;
 
@@ -52,7 +50,7 @@ export class InstrumentPinPicker implements IComponent {
 
         const parameterGroup = FormGroup("Column", [ noteRadio.getDomNode(), midiParameterRadio.getDomNode(), this.pinSelect ]);
 
-        const modalButtonBar = new ModalButtonBar(this, this.parent);
+        const modalButtonBar = new ModalButtonBar(this.app);
 
         this.container.appendChild(instrumentGroup);
         this.container.appendChild(parameterGroup);
