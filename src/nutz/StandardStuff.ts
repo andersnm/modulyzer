@@ -1,7 +1,7 @@
 import { Appl } from "../App";
 import { ICommandHost } from "./CommandHost";
 import { domAppendNodes } from "./DomUtil";
-import { IComponent, INotify } from "./IComponent";
+import { IComponent } from "./IComponent";
 
 export function FormGroup(label: string, content: Node|Node[]): HTMLElement {
     const containerElement = document.createElement("div");

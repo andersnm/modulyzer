@@ -1,7 +1,7 @@
 import { Appl } from "../App";
 import { registerPatternListCommands } from "../commands/PatternList/Register";
 import { patternListMenu } from "../menu/menu";
-import { ButtonToolbar, DataTable, IComponent, MenuItem } from "../nutz";
+import { ButtonToolbar, DataTable } from "../nutz";
 import { ViewFrame } from "../nutz/ViewFrame";
 import { PatternPanel } from "./PatternPanel";
 
@@ -15,11 +15,12 @@ export class PatternsPanel extends ViewFrame {
 
         registerPatternListCommands(this);
 
-        this.list = new DataTable(this);
+        this.list = new DataTable();
         this.list.addColumn("Name", "name")
         this.list.addColumn("Cols", "columns")
         this.list.addColumn("Sub.", "subdivision")
         this.list.addColumn("Rows", "rows")
+        this.list.addEventListener("dblclick", this.onDblClick);
         this.list.container.addEventListener("contextmenu", this.onContextMenu);
 
         this.addToolbar(ButtonToolbar(this, [
@@ -68,6 +69,13 @@ export class PatternsPanel extends ViewFrame {
         this.app.contextMenuContainer.show(this, rc.left + e.offsetX, rc.top + e.offsetY, patternListMenu);
     }
 
+    onDblClick = async (ev: CustomEvent<number>) => {
+        const index = ev.detail;
+        const pattern = this.app.song.patterns[index];
+        const panel = await this.app.executeCommand("show-pattern-editor") as PatternPanel;
+        panel.setPattern(pattern);
+    };
+
     async bind() {
         const selectedIndex = this.list.selectedIndex;
 
@@ -83,17 +91,6 @@ export class PatternsPanel extends ViewFrame {
         }
 
         this.list.setSelectedIndex(Math.min(selectedIndex, this.list.getRowCount() - 1));
-    }
-
-    async notify(source: IComponent, eventName: string, ...args: any) {
-        if (source === this.list) {
-            if (eventName === "dblclick") {
-                const index = args[0];
-                const pattern = this.app.song.patterns[index];
-                const panel = await this.app.executeCommand("show-pattern-editor") as PatternPanel;
-                panel.setPattern(pattern);
-            }
-        }
     }
 
     getDomNode(): Node {

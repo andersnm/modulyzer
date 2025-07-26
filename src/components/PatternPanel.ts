@@ -1,6 +1,7 @@
 import { Appl } from "../App";
 import { PatternDocument } from "../audio/SongDocument";
 import { registerPatternEditorCommands } from "../commands/PatternEditor/Register";
+import { patternMenu } from "../menu/menu";
 import { CommandButtonBar, IComponent, StatusBar } from "../nutz";
 import { ViewFrame } from "../nutz/ViewFrame";
 import { PatternEditorCanvas } from "./PatternEditorCanvas";
@@ -63,7 +64,11 @@ export class PatternPanel extends ViewFrame implements IComponent {
 
         registerPatternEditorCommands(this)
 
-        this.patternEditor = new PatternEditorCanvas(app, this);
+        this.patternEditor = new PatternEditorCanvas(app);
+        this.patternEditor.addEventListener("cursormove", this.onCursorMove);
+        this.patternEditor.addEventListener("selchange", this.onSelChange);
+        this.patternEditor.canvas.addEventListener("contextmenu", this.onContextMenu);
+
         this.octaveInput = new OctaveInput(this);
         this.actionButtons = new CommandButtonBar(this, [
             {
@@ -136,6 +141,21 @@ export class PatternPanel extends ViewFrame implements IComponent {
         }
     };
 
+    onCursorMove = () => {
+        this.updateStatusBar();
+    }
+
+    onSelChange = () => {
+        this.bindButtons();
+    }
+
+    onContextMenu = (e: MouseEvent) => {
+        const rc = this.patternEditor.canvas.getBoundingClientRect();
+
+        this.app.contextMenuContainer.show(this, rc.left + e.offsetX, rc.top + e.offsetY, patternMenu);
+        e.preventDefault();
+    };
+
     setPattern(pattern: PatternDocument) {
         this.patternEditor.setPattern(pattern);
         if (pattern) this.patternEditor.moveCursor(0, 0);
@@ -203,15 +223,6 @@ export class PatternPanel extends ViewFrame implements IComponent {
         }
 
         this.statusBar.setText(2, patternColumn.parameterName);
-    }
-
-    notify(source: IComponent, eventName: string, ...args: any): void {
-        if (eventName === "cursormove") {
-            this.updateStatusBar();
-        } else
-        if (eventName === "selchange") {
-            this.bindButtons();
-        }
     }
 
     bindButtons() {

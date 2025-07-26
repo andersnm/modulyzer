@@ -11,13 +11,19 @@ export class TabFrameContainer implements IComponent {
     tabContent: IComponent[] = [];
 
     constructor(protected enableTitle: boolean) {
-        this.tabs = new Tabs(this);
+        this.tabs = new Tabs();
+        this.tabs.addEventListener("tabchange", this.onTabChange);
 
         this.tabs.getDomNode().classList.add("pl-2");
 
         this.outer = document.createElement("div");
         this.outer.className = "flex flex-col flex-1";
     }
+
+    onTabChange = (e: CustomEvent) => {
+        const index = e.detail as number;
+        this.setCurrentTab(index);
+    };
 
     bind() {
         while (this.outer.childNodes.length > 0) this.outer.removeChild(this.outer.lastChild);
@@ -36,9 +42,6 @@ export class TabFrameContainer implements IComponent {
             this.outer.appendChild(tabs);
             this.outer.appendChild(VOutset(tabContent.getDomNode(), "flex-1"));
         }
-
-        // notify comp direct -> in specfic -> compo aalways owns notify-mount and notify-unmount??
-        // tabContent.getDomNode().dispatchEvent(new CustomEvent("mount"))
     }
 
     addTab(label: string, content: IComponent) {
@@ -63,15 +66,6 @@ export class TabFrameContainer implements IComponent {
         element.focus();
     }
 
-    notify(source: IComponent, eventName: string, ...args: any): void {
-        // console.log("Notified", eventName, args)
-        if (eventName === "selectTab") {
-            const index = args[0];
-            this.setCurrentTab(index);
-        }
-    }
-
-    // instead of render() , we have mount and unmount, expecting dom elements to be class members already
     getDomNode() {
         return this.outer;
     }

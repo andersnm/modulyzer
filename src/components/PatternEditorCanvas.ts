@@ -1,9 +1,8 @@
-import { DragTarget, formatHotkey, ICommandHost, IComponent, INotify } from "../nutz";
+import { DragTarget, formatHotkey, IComponent } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 import { Appl } from "../App";
 import { InstrumentDocument, PatternDocument } from "../audio/SongDocument";
 import { CursorColumnInfo, deleteValue, editNote, editNoteOff, editValue, editVelocity, formatNote, formatU8, getCursorColumnAt, getCursorColumnAtPosition, getCursorColumnIndex, getCursorColumns, getNoteForKey, getPatternRenderColumns, getRenderColumnPosition, getRenderColumnWidth, RenderColumnInfo } from "./PatternEditorHelper";
-import { patternMenu } from "../menu/menu";
 
 const maxPolyphonic = 8;
 
@@ -49,7 +48,7 @@ class DragSelect extends DragTarget {
         this.endRow = t;
 
         this.component.setSelection(this.startColumn, this.startRow, this.endColumn, this.endRow);
-        this.component.parent.notify(this.component, "selchange")
+        this.component.dispatchEvent(new CustomEvent("selchange"));
     }
 
     up(e: PointerEvent) {
@@ -63,14 +62,13 @@ class DragSelect extends DragTarget {
         this.component.cursorTime = t;
 
         this.component.redrawCanvas();
-        this.component.parent.notify(this.component, "cursormove")
+        this.component.dispatchEvent(new CustomEvent("cursormove"));
     }
 
 }
 
-export class PatternEditorCanvas implements IComponent {
+export class PatternEditorCanvas extends EventTarget implements IComponent {
     app: Appl;
-    parent: INotify;
     dragTarget: DragTarget;
     container: HTMLElement;
     canvas: HTMLCanvasElement;
@@ -86,9 +84,9 @@ export class PatternEditorCanvas implements IComponent {
     rowNumberWidth: number;
     selection: PatternSelection;
 
-    constructor(app: Appl, parent: INotify) {
+    constructor(app: Appl) {
+        super();
         this.app = app;
-        this.parent = parent;
         this.container = document.createElement("div");
         this.container.className = "flex-1 w-full pb-1";
         this.container.tabIndex = 0;
@@ -101,7 +99,6 @@ export class PatternEditorCanvas implements IComponent {
         this.canvas.addEventListener("pointerdown", this.onMouseDown);
         this.canvas.addEventListener("pointerup", this.onMouseUp);
         this.canvas.addEventListener("pointermove", this.onMouseMove);
-        this.canvas.addEventListener("contextmenu", this.onContextMenu);
 
         this.canvas.addEventListener("resize", this.onResize);
 
@@ -174,19 +171,10 @@ export class PatternEditorCanvas implements IComponent {
         this.dragTarget.move(e);
     };
 
-    onContextMenu = (e: MouseEvent) => {
-        console.log("onContextMenu")
-        const rc = this.canvas.getBoundingClientRect();
-
-        // TODO: dont cast
-        this.app.contextMenuContainer.show(this.parent as ICommandHost, rc.left + e.offsetX, rc.top + e.offsetY, patternMenu);
-        e.preventDefault();
-    };
-
     onKeyDown = (e: KeyboardEvent) => {
         if (this.editKeyDown(e)) {
-            this.parent.notify(this, "cursormove");
-            this.parent.notify(this, "selchange");
+            this.dispatchEvent(new CustomEvent("cursormove"))
+            this.dispatchEvent(new CustomEvent("selchange"))
             e.stopPropagation(); // dont run global handler
             e.preventDefault(); // dont do canvas default
             return;

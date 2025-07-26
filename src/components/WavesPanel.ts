@@ -73,11 +73,12 @@ export class WavesPanel extends ViewFrame {
 
         registerWaveTableCommands(this);
 
-        this.list = new DataTable(this);
+        this.list = new DataTable();
         this.list.addColumn("", "action")
         this.list.addColumn("Name", "name")
         this.list.addColumn("Duration", "duration")
         this.list.addColumn("Note", "note")
+        this.list.addEventListener("dblclick", this.onDblClick);
         this.list.container.addEventListener("contextmenu", this.onContextMenu);
 
         this.instrumentDropdown = new InstrumentDropdown();
@@ -168,16 +169,12 @@ export class WavesPanel extends ViewFrame {
         this.setInstrument(instrument);
     }
 
-    async notify(source: IComponent, eventName: string, ...args: any) {
-        if (source === this.list) {
-            if (eventName === "dblclick") {
-                const index = args[0];
-                const wave = this.instrument.waves[index];
-                const panel = await this.app.executeCommand("show-wave-editor", wave) as WavePanel;
-                panel.setWave(wave);
-            }
-        }
-    }
+    onDblClick = async (ev: CustomEvent<number>) => {
+        const index = ev.detail;
+        const wave = this.instrument.waves[index];
+        const panel = await this.app.executeCommand("show-wave-editor", wave) as WavePanel;
+        panel.setWave(wave);
+    };
 
     ensureInstrument() {
         const instruments = this.getWaveTableInstruments();

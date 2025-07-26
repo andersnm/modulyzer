@@ -2,9 +2,9 @@ import { Appl } from "../App";
 import { SequenceEditorCanvas } from "./SequenceEditorCanvas";
 import { registerSequenceEditorCommands } from "../commands/SequenceEditor/Register";
 import { ViewFrame } from "../nutz/ViewFrame";
-import { CommandButtonBar, IComponent, INotify } from "../nutz";
+import { CommandButtonBar } from "../nutz";
 
-export class SequencePanel extends ViewFrame implements INotify {
+export class SequencePanel extends ViewFrame {
     app: Appl;
     actionButtons: CommandButtonBar;
     sequenceEditor: SequenceEditorCanvas;
@@ -15,7 +15,8 @@ export class SequencePanel extends ViewFrame implements INotify {
 
         registerSequenceEditorCommands(this);
 
-        this.sequenceEditor = new SequenceEditorCanvas(app, this);
+        this.sequenceEditor = new SequenceEditorCanvas(app);
+        this.sequenceEditor.addEventListener("selchange", this.onSelChange);
 
         this.actionButtons = new CommandButtonBar(this, [
             {
@@ -49,10 +50,8 @@ export class SequencePanel extends ViewFrame implements INotify {
         this.bindButtons();
     }
 
-    notify(source: IComponent, eventName: string, ...args: any): void {
-        if (eventName === "selchange") {
-            this.bindButtons();
-        }
+    onSelChange = () => {
+        this.bindButtons();
     }
 
     bindButtons() {

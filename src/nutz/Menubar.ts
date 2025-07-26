@@ -1,7 +1,7 @@
 import { MenuItem } from "../menu/menu";
 import { MenuItem as NutzMenuItem } from "./Menu";
 import { ICommandHost } from "./CommandHost";
-import { IComponent, INotify } from "./IComponent";
+import { IComponent } from "./IComponent";
 import { Menu } from "./Menu";
 
 export function convertNutzMenu(app: ICommandHost, menu: MenuItem[]): NutzMenuItem[] {
@@ -30,10 +30,50 @@ export class MenuBar implements IComponent {
         this.app = app;
         this.menuContainer = document.createElement("div");
         this.menuContainer.className = "flex flex-row nutz-menubar";
-        this.menu = new Menu(this);
-
-        // TODO; capture global clicks, actions, close menu
+        this.menu = new Menu();
+        this.menu.addEventListener("action", this.onMenuAction);
+        this.menu.addEventListener("keydown", this.onMenuKeyDown);
     }
+
+    onMenuAction = (ev: CustomEvent) => {
+        const oldNode = this.menuContainer.childNodes[this.selectedIndex] as HTMLElement;
+        const oldIndex = this.selectedIndex;
+
+        if (!this.hovering) {
+            this.selectedIndex = -1; // unless hover - grr
+        }
+
+        this.bindMenubarItemStyle(oldNode, oldIndex);
+
+        this.menu.hide();
+
+        this.app.executeCommand(ev.detail);
+    };
+
+    onMenuKeyDown = (ev: CustomEvent) => {
+        const keyEv = ev.detail;
+
+        const oldNode = this.menuContainer.childNodes[this.selectedIndex] as HTMLElement;
+        const oldIndex = this.selectedIndex;
+
+        if (keyEv.key === "ArrowRight") {
+            this.selectedIndex = (this.selectedIndex + 1) % this.menuItems.length;
+        } else if (keyEv.key === "ArrowLeft") {
+            this.selectedIndex = (this.selectedIndex + this.menuItems.length - 1) % this.menuItems.length;
+        }
+
+        this.bindMenubarItemStyle(oldNode, oldIndex);
+
+        this.menu.hide();
+
+        const el = this.menuContainer.childNodes[this.selectedIndex] as HTMLElement;
+
+        const item = this.menuItems[this.selectedIndex];
+        const rc = el.getBoundingClientRect()
+        this.showMenu(rc.left, rc.bottom, item.items);
+
+        this.bindMenubarItemStyle(el, this.selectedIndex);
+    };
 
     bindMenubarItemStyle(itemNode: HTMLElement, index: number) {
         // const itemNode = this.menuContainer.childNodes[index] as HTMLElement;
@@ -133,50 +173,6 @@ export class MenuBar implements IComponent {
         const nutzMenu = convertNutzMenu(this.app, menu)
         this.menu.bindMenu(nutzMenu);
         this.menu.show(x, y);
-    }
-
-    notify(source: IComponent, eventName: string, ...args: any): void {
-        console.log("NOTIFY", eventName, args);
-        if (eventName === "keydown") {
-            // const n = this.menuContainer[this.selectedIndex];
-            const oldNode = this.menuContainer.childNodes[this.selectedIndex] as HTMLElement;
-            const oldIndex = this.selectedIndex;
-
-            if (args[0].key === "ArrowRight") {
-                this.selectedIndex++;
-            } else if (args[0].key === "ArrowLeft") {
-                this.selectedIndex--;
-            }
-
-            this.bindMenubarItemStyle(oldNode, oldIndex);
-
-            const el = this.menuContainer.childNodes[this.selectedIndex] as HTMLElement;
-
-            const item = this.menuItems[this.selectedIndex];
-            const rc = el.getBoundingClientRect()
-            this.showMenu(rc.left, rc.bottom, item.items);
-
-            this.bindMenubarItemStyle(el, this.selectedIndex);
-
-            // this.selectedIndex = itemIndex;
-
-            // n2.click();
-
-            // arrow right -> click next item
-            // index based
-            // this.menuContainer[]
-        } else if (eventName === "action") {
-            const oldNode = this.menuContainer.childNodes[this.selectedIndex] as HTMLElement;
-            const oldIndex = this.selectedIndex;
-
-            if (!this.hovering) {
-                this.selectedIndex = -1; // unless hover - grr
-            }
-
-            this.bindMenubarItemStyle(oldNode, oldIndex);
-
-            this.app.executeCommand(args[0]);
-        }
     }
 
     getDomNode(): Node {

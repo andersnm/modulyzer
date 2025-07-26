@@ -1,5 +1,5 @@
 import { Appl } from "../App";
-import { DragTarget, formatHotkey, IComponent, INotify } from "../nutz";
+import { DragTarget, formatHotkey, IComponent } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 import { PatternPanel } from "./PatternPanel";
 
@@ -45,7 +45,7 @@ class DragSelect extends DragTarget {
         this.endRow = t;
 
         this.component.setSelection(this.startColumn, this.startRow, this.endColumn, this.endRow);
-        this.component.parent.notify(this.component, "selchange");
+        this.component.dispatchEvent(new CustomEvent("selchange"));
     }
 
     up(e: PointerEvent) {
@@ -56,13 +56,12 @@ class DragSelect extends DragTarget {
         const t = Math.floor(e.offsetY / fontHeight) + this.component.scrollRow;
 
         this.component.setCursorPosition(c, t);
-        this.component.parent.notify(this.component, "cursormove")
+        this.component.dispatchEvent(new CustomEvent("cursormove"));
     }
 }
 
-export class SequenceEditorCanvas implements IComponent {
+export class SequenceEditorCanvas extends EventTarget implements IComponent {
     app: Appl;
-    parent: INotify;
     container: HTMLElement;
     canvas: HTMLCanvasElement;
     dragTarget: DragTarget;
@@ -75,9 +74,9 @@ export class SequenceEditorCanvas implements IComponent {
     rowNumberWidth: number;
     selection: SequenceSelection;
 
-    constructor(app: Appl, parent: INotify) {
+    constructor(app: Appl) {
+        super();
         this.app = app;
-        this.parent = parent;
 
         this.container = document.createElement("div");
         this.container.className = "flex-1 w-full";
@@ -183,8 +182,8 @@ export class SequenceEditorCanvas implements IComponent {
 
     onKeyDown = (e: KeyboardEvent) => {
         if (this.editKeyDown(e)) {
-            this.parent.notify(this, "selchange");
-            this.parent.notify(this, "cursormove");
+            this.dispatchEvent(new CustomEvent("selchange"));
+            this.dispatchEvent(new CustomEvent("cursormove"));
             e.stopPropagation(); // dont run global handler
             e.preventDefault(); // dont do canvas default
             return;

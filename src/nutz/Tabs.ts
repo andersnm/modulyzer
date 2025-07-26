@@ -9,16 +9,15 @@ export interface TabInfo {
     handler: () => void;
 }
 
-export class Tabs implements IComponent {
-    private parent: IComponent;
+export class Tabs extends EventTarget implements IComponent {
     private position: TabsPositionType = "top";
     tabs: TabInfo[] = [];
     private currentTab: number = 0;
 
     tabsContainer: HTMLElement;
 
-    constructor(parent: IComponent) {
-        this.parent = parent;
+    constructor() {
+        super();
         this.tabsContainer = document.createElement("div");
         this.tabsContainer.className = "flex gap-1 bg-neutral-800";
         this.tabsContainer.addEventListener("mousedown", e => e.preventDefault() ); // prevent taking focus
@@ -33,10 +32,7 @@ export class Tabs implements IComponent {
             tab: document.createElement("div"),
             index,
             handler: () => {
-                console.log("Clickety set tab");
-                // this.setCurrentTab(index);
-                if (this.parent.notify) this.parent.notify(this, "selectTab", index);
-                // also emit when click - "notify parent" concept??
+                this.dispatchEvent(new CustomEvent("tabchange", { detail: index }));
             },
         };
 
@@ -49,10 +45,7 @@ export class Tabs implements IComponent {
 
     setCurrentTab(index) {
         this.currentTab = index;
-        
-        // rerender tab buttons, notify parent
         this.bind();
-        // invalidat -> rebind() -> updat class nams
     }
 
     getCurrentTab() {

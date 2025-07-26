@@ -1,5 +1,5 @@
 import { domAppendNodes } from "./DomUtil";
-import { IComponent, INotify } from "./IComponent";
+import { IComponent } from "./IComponent";
 
 function getChildNodeIndex(childNodes, node) {
     let index = 0;
@@ -30,8 +30,7 @@ function scrollIntoViewIfNeeded(parent: HTMLElement, headerHeight: number, child
     }
 }
 
-export class DataTable implements IComponent {
-    parent: INotify;
+export class DataTable extends EventTarget implements IComponent {
     columns: {label: string, propertyNameOrIndex: string|number}[] = [];
 
     container: HTMLDivElement;
@@ -41,8 +40,8 @@ export class DataTable implements IComponent {
     headerRow: HTMLTableRowElement;
     selectedIndex: number = -1;
 
-    constructor(parent: INotify) {
-        this.parent = parent;
+    constructor() {
+        super();
 
         this.container = document.createElement("div")
         this.container.classList.add("w-full", "h-full", "relative", "overflow-auto")
@@ -126,7 +125,7 @@ export class DataTable implements IComponent {
         });
 
         row.addEventListener("dblclick", () => {
-            this.parent.notify(this, "dblclick", this.selectedIndex);
+            this.dispatchEvent(new CustomEvent<number>("dblclick", { detail: this.selectedIndex }));
         });
 
         for (let column of this.columns) {
@@ -176,7 +175,7 @@ export class DataTable implements IComponent {
             scrollIntoViewIfNeeded(this.container, bounding.height, row.childNodes[0] as HTMLElement);
         }
 
-        this.parent.notify(this, "select", index);
+        this.dispatchEvent(new CustomEvent<number>("select", { detail: index }));
     }
 
     removeRow(index: number) {

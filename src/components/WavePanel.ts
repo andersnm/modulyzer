@@ -27,8 +27,13 @@ export class WavePanel extends ViewFrame {
         this.view.className = "flex flex-col flex-1";
         this.view.tabIndex = 0;
 
-        this.waveEditor = new WaveEditorCanvas(this);
-        this.waveScroll = new WaveScrollCanvas(this);
+        this.waveEditor = new WaveEditorCanvas();
+        this.waveEditor.addEventListener("selchange", this.onWaveEditorSelChange);
+        this.waveEditor.addEventListener("zoomchange", this.onWaveEditorZoomChange);
+
+        this.waveScroll = new WaveScrollCanvas();
+        this.waveScroll.addEventListener("selchange", this.onWaveScrollSelChange);
+        this.waveScroll.addEventListener("zoomchange", this.onWaveScrollZoomChange);
 
         this.addToolbar(ButtonToolbar(this, [
             {
@@ -180,6 +185,54 @@ export class WavePanel extends ViewFrame {
         return true;
     };
 
+    onWaveEditorSelChange = () => {
+        if (this.waveEditor.selection) {
+            const start = this.waveEditor.selection.start;
+            const end = this.waveEditor.selection.end;
+            this.waveScroll.setSelection(start, end);
+            this.document.selection = { ... this.waveEditor.selection };
+        } else {
+            this.waveScroll.clearSelection();
+            this.document.selection = null;
+        }
+    }
+
+    onWaveEditorZoomChange = () => {
+        if (this.waveEditor.zoom) {
+            const start = this.waveEditor.zoom.start;
+            const end = this.waveEditor.zoom.end;
+            this.waveScroll.setZoom(start, end);
+            this.document.zoom = { ... this.waveEditor.zoom };
+        } else {
+            this.waveScroll.clearZoom();
+            this.document.zoom = null;
+        }
+    };
+
+    onWaveScrollSelChange = () => {
+        if (this.waveScroll.selection) {
+            const start = this.waveScroll.selection.start;
+            const end = this.waveScroll.selection.end;
+            this.waveEditor.setSelection(start, end);
+            this.document.selection = { ... this.waveScroll.selection };
+        } else {
+            this.waveEditor.clearSelection();
+            this.document.selection = null;
+        }
+    };
+
+    onWaveScrollZoomChange = () => {
+        if (this.waveScroll.zoom) {
+            const start = this.waveScroll.zoom.start;
+            const end = this.waveScroll.zoom.end;
+            this.waveEditor.setZoom(start, end);
+            this.document.zoom = { ... this.waveScroll.zoom };
+        } else {
+            this.waveEditor.clearZoom();
+            this.document.zoom = null;
+        }
+    };
+
     async statusCreateNewAndGotoWave(instrument: InstrumentDocument) {
         const wave = await showCreateNewWaveDialog(this.app, instrument);
         if (wave) {
@@ -199,54 +252,6 @@ export class WavePanel extends ViewFrame {
         }
 
         return result;
-    }
-
-    notify(source: IComponent, eventName: string, ...args: any): void {
-        if (source === this.waveEditor) {
-            if (eventName === "selchange") {
-                if (this.waveEditor.selection) {
-                    const start = this.waveEditor.selection.start;
-                    const end = this.waveEditor.selection.end;
-                    this.waveScroll.setSelection(start, end);
-                    this.document.selection = { ... this.waveEditor.selection };
-                } else {
-                    this.waveScroll.clearSelection();
-                    this.document.selection = null;
-                }
-            } else if (eventName === "zoomchange") {
-                if (this.waveEditor.zoom) {
-                    const start = this.waveEditor.zoom.start;
-                    const end = this.waveEditor.zoom.end;
-                    this.waveScroll.setZoom(start, end);
-                    this.document.zoom = { ... this.waveEditor.zoom };
-                } else {
-                    this.waveScroll.clearZoom();
-                    this.document.zoom = null;
-                }
-            }
-        } else if (source === this.waveScroll) {
-            if (eventName === "selchange") {
-                if (this.waveScroll.selection) {
-                    const start = this.waveScroll.selection.start;
-                    const end = this.waveScroll.selection.end;
-                    this.waveEditor.setSelection(start, end);
-                    this.document.selection = { ... this.waveScroll.selection };
-                } else {
-                    this.waveEditor.clearSelection();
-                    this.document.selection = null;
-                }
-            } else if (eventName === "zoomchange") {
-                if (this.waveScroll.zoom) {
-                    const start = this.waveScroll.zoom.start;
-                    const end = this.waveScroll.zoom.end;
-                    this.waveEditor.setZoom(start, end);
-                    this.document.zoom = { ... this.waveScroll.zoom };
-                } else {
-                    this.waveEditor.clearZoom();
-                    this.document.zoom = null;
-                }
-            }
-        }
     }
 
     getDomNode(): Node {

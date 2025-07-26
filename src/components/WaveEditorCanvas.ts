@@ -1,6 +1,6 @@
 import { WaveRange } from "../audio/SongDocument";
 import { convertRemToPixels, drawWaveBuffer, drawWaveRange, samplePositionFromPixel  } from "../audio/WaveCanvasUtil";
-import { DragTarget, IComponent, INotify } from "../nutz";
+import { DragTarget, IComponent } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 
 class DragSelect extends DragTarget {
@@ -34,8 +34,7 @@ class DragSelect extends DragTarget {
     }
 }
 
-export class WaveEditorCanvas implements IComponent {
-    parent: INotify;
+export class WaveEditorCanvas extends EventTarget implements IComponent {
     container: HTMLElement;
     canvas: HTMLCanvasElement;
 
@@ -45,8 +44,8 @@ export class WaveEditorCanvas implements IComponent {
     playPosition: number;
     dragTarget: DragTarget | null = null;
 
-    constructor(parent: INotify) {
-        this.parent = parent;
+    constructor() {
+        super();
         this.container = document.createElement("div");
         this.container.className = "flex-1 w-full pb-1";
 
@@ -128,7 +127,7 @@ export class WaveEditorCanvas implements IComponent {
         this.selection = { start, end };
 
         console.log(this.selection)
-        this.parent.notify(this, "selchange");
+        this.dispatchEvent(new CustomEvent("selchange"));
         this.redrawCanvas();
     }
 
@@ -138,7 +137,7 @@ export class WaveEditorCanvas implements IComponent {
         }
 
         this.selection = null;
-        this.parent.notify(this, "selchange");
+        this.dispatchEvent(new CustomEvent("selchange"));
         this.redrawCanvas();
     }
 
@@ -149,7 +148,7 @@ export class WaveEditorCanvas implements IComponent {
 
         console.log("edit: zoom")
         this.zoom = { start, end };
-        this.parent.notify(this, "zoomchange");
+        this.dispatchEvent(new CustomEvent("zoomchange"));
         this.redrawCanvas();
     }
 
@@ -159,7 +158,7 @@ export class WaveEditorCanvas implements IComponent {
         }
 
         this.zoom = null;
-        this.parent.notify(this, "zoomchange");
+        this.dispatchEvent(new CustomEvent("zoomchange"));
         this.redrawCanvas();
     }
 

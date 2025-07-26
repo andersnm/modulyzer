@@ -1,4 +1,4 @@
-import { IComponent, INotify } from "./IComponent";
+import { IComponent } from "./IComponent";
 
 export interface MenuItem {
     label: string;
@@ -9,8 +9,7 @@ export interface MenuItem {
     items?: MenuItem[]; 
 }
 
-export class Menu implements IComponent {
-    private parent: INotify;
+export class Menu extends EventTarget implements IComponent {
     menuContainer: HTMLElement;
     inner: HTMLElement;
     submenu: Menu = null;
@@ -18,8 +17,8 @@ export class Menu implements IComponent {
     selectedIndex: number = -1;
     items: MenuItem[] = [];
 
-    constructor(parent: INotify) {
-        this.parent = parent;
+    constructor() {
+        super();
         this.menuContainer = document.createElement("div");
         this.menuContainer.tabIndex = 0;
         this.menuContainer.className = "nutz-menu z-20 absolute px-1 py-1 bg-neutral-600 rounded w-72";
@@ -30,7 +29,6 @@ export class Menu implements IComponent {
         this.menuContainer.appendChild(this.inner);
 
         this.menuContainer.addEventListener("keydown", ev => {
-            // console.log("mkdown", this, ev)
             // right -> open flyout if exist, or menubar next (from flyout too)
             const oldIndex = this.selectedIndex;
 
@@ -52,20 +50,23 @@ export class Menu implements IComponent {
                     const itemOuterNode = this.inner.childNodes[this.selectedIndex] as HTMLElement;
                     const rc = itemOuterNode.getBoundingClientRect()
 
-                    this.submenu = new Menu(this);
+                    this.submenu = new Menu();
+                    this.submenu.addEventListener("action", this.onSubMenuAction);
+                    this.submenu.addEventListener("keydown", this.onSubMenuKeyDown);
+
                     this.submenu.bindMenu(item.items);
                     this.submenu.show(rc.right, rc.top);
 
                     this.submenuItemIndex = this.selectedIndex;
                     // this.submenuNode = itemOuterNode;
                 } else {
-                   this.parent.notify(this, "keydown", ev);
+                    this.dispatchEvent(new CustomEvent("keydown", { detail: ev }))
                 }
             } else if (ev.key === "Enter") {
                 const item = this.items[this.selectedIndex];
-                this.notify(this, "action", item.action);
+                this.dispatchEvent(new CustomEvent("action", { detail: item.action }));
             } else {
-                this.notify(this, "keydown", ev);
+                this.dispatchEvent(new CustomEvent("keydown", { detail: ev }))
             }
 
             if (oldIndex !== this.selectedIndex) {
@@ -218,7 +219,10 @@ export class Menu implements IComponent {
                     const rc = itemOuterNode.getBoundingClientRect()
                     // this.showMenu(rc.left, rc.bottom, item.items);
 
-                    this.submenu = new Menu(this);
+                    this.submenu = new Menu();
+                    this.submenu.addEventListener("action", this.onSubMenuAction);
+                    this.submenu.addEventListener("keydown", this.onSubMenuKeyDown);
+
                     this.submenu.bindMenu(item.items);
                     this.submenu.show(rc.right, rc.top);
 
@@ -233,8 +237,7 @@ export class Menu implements IComponent {
             });
 
             itemOuterNode.addEventListener("click", () => {
-                // this.app.executeCommand(item.action);
-                this.notify(this, "action", item.action);
+                this.dispatchEvent(new CustomEvent("action", { detail: item.action }));
             });
 
             this.bindMenuItem(itemOuterNode, itemIndex);
@@ -242,23 +245,20 @@ export class Menu implements IComponent {
         }
     }
 
-    notify(source: IComponent, eventName: string, ...args: any): void {
-        
-        if (eventName === "action") {
-            this.hide();
-            this.parent.notify(source, eventName, ...args);
-        } else if (eventName === "keydown") {
-            if (args[0].key === "ArrowLeft") {
-                // child menu 
-                this.closeSubmenu();
-                this.menuContainer.focus();
-            } else if (args[0].key === "ArrowRight") {
-                // if item has child items, open it, else send to parent
-            } else {
-                this.parent.notify(source, eventName, ...args);
-            }
+    onSubMenuAction = (ev: CustomEvent) => {
+        this.dispatchEvent(new CustomEvent("action", { detail: ev.detail }));
+    };
+
+    onSubMenuKeyDown = (ev: CustomEvent) => {
+        const keyEv = ev.detail;
+        if (keyEv.key === "ArrowLeft") {
+            // close child menu and refocus current
+            this.closeSubmenu();
+            this.menuContainer.focus();
+        } else {
+            this.dispatchEvent(new CustomEvent("keydown", { detail: ev.detail }));
         }
-    }
+    };
 
     getDomNode(): Node {
         return null;

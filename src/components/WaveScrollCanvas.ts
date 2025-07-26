@@ -11,7 +11,7 @@ drag zoom range edge = extend zoom
 // import { resizeCanvas } from "../FlexCanvasHelper";
 import { WaveRange } from "../audio/SongDocument";
 import { convertRemToPixels, drawWaveBuffer, drawWaveRange, samplePositionFromPixel } from "../audio/WaveCanvasUtil";
-import { DragTarget, IComponent, INotify, PointType, ptInRect, RectType } from "../nutz";
+import { DragTarget, IComponent, PointType, ptInRect, RectType } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 
 class DragSelect extends DragTarget {
@@ -29,7 +29,7 @@ class DragSelect extends DragTarget {
     move(e: PointerEvent) {
         this.end = samplePositionFromPixel(this.component.canvas, e.offsetX, null, this.component.buffers[0].length);
         this.component.setSelection(this.start, this.end)
-        this.component.parent.notify(this.component, "selchange");
+        this.component.dispatchEvent(new CustomEvent("selchange"));
     }
 
     up(e: PointerEvent) {
@@ -69,7 +69,7 @@ class DragZoomArea extends DragTarget {
         }
 
         this.component.setZoom(this.startZoom.start + dist, this.startZoom.end + dist);
-        this.component.parent.notify(this.component, "zoomchange");
+        this.component.dispatchEvent(new CustomEvent("zoomchange"));
     }
 
     up(e: PointerEvent) {
@@ -108,7 +108,7 @@ class DragZoomLeft extends DragTarget {
         }
 
         this.component.setZoom(this.startZoom.start + dist, this.startZoom.end);
-        this.component.parent.notify(this.component, "zoomchange");
+        this.component.dispatchEvent(new CustomEvent("zoomchange"));
     }
 
     up(e: PointerEvent) {
@@ -147,16 +147,14 @@ class DragZoomRight extends DragTarget {
         }
 
         this.component.setZoom(this.startZoom.start, this.startZoom.end + dist);
-        this.component.parent.notify(this.component, "zoomchange");
+        this.component.dispatchEvent(new CustomEvent("zoomchange"));
     }
 
     up(e: PointerEvent) {
     }
 }
 
-export class WaveScrollCanvas implements IComponent {
-    parent: INotify;
-
+export class WaveScrollCanvas extends EventTarget implements IComponent {
     container: HTMLElement;
     canvas: HTMLCanvasElement;
 
@@ -171,8 +169,8 @@ export class WaveScrollCanvas implements IComponent {
     zoomHandleLeftRect: RectType | null = null;
     zoomHandleRightRect: RectType | null = null;
 
-    constructor(parent: INotify) {
-        this.parent = parent;
+    constructor() {
+        super();
         this.container = document.createElement("div");
         this.container.className = "h-32 w-full pb-1";
 

@@ -1,10 +1,10 @@
 import { MenuItem } from "../menu/menu";
 import { ICommandHost } from "./CommandHost";
-import { IComponent, INotify } from "./IComponent";
+import { IComponent } from "./IComponent";
 import { Menu, MenuItem as NutzMenuItem } from "./Menu";
 import { convertNutzMenu } from "./Menubar";
 
-export class ContextMenuContainer implements INotify {
+export class ContextMenuContainer {
     menu: Menu;
     overlay: HTMLDivElement;
     commandHost: ICommandHost;
@@ -12,7 +12,9 @@ export class ContextMenuContainer implements INotify {
     resolve: (item: any) => void;
 
     constructor() {
-        this.menu = new Menu(this);
+        this.menu = new Menu();
+        this.menu.addEventListener("action", this.onMenuAction);
+        this.menu.addEventListener("keydown", this.onMenuKeyDown);
     }
 
     async show(app: ICommandHost, x: number, y: number, menu: MenuItem[]) {
@@ -79,18 +81,18 @@ export class ContextMenuContainer implements INotify {
         this.focusElement?.focus();
     }
 
-    notify(source: IComponent, eventName: string, ...args: any): void {
-        if (eventName === "action") {
-            const commandHost = this.commandHost;
+    onMenuAction = (ev: CustomEvent) => {
+        const commandHost = this.commandHost;
+        this.hide();
+        this.resolve(ev.detail);
+        this.resolve = null;
+    };
+
+    onMenuKeyDown = (ev: CustomEvent) => {
+        if (ev.detail.key === "Escape") {
             this.hide();
-            this.resolve(args[0]);
+            this.resolve(null);
             this.resolve = null;
-        } else if (eventName === "keydown") {
-            if (args[0].key === "Escape") {
-                this.hide();
-                this.resolve(null);
-                this.resolve = null;
-            }
         }
-    }
+    };
 }
