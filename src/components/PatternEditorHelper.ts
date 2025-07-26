@@ -111,7 +111,7 @@ export function getCursorColumns(renderColumns: RenderColumnInfo[]): CursorColum
     return cursorColumns;
 }
 
-export function getPatternRenderColumns(instrumentFactories: InstrumentFactory[], pattern: PatternDocument, maxPolyphonic: number): RenderColumnInfo[] {
+export function getPatternRenderColumns(instrumentFactories: InstrumentFactory[], pattern: PatternDocument): RenderColumnInfo[] {
     const renderColumns: RenderColumnInfo[] = [];
 
     let position = 0;
@@ -128,8 +128,11 @@ export function getPatternRenderColumns(instrumentFactories: InstrumentFactory[]
                 tabStep++;
             }
 
+            // get polyphonic channels from instrument (or do we specify 0/1..maxPoly on instrument itself
+            const factory = instrumentFactories.find(f => f.identifier === patternColumn.instrument.instrumentId);
+
             // compute N columns of (note+velocity)
-            for (let i = 0; i < maxPolyphonic; i++) {
+            for (let i = 0; i < factory.maxPolyphony; i++) {
                 // note column
                 const noteCursorColumns: CursorColumnInfo[] = [];
 

@@ -10,7 +10,7 @@ function debounce<T extends (...args: any[]) => void>(func: T, wait: number): (.
 }
 
 export class ReverbFactory extends InstrumentFactory {
-    getIdentifier(): string {
+    get identifier(): string {
         return "@modulyzer/Reverb";
     }
 

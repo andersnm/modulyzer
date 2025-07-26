@@ -3,7 +3,7 @@ import { Player } from "../Player";
 import { describeUnit, Instrument, InstrumentFactory, WebAudioParameter } from "./InstrumentFactory";
 
 export class ComboDelayFactory extends InstrumentFactory {
-    getIdentifier(): string {
+    get identifier(): string {
         return "@modulyzer/ComboDelay";
     }
 

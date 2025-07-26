@@ -48,7 +48,7 @@ export class InstrumentFactoryPicker implements IComponent {
         let index = 0;
         for (let instrument of this.app.instrumentFactories) {
             var option = document.createElement("option");
-            option.text = instrument.getIdentifier();
+            option.text = instrument.identifier;
             option.value = index.toString();
 
             this.instrumentSelect.options.add(option);

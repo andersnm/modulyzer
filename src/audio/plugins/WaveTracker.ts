@@ -2,9 +2,10 @@ import { Player, Wave } from "../Player";
 import { Instrument, InstrumentFactory } from "./InstrumentFactory";
 
 export class WaveTrackerFactory extends InstrumentFactory {
+    maxPolyphony: number = 8;
     useWaveTable = true;
 
-    getIdentifier(): string {
+    get identifier(): string {
         return "@modulyzer/WaveTracker";
     }
 

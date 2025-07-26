@@ -14,7 +14,9 @@ function getOscType(value: number) {
 }
 
 export class OscillatorFactory extends InstrumentFactory {
-    getIdentifier(): string {
+    maxPolyphony: number = 1;
+
+    get identifier(): string {
         return "@modulyzer/Oscillator";
     }
 

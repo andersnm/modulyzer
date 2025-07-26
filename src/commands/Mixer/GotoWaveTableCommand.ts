@@ -20,7 +20,7 @@ export class GotoWaveTableCommand implements ICommand {
             return;
         }
 
-        const factory = this.app.instrumentFactories.find(f => f.getIdentifier() === instrument.instrumentId);
+        const factory = this.app.instrumentFactories.find(f => f.identifier === instrument.instrumentId);
         if (!factory.useWaveTable) {
             console.log("Instrument does not have wave table")
             return;

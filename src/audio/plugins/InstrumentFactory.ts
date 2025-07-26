@@ -128,7 +128,7 @@ export abstract class Instrument extends EventTarget {
 
 export abstract class InstrumentFactory {
     useWaveTable: boolean = false;
-    useSysex: boolean = false;
-    abstract getIdentifier(): string;
+    maxPolyphony: number = 0;
+    abstract get identifier(): string;
     abstract createInstrument(context: AudioContext, player: Player): Instrument;
 }

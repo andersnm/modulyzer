@@ -3,12 +3,10 @@ import { Player } from "../Player";
 import { Instrument, InstrumentFactory, WebAudioParameter } from "./InstrumentFactory";
 
 export class Open303Factory extends InstrumentFactory {
-    getIdentifier(): string {
-        return "@modulyzer/Open303";
-    }
+    maxPolyphony: number = 2;
 
-    getPolyphony() {
-        return 1;
+    get identifier(): string {
+        return "@modulyzer/Open303";
     }
 
     createInstrument(context: AudioContext, player: Player): Instrument {

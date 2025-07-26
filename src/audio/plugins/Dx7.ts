@@ -3,14 +3,10 @@ import { Player } from "../Player";
 import { Instrument, InstrumentFactory, WebAudioParameter } from "./InstrumentFactory";
 
 export class Dx7Factory extends InstrumentFactory {
-    useSysex = true;
+    maxPolyphony: number = 8;
 
-    getIdentifier(): string {
+    get identifier(): string {
         return "@modulyzer/Dx7";
-    }
-
-    getPolyphony() {
-        return 16;
     }
 
     createInstrument(context: AudioContext, player: Player): Instrument {

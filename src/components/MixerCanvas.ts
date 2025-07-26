@@ -26,11 +26,6 @@ const instrumentMenu: MenuItem[] = [
         label: "Delete",
         action: "delete-selection",
     },
-    {
-        label: "Send Sysex...",
-        action: "send-sysex",
-        // enabled: factory.useSysex,
-    },
 ];
 
 class DragMove extends DragTarget {

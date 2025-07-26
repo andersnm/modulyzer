@@ -1,7 +1,7 @@
 import { Instrument, InstrumentFactory } from "./InstrumentFactory";
 
 export class MasterFactory extends InstrumentFactory {
-    getIdentifier(): string {
+    get identifier(): string {
         return "@modulyzer/Master";
     }
 

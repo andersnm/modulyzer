@@ -4,8 +4,6 @@ import { Appl } from "../App";
 import { InstrumentDocument, PatternDocument } from "../audio/SongDocument";
 import { CursorColumnInfo, deleteValue, editNote, editNoteOff, editValue, editVelocity, formatNote, formatU8, getCursorColumnAt, getCursorColumnAtPosition, getCursorColumnIndex, getCursorColumns, getNoteForKey, getPatternRenderColumns, getRenderColumnPosition, getRenderColumnWidth, RenderColumnInfo } from "./PatternEditorHelper";
 
-const maxPolyphonic = 8;
-
 interface PatternSelection {
     startColumn: number;
     endColumn: number;
@@ -528,7 +526,7 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
         this.selection = null;
 
         if (this.pattern) {
-            this.renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern, maxPolyphonic);
+            this.renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.pattern);
             this.cursorColumns = getCursorColumns(this.renderColumns);
         } else {
             this.renderColumns = [];

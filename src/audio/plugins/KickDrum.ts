@@ -9,7 +9,9 @@ function noteToFreq(note: number) {
 }
 
 export class KickDrumFactory extends InstrumentFactory {
-    getIdentifier(): string {
+    maxPolyphony: number = 1;
+
+    get identifier(): string {
         return "@modulyzer/KickDrum";
     }
 

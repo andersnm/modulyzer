@@ -179,7 +179,7 @@ export class PatternPanel extends ViewFrame implements IComponent {
 
         this.statusBar.setText(3, this.patternEditor.pattern.name);
 
-        const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.patternEditor.pattern, 8);
+        const renderColumns = getPatternRenderColumns(this.app.instrumentFactories, this.patternEditor.pattern);
         const cursorColumn = getCursorColumnAt(renderColumns, this.patternEditor.cursorColumn);
         if (!cursorColumn) {
             this.statusBar.setText(0, "Row: 0");

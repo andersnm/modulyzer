@@ -132,9 +132,9 @@ export class Player extends EventTarget {
         this.context = context;
     }
 
-    getInstrumentFactoryById(id) {
+    getInstrumentFactoryById(id: string) {
         for (let instrumentFactory of this.instrumentFactories) {
-            if (instrumentFactory.getIdentifier() === id) {
+            if (instrumentFactory.identifier === id) {
                 return instrumentFactory;
             }
         }
