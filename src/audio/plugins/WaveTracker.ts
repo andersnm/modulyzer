@@ -71,17 +71,24 @@ export class WaveTracker extends Instrument {
         const node = this.context.createBufferSource();
         node.buffer = wave.audioBuffer;
 
+        const rangeInDecibels = 40;
+        const waveGain = this.context.createGain();
+        const dB = (velocity / 127) * rangeInDecibels - rangeInDecibels;
+        const gainValue = Math.pow(10, dB / 20);
+        waveGain.gain.setValueAtTime(gainValue, 0);
+
         const waveNode = {wave, node};
         this.nodes.push(waveNode); // there may be two same notes here, but will sort out after the "ended" event
 
         node.addEventListener("ended", () => {
-            console.log("end of playback");
-            node.disconnect(this.gainNode);
+            node.disconnect(waveGain);
+            waveGain.disconnect(this.gainNode);
             const i = this.nodes.indexOf(waveNode)
             this.nodes.splice(i, 1);
         });
 
-        node.connect(this.gainNode);
+        node.connect(waveGain);
+        waveGain.connect(this.gainNode);
 
         node.start(time);
     }
@@ -90,9 +97,8 @@ export class WaveTracker extends Instrument {
         for (let i = 0; i < this.nodes.length; ) {
             const n = this.nodes[i];
             if (n.wave.note === note) {
-                console.log("Note stopped", n.wave)
                 n.node.stop(time);
-                this.nodes.splice(i, 1);
+                this.nodes.splice(i, 1); // TODO: is it needed if "ended" also splices
                 break;
             }
 

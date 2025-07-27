@@ -22,7 +22,8 @@ export class AddInstrumentCommand implements ICommand {
         const factory = this.app.instrumentFactories[instrumentFactoryPicker.instrumentFactoryIndex];
         const instrumentId = factory.identifier;
 
-        const instrument = this.app.song.createInstrument(instrumentId, this.getInstrumentName(instrumentId), 0, 0, {});
+        const clickPt = this.component.mixerCanvas.clickPt;
+        const instrument = this.app.song.createInstrument(instrumentId, this.getInstrumentName(instrumentId), clickPt[0], clickPt[1], {});
 
         const instrumentName = instrument.instrumentId.replace(/[\/\\:*?"<>|]/g, "_");
 

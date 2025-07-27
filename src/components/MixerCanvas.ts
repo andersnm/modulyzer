@@ -135,6 +135,7 @@ export class MixerCanvas implements IComponent {
     selectedConnection: ConnectionDocument;
 
     drawConnectionPosition: PointType | null = null;
+    clickPt: PointType = [ 0, 0 ];
 
     constructor(app: Appl, commandHost: ICommandHost) {
         this.app = app;
@@ -235,6 +236,9 @@ export class MixerCanvas implements IComponent {
                     this.selectedConnection = connection;
                     this.dragTarget = new DragConnectionGain(this, connection, e);
                     this.redrawCanvas();
+                } else {
+                    const p: PointType = [ e.offsetX, e.offsetY ];
+                    this.clickPt = this.convertScreenToInstrument(p);
                 }
 
                 return;
@@ -276,7 +280,9 @@ export class MixerCanvas implements IComponent {
     onContextMenu = (e: MouseEvent) => {
         console.log("onContextMenu")
 
-        const p = [ e.offsetX, e.offsetY ];
+        const p: PointType = [ e.offsetX, e.offsetY ];
+        this.clickPt = this.convertScreenToInstrument(p);
+        
         const instrument = this.instrumentAtPoint(e.offsetX, e.offsetY);
 
         const rc = this.canvas.getBoundingClientRect();
@@ -310,7 +316,7 @@ export class MixerCanvas implements IComponent {
         e.preventDefault();
     };
 
-    convertScreenToInstrument(pt: PointType) {
+    convertScreenToInstrument(pt: PointType): PointType {
         const w = this.canvas.width;
         const h = this.canvas.height;
 
