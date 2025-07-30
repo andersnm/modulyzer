@@ -1,63 +1,18 @@
 import { Appl } from "../App";
 import { InstrumentDocument } from "../audio/SongDocument";
 import { registerWaveTableCommands } from "../commands/WaveTable/Register";
-import { waveListMenu } from "../menu/menu";
+import { waveInstrumentMenu, waveListMenu } from "../menu/menu";
 import { Button, ButtonToolbar, DataTable, IComponent } from "../nutz";
 import { ViewFrame } from "../nutz/ViewFrame";
+import { InstrumentDropdown } from "./InstrumentDropdown";
 import { formatNote } from "./PatternEditorHelper";
+import { WaveFrame } from "./WaveFrame";
 import { WavePanel } from "./WavePanel";
 
 function formatTime(sec: number): string {
     const min = Math.floor(sec / 60);
     sec -= min * 60;
     return min + "m " + Math.floor(sec) + "s";
-}
-
-export class InstrumentDropdown implements IComponent {
-    container: HTMLDivElement;
-    instrumentSelect: HTMLSelectElement;
-    instrument: InstrumentDocument;
-
-    constructor() {
-        this.container = document.createElement("div");
-        this.container.classList.add("flex", "gap-1", "items-center", "flex-1");
-
-        this.instrumentSelect = document.createElement("select");
-        this.instrumentSelect.className = "flex-1 rounded-lg p-1 text-neutral-300 bg-neutral-600";
-        this.container.appendChild(this.instrumentSelect);
-    }
-
-    setInstrument(instrument: InstrumentDocument) {
-        this.instrument = instrument;
-        this.instrumentSelect.value = instrument?.name??null;
-    }
-
-    bindInstruments(instruments: InstrumentDocument[]) {
-        while (this.instrumentSelect.options.length > 0) this.instrumentSelect.options.remove(0);
-
-        for (let instrument of instruments) {
-            const opt = document.createElement("option")
-            opt.value = instrument.name; // TODO? assume unique
-            opt.label = instrument.name;
-            opt.selected = (this.instrument === instrument);
-            this.instrumentSelect.options.add(opt);
-        }
-
-        if (this.instrumentSelect.options.length === 0) {
-            const opt = document.createElement("option")
-            opt.value = null;
-            opt.label = "<no instruments using wave table>";
-            opt.selected = true;
-            this.instrumentSelect.options.add(opt);
-            this.instrumentSelect.disabled = true;
-        } else {
-            this.instrumentSelect.disabled = false;
-        }
-    }
-
-    getDomNode(): Node {
-        return this.container;
-    }
 }
 
 export class WavesPanel extends ViewFrame {
@@ -82,27 +37,10 @@ export class WavesPanel extends ViewFrame {
         this.list.container.addEventListener("contextmenu", this.onContextMenu);
 
         this.instrumentDropdown = new InstrumentDropdown();
+        this.instrumentDropdown.menuButton.addEventListener("click", this.onInstrumentMenuClick)
         this.instrumentDropdown.instrumentSelect.addEventListener("change", this.onChangeInstrument);
 
         this.addToolbar(this.instrumentDropdown.getDomNode() as HTMLElement);
-
-        this.addToolbar(ButtonToolbar(this, [
-            {
-                type: "button",
-                label: "New...",
-                action: "create-wave",
-            },
-            {
-                type: "button",
-                label: "Open...",
-                action: "open-wave",
-            },
-            {
-                type: "button",
-                label: "Paste New",
-                action: "paste-new-wave",
-            },
-        ]));
 
         this.setView(this.list.getDomNode() as HTMLElement);
 
@@ -172,8 +110,13 @@ export class WavesPanel extends ViewFrame {
     onDblClick = async (ev: CustomEvent<number>) => {
         const index = ev.detail;
         const wave = this.instrument.waves[index];
-        const panel = await this.app.executeCommand("show-wave-editor", wave) as WavePanel;
+        const panel = await this.app.executeCommand("show-wave-editor", wave) as WaveFrame;
         panel.setWave(wave);
+    };
+
+    onInstrumentMenuClick = async (ev: MouseEvent) => {
+        const rc = (ev.target as HTMLElement).getBoundingClientRect();
+        await this.app.contextMenuContainer.show(this, rc.left + ev.offsetX, rc.top + ev.offsetY, waveInstrumentMenu);
     };
 
     ensureInstrument() {

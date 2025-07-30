@@ -1,7 +1,7 @@
 import { Appl } from "../App";
 import { DragTarget, formatHotkey, IComponent } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
-import { PatternPanel } from "./PatternPanel";
+import { PatternFrame } from "./PatternFrame";
 
 const maxSequencerLength = 1024;
 
@@ -262,7 +262,7 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
         const sequenceEvent = sequenceColumn.events.find(e => e.time === this.cursorTime);
 
         if (sequenceEvent) {
-            const panel = await this.app.executeCommand("show-pattern-editor") as PatternPanel;
+            const panel = await this.app.executeCommand("show-pattern-editor") as PatternFrame;
             panel.setPattern(sequenceEvent.pattern);
         }
     }

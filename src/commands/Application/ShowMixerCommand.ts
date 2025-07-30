@@ -1,5 +1,5 @@
 import { Appl } from "../../App";
-import { MixerPanel } from "../../components/MixerPanel";
+import { MixerFrame } from "../../components/MixerFrame";
 import { ICommand } from "../../nutz";
 
 export class ShowMixerCommand implements ICommand {
@@ -11,10 +11,11 @@ export class ShowMixerCommand implements ICommand {
         const tabIndex = this.app.mainTabs.tabs.tabs.findIndex(t => t.label === "Mixer");
         if (tabIndex !== -1) {
             this.app.mainTabs.setCurrentTab(tabIndex);
-            return;
+            return this.app.mainTabs.tabContent[tabIndex];
         }
 
-        const content = new MixerPanel(this.app);
+        const content = new MixerFrame(this.app);
         this.app.mainTabs.addTab("Mixer", content);
+        return content;
     }
 }

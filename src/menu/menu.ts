@@ -266,3 +266,19 @@ export const presetMenu: MenuItem[] = [
         action: "save-local-bank",
     },
 ];
+
+export const waveInstrumentMenu: MenuItem[]= [
+    {
+        label: "New Wave...",
+        action: "create-wave",
+    },
+    {
+        label: "Open...",
+        action: "open-wave",
+    },
+    {
+        label: "Paste New",
+        action: "paste-new-wave",
+    },
+];
+

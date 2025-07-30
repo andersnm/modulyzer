@@ -1,4 +1,5 @@
 import { Appl } from "../../App";
+import { PatternFrame } from "../../components/PatternFrame";
 import { PatternPanel } from "../../components/PatternPanel";
 
 export class ShowPatternEditorCommand {
@@ -12,7 +13,7 @@ export class ShowPatternEditorCommand {
             return this.app.mainTabs.tabContent[tabIndex] as PatternPanel;
         }
 
-        const panel = new PatternPanel(this.app);
+        const panel = new PatternFrame(this.app);
         this.app.mainTabs.addTab("Pattern", panel);
         this.app.mainTabs.setCurrentTab(this.app.mainTabs.tabs.tabs.length - 1);
         return panel;

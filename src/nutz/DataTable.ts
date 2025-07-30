@@ -175,7 +175,7 @@ export class DataTable extends EventTarget implements IComponent {
             scrollIntoViewIfNeeded(this.container, bounding.height, row.childNodes[0] as HTMLElement);
         }
 
-        this.dispatchEvent(new CustomEvent<number>("select", { detail: index }));
+        this.dispatchEvent(new CustomEvent<number>("change", { detail: index }));
     }
 
     removeRow(index: number) {

@@ -3,7 +3,7 @@ import { registerPatternListCommands } from "../commands/PatternList/Register";
 import { patternListMenu } from "../menu/menu";
 import { ButtonToolbar, DataTable } from "../nutz";
 import { ViewFrame } from "../nutz/ViewFrame";
-import { PatternPanel } from "./PatternPanel";
+import { PatternFrame } from "./PatternFrame";
 
 export class PatternsPanel extends ViewFrame {
     app: Appl;
@@ -72,7 +72,7 @@ export class PatternsPanel extends ViewFrame {
     onDblClick = async (ev: CustomEvent<number>) => {
         const index = ev.detail;
         const pattern = this.app.song.patterns[index];
-        const panel = await this.app.executeCommand("show-pattern-editor") as PatternPanel;
+        const panel = await this.app.executeCommand("show-pattern-editor") as PatternFrame;
         panel.setPattern(pattern);
     };
 

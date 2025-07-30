@@ -2,7 +2,7 @@ import { Appl } from "../App";
 import { Bank, Preset, InstrumentDocument } from "../audio/SongDocument";
 import { registerPinsCommands } from "../commands/PinsList/Register";
 import { presetMenu } from "../menu/menu";
-import { CommandButtonBar, ScrollableFlexContainer } from "../nutz";
+import { CommandButtonBar, ScrollableFlexContainer, StatusBar } from "../nutz";
 import { ViewFrame } from "../nutz/ViewFrame";
 import { PinSlider } from "./PinSlider";
 import { PresetDropdown } from "./PresetDropdown";
@@ -13,6 +13,7 @@ export class PinsPanel extends ViewFrame {
     listDiv: HTMLDivElement;
     scrollDiv: ScrollableFlexContainer;
     presetDropdown: PresetDropdown;
+    statusBar: StatusBar;
     instrument: InstrumentDocument;
 
     pinRows: PinSlider[] = [];
@@ -34,6 +35,12 @@ export class PinsPanel extends ViewFrame {
         this.addToolbar(this.presetDropdown.getDomNode() as HTMLElement);
 
         this.setView(this.scrollDiv.getDomNode() as HTMLElement);
+
+        this.statusBar = new StatusBar();
+        this.statusBar.addPart(["flex-1"], "<no instrument selected>")
+
+        // NOTE: Adding statusbar in ViewFrame's container
+        this.container.appendChild(this.statusBar.getDomNode());
     }
 
     onPresetMenuClick = async (ev: MouseEvent) => {
@@ -60,6 +67,7 @@ export class PinsPanel extends ViewFrame {
         this.pinRows.length = 0;
 
         this.presetDropdown.clearPresets();
+        this.statusBar.setText(0, "<no instrument selected>");
     }
 
     async bindInstrument(instrument: InstrumentDocument) {
@@ -79,6 +87,8 @@ export class PinsPanel extends ViewFrame {
         }
 
         this.presetDropdown.bindPresets(instrument.bank.presets);
+
+        this.statusBar.setText(0, instrument.name + " (" + instrument.instrumentId + ")");
     }
 
     setBank(bank: Bank) {

@@ -64,7 +64,6 @@ export class Appl extends CommandHost implements IComponent {
     bpmInput: BpmInput;
     toolbar: HTMLElement;
     frame: GridFrameContainer;
-    sidebarTabs: TabFrameContainer;
     mainTabs: TabFrameContainer;
 
     device: AudioDevice;
@@ -134,14 +133,10 @@ export class Appl extends CommandHost implements IComponent {
 
         const toolbarContainer = HFlex([toolbar, this.bpmInput.getDomNode()], "gap-1");
 
-        this.sidebarTabs = new TabFrameContainer(true);
-        this.sidebarTabs.setTabsPosition("bottom");
-
         this.mainTabs = new TabFrameContainer(false);
 
         this.frame.addFrame("top", this.menuBar);
         this.frame.addFrame("top", { getDomNode: () => toolbarContainer }, undefined, 1);
-        this.frame.addFrame("left", this.sidebarTabs, undefined, 1);
         this.frame.addFrame("main", this.mainTabs);
 
         this.modalDialogContainer = new ModalDialogContainer();
@@ -187,11 +182,6 @@ export class Appl extends CommandHost implements IComponent {
 
     async init() {
 
-        // Default sidebars
-        this.executeCommand("show-patterns");
-        this.executeCommand("show-waves");
-        this.executeCommand("show-pins");
-
         // Default main views
         this.executeCommand("show-sequence-editor");
         this.executeCommand("show-pattern-editor");
@@ -199,7 +189,6 @@ export class Appl extends CommandHost implements IComponent {
         this.executeCommand("show-mixer");
 
         // re-focus
-        this.executeCommand("show-patterns");
         this.executeCommand("show-sequence-editor");
 
         // Initialize filesystem

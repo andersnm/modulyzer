@@ -1,6 +1,6 @@
 import { Appl } from "../../App";
+import { MixerFrame } from "../../components/MixerFrame";
 import { MixerPanel } from "../../components/MixerPanel";
-import { PinsPanel } from "../../components/PinsPanel";
 import { ICommand } from "../../nutz";
 
 export class GotoPinsCommand implements ICommand {
@@ -17,7 +17,7 @@ export class GotoPinsCommand implements ICommand {
             return;
         }
 
-        const panel = await this.app.executeCommand("show-pins") as PinsPanel;
-        await panel.bindInstrument(instrument);
+        const panel = await this.app.executeCommand("show-mixer") as MixerFrame;
+        await panel.list.bindInstrument(instrument);
     }
 }

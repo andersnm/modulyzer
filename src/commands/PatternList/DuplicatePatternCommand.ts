@@ -1,4 +1,4 @@
-import { PatternPanel } from "../../components/PatternPanel";
+import { PatternFrame } from "../../components/PatternFrame";
 import { PatternsPanel } from "../../components/PatternsPanel";
 import { ICommand } from "../../nutz";
 
@@ -14,7 +14,7 @@ export class DuplicatePatternCommand implements ICommand {
 
         const pattern = this.component.app.song.patterns[i];
         const p = this.component.app.song.duplicatePattern(pattern);
-        const panel = await this.component.app.executeCommand("show-pattern-editor") as PatternPanel;
+        const panel = await this.component.app.executeCommand("show-pattern-editor") as PatternFrame;
         panel.setPattern(p);
     }
 }

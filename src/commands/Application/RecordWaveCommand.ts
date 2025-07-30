@@ -1,4 +1,5 @@
 import { Appl } from "../../App";
+import { WaveFrame } from "../../components/WaveFrame";
 import { WavePanel } from "../../components/WavePanel";
 
 export class RecordWaveCommand {
@@ -12,13 +13,13 @@ export class RecordWaveCommand {
             return;
         }
 
-        const wavePanel = this.app.mainTabs.tabContent[tabIndex] as WavePanel;
-        if (!wavePanel.document) {
+        const wavePanel = this.app.mainTabs.tabContent[tabIndex] as WaveFrame;
+        if (!wavePanel.waveView.document) {
             console.warn("Wave tab has no wave")
             return;
         }
 
-        const offset = wavePanel.waveEditor.selection?.start ?? 0;
-        this.app.startRecordWave(wavePanel.document, offset);
+        const offset = wavePanel.waveView.waveEditor.selection?.start ?? 0;
+        this.app.startRecordWave(wavePanel.waveView.document, offset);
     }
 }

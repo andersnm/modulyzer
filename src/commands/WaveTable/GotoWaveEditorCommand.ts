@@ -1,5 +1,5 @@
 import { Appl } from "../../App";
-import { WavePanel } from "../../components/WavePanel";
+import { WaveFrame } from "../../components/WaveFrame";
 import { WavesPanel } from "../../components/WavesPanel";
 
 export class GotoWaveEditorCommand {
@@ -20,7 +20,7 @@ export class GotoWaveEditorCommand {
         }
 
         const wave = this.component.instrument.waves[this.component.list.selectedIndex];
-        const panel = await this.app.executeCommand("show-wave-editor") as WavePanel;
+        const panel = await this.app.executeCommand("show-wave-editor") as WaveFrame;
         panel.setWave(wave);
     }
 }

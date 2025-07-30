@@ -1,5 +1,5 @@
 import { Appl } from "../../App";
-import { WavePanel } from "../../components/WavePanel";
+import { WaveFrame } from "../../components/WaveFrame";
 
 export class ShowWaveEditorCommand {
     constructor(private app: Appl) {
@@ -12,7 +12,7 @@ export class ShowWaveEditorCommand {
             return this.app.mainTabs.tabContent[tabIndex];
         }
 
-        const panel = new WavePanel(this.app);
+        const panel = new WaveFrame(this.app);
         this.app.mainTabs.addTab("Wave", panel);
         this.app.mainTabs.setCurrentTab(this.app.mainTabs.tabs.tabs.length - 1);
         return panel;
