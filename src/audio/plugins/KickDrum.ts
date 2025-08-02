@@ -45,7 +45,7 @@ export class KickDrum extends Instrument {
         this.oscNode.type = "triangle";
 
         this.waveShaper = context.createWaveShaper();
-        this.waveShaper.curve = generateWaveShaperCurve(256, 0.1);
+        this.waveShaper.curve = generateWaveShaperCurve(256, 0.1) as Float32Array<ArrayBuffer>; // WTF
         this.oscNode.connect(this.waveShaper);
 
         this.gainNode = context.createGain();
@@ -84,7 +84,7 @@ export class KickDrum extends Instrument {
             }),
             new WebAudioParameter("Level", this.outputGain.gain, "linear", describeUnit("%", 100), 0, 1, 1),
             new VirtualParameter("Buzz", 0, 1, 0.5, "linear", (time, value) => {
-                this.waveShaper.curve = generateWaveShaperCurve(1024, value);
+                this.waveShaper.curve = generateWaveShaperCurve(1024, value) as Float32Array<ArrayBuffer>; // WTF
             }),
             new VirtualParameter("Waveform", 0, oscTypeTable.length - 1, 0, "linear", (time, value) => {
                 // description: "sine, square, sawtooth, triangle",
