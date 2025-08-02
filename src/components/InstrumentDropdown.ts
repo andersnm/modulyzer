@@ -5,7 +5,6 @@ export class InstrumentDropdown implements IComponent {
     container: HTMLDivElement;
     instrumentSelect: HTMLSelectElement;
     menuButton: HTMLButtonElement;
-    instrument: InstrumentDocument;
 
     constructor() {
         this.container = document.createElement("div");
@@ -22,7 +21,6 @@ export class InstrumentDropdown implements IComponent {
     }
 
     setInstrument(instrument: InstrumentDocument) {
-        this.instrument = instrument;
         this.instrumentSelect.value = instrument?.name??null;
     }
 
@@ -33,7 +31,6 @@ export class InstrumentDropdown implements IComponent {
             const opt = document.createElement("option")
             opt.value = instrument.name; // TODO? assume unique
             opt.label = instrument.name;
-            opt.selected = (this.instrument === instrument);
             this.instrumentSelect.options.add(opt);
         }
 

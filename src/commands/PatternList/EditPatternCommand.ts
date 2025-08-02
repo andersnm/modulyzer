@@ -17,7 +17,7 @@ export class EditPatternCommand implements ICommand {
             return ;
         }
 
-        const pattern = this.component.app.song.patterns[i];
+        const pattern = this.component.frame.instrument.patterns[i];
         if (!pattern) {
             return;
         }

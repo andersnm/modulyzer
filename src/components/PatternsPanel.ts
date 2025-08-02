@@ -1,17 +1,22 @@
 import { Appl } from "../App";
+import { InstrumentDocument, PatternDocument } from "../audio/SongDocument";
 import { registerPatternListCommands } from "../commands/PatternList/Register";
 import { patternListMenu } from "../menu/menu";
 import { ButtonToolbar, DataTable } from "../nutz";
 import { ViewFrame } from "../nutz/ViewFrame";
+import { InstrumentDropdown } from "./InstrumentDropdown";
 import { PatternFrame } from "./PatternFrame";
 
 export class PatternsPanel extends ViewFrame {
     app: Appl;
+    instrumentDropdown: InstrumentDropdown;
     list: DataTable;
+    frame: PatternFrame; // TODO: should not short circuit parent access!
 
-    constructor(app: Appl) {
+    constructor(app: Appl, frame: PatternFrame) {
         super(app);
         this.app = app;
+        this.frame = frame;
 
         registerPatternListCommands(this);
 
@@ -20,8 +25,11 @@ export class PatternsPanel extends ViewFrame {
         this.list.addColumn("Cols", "columns")
         this.list.addColumn("Sub.", "subdivision")
         this.list.addColumn("Rows", "rows")
-        this.list.addEventListener("dblclick", this.onDblClick);
         this.list.container.addEventListener("contextmenu", this.onContextMenu);
+
+        this.instrumentDropdown = new InstrumentDropdown();
+
+        this.addToolbar(this.instrumentDropdown.getDomNode() as HTMLElement);
 
         this.addToolbar(ButtonToolbar(this, [
             {
@@ -32,30 +40,6 @@ export class PatternsPanel extends ViewFrame {
         ]));
 
         this.setView(this.list.getDomNode() as HTMLElement);
-
-        this.container.addEventListener("nutz:mounted", this.onMounted);
-        this.container.addEventListener("nutz:unmounted", this.onUnmounted);
-    }
-
-    onMounted = async (ev) => {
-        this.bind();
-        this.app.song.addEventListener("createPattern", this.onUpdate)
-        this.app.song.addEventListener("updatePattern", this.onUpdate)
-        this.app.song.addEventListener("deletePattern", this.onUpdate)
-        this.app.song.addEventListener("createPatternColumn", this.onUpdate)
-        this.app.song.addEventListener("deletePatternColumn", this.onUpdate)
-    };
-
-    onUnmounted = async (ev) => {
-        this.app.song.removeEventListener("createPattern", this.onUpdate)
-        this.app.song.removeEventListener("updatePattern", this.onUpdate)
-        this.app.song.removeEventListener("deletePattern", this.onUpdate)
-        this.app.song.removeEventListener("createPatternColumn", this.onUpdate)
-        this.app.song.removeEventListener("deletePatternColumn", this.onUpdate)
-    };
-
-    onUpdate = () => {
-        this.bind();
     }
 
     onContextMenu = (e: MouseEvent) => {
@@ -69,19 +53,18 @@ export class PatternsPanel extends ViewFrame {
         this.app.contextMenuContainer.show(this, rc.left + e.offsetX, rc.top + e.offsetY, patternListMenu);
     }
 
-    onDblClick = async (ev: CustomEvent<number>) => {
-        const index = ev.detail;
-        const pattern = this.app.song.patterns[index];
-        const panel = await this.app.executeCommand("show-pattern-editor") as PatternFrame;
-        panel.setPattern(pattern);
-    };
+    bindInstruments(instruments: InstrumentDocument[]) {
+        const selectedValue = this.instrumentDropdown.instrumentSelect.value;
+        this.instrumentDropdown.bindInstruments(instruments);
+        this.instrumentDropdown.instrumentSelect.value = selectedValue;
+    }
 
-    async bind() {
+    bindPatternList(patterns: PatternDocument[]) {
         const selectedIndex = this.list.selectedIndex;
 
         while (this.list.getRowCount()) this.list.removeRow(0);
 
-        for (let item of this.app.song.patterns) {
+        for (let item of patterns) {
             this.list.addRow({
                 name: item.name,
                 columns: item.columns.length.toString(),
@@ -91,6 +74,15 @@ export class PatternsPanel extends ViewFrame {
         }
 
         this.list.setSelectedIndex(Math.min(selectedIndex, this.list.getRowCount() - 1));
+    }
+
+    setInstrument(instrument: InstrumentDocument) {
+        this.instrumentDropdown.setInstrument(instrument);
+    }
+
+    setPattern(pattern: PatternDocument) {
+        const index = pattern?.instrument.patterns.indexOf(pattern) ?? -1;
+        this.list.setSelectedIndex(index);
     }
 
     getDomNode(): Node {

@@ -65,6 +65,7 @@ export class InstrumentDocument {
     y: number = 0;
     parameterValues: ParameterValueDictionary = {};
     waves: WaveDocument[] = [];
+    patterns: PatternDocument[] = [];
     bank: Bank = new Bank();
 }
 
@@ -102,6 +103,7 @@ export class PatternColumnDocument {
 };
 
 export class PatternDocument {
+    instrument: InstrumentDocument;
     name: string = "";
     duration: number = 1;
     subdivision: number = 4;
@@ -122,6 +124,7 @@ export class SequenceEventDocument {
 }
 
 export class SequenceColumnDocument {
+    instrument: InstrumentDocument;
     events: SequenceEventDocument[] = [];
 }
 
@@ -201,9 +204,6 @@ export class SongDocument extends EventTarget {
         super();
 
         this.createInstrument("@modulyzer/Master", "Master", 0, 0, {});
-        const sc = this.createSequenceColumn();
-        const p = this.createPattern("00", 32, 4);
-        this.createSequenceEvent(sc, 0, p);
     }
 
     name: string = "Untitled";
@@ -213,7 +213,6 @@ export class SongDocument extends EventTarget {
 
     instruments: InstrumentDocument[] = [];
     connections: ConnectionDocument[] = [];
-    patterns: PatternDocument[] = [];
     sequenceColumns: SequenceColumnDocument[] = [];
 
     setBpm(bpm: number) {
@@ -260,6 +259,10 @@ export class SongDocument extends EventTarget {
             } else {
                 c++;
             }
+        }
+
+        while (instrument.patterns.length) {
+            this.deletePattern(instrument.patterns[instrument.patterns.length - 1]);
         }
 
         while (instrument.waves.length) {
@@ -313,12 +316,13 @@ export class SongDocument extends EventTarget {
         this.dispatchEvent(new CustomEvent("deleteConnection", { detail: connection }));
     }
 
-    createPattern(name: string, duration: number, subdivision: number) {
+    createPattern(instrument: InstrumentDocument, name: string, duration: number, subdivision: number) {
         const pattern = new PatternDocument();
+        pattern.instrument = instrument;
         pattern.name = name;
         pattern.duration = duration;
         pattern.subdivision = subdivision;
-        this.patterns.push(pattern);
+        instrument.patterns.push(pattern);
 
         this.dispatchEvent(new CustomEvent("createPattern", { detail: pattern }));
 
@@ -336,16 +340,18 @@ export class SongDocument extends EventTarget {
 
     deletePattern(pattern: PatternDocument) {
 
+        const instrument = pattern.instrument;
+
         while (pattern.columns.length > 0) {
             this.deletePatternColumn(pattern, pattern.columns[pattern.columns.length - 1]);
         }
 
-        const index = this.patterns.findIndex(c => c === pattern);
+        const index = instrument.patterns.findIndex(c => c === pattern);
         if (index === -1) {
             return;
         }
 
-        this.patterns.splice(index, 1);
+        instrument.patterns.splice(index, 1);
         this.dispatchEvent(new CustomEvent("deletePattern", { detail: pattern }));
     }
 
@@ -422,8 +428,9 @@ export class SongDocument extends EventTarget {
         this.dispatchEvent(new CustomEvent("deletePatternEvent", { detail: patternEvent }));
     }
 
-    createSequenceColumn() {
+    createSequenceColumn(instrument: InstrumentDocument) {
         const sc = new SequenceColumnDocument();
+        sc.instrument = instrument;
 
         this.sequenceColumns.push(sc);
 
@@ -525,9 +532,10 @@ export class SongDocument extends EventTarget {
     }
 
     duplicatePattern(pattern: PatternDocument) {
-        const name = getNewPatternName(this.patterns);
+        const instrument = pattern.instrument;
+        const name = getNewPatternName(instrument.patterns);
 
-        const p = this.createPattern(name, pattern.duration, pattern.subdivision);
+        const p = this.createPattern(instrument, name, pattern.duration, pattern.subdivision);
         for (let column of pattern.columns) {
             const pc = this.createPatternColumn(p, column.instrument, column.type, column.parameterName);
 
@@ -542,10 +550,6 @@ export class SongDocument extends EventTarget {
     clearAll() {
         while (this.instruments.length) {
             this.deleteInstrument(this.instruments[this.instruments.length - 1]);
-        }
-
-        while (this.patterns.length) {
-            this.deletePattern(this.patterns[this.patterns.length - 1]);
         }
 
         while (this.sequenceColumns.length) {
@@ -570,35 +574,35 @@ export class SongDocument extends EventTarget {
                     selection: wave.selection,
                     zoom: wave.zoom,
                     buffers: wave.buffers.map(b => compressFloat32ArrayToBase64(b)),
-                }))
+                })),
+                patterns: instrument.patterns.map(pattern => ({
+                    name: pattern.name,
+                    duration: pattern.duration,
+                    subdivision: pattern.subdivision,
+                    columns: pattern.columns.map(column => ({
+                        instrument: this.instruments.indexOf(column.instrument),
+                        type: column.type,
+                        parameterName: column.parameterName,
+                        events: column.events.map(event => ({
+                            time: event.time,
+                            value: event.value,
+                            data0: event.data0,
+                            data1: event.data1,
+                            channel: event.channel,
+                        })),
+                    })),
+                })),
             })),
             connections: this.connections.map(connection => ({
                 from: this.instruments.indexOf(connection.from),
                 to: this.instruments.indexOf(connection.to),
                 gain: connection.gain,
             })),
-            patterns: this.patterns.map(pattern => ({
-                name: pattern.name,
-                duration: pattern.duration,
-                subdivision: pattern.subdivision,
-                columns: pattern.columns.map(column => ({
-                    instrument: this.instruments.indexOf(column.instrument),
-                    type: column.type,
-                    parameterName: column.parameterName,
-                    events: column.events.map(event => ({
-                        time: event.time,
-                        value: event.value,
-                        data0: event.data0,
-                        data1: event.data1,
-                        channel: event.channel,
-                    })),
-                })),
-            })),
             sequence: {
                 columns: this.sequenceColumns.map(column => ({
                     events: column.events.map(event => ({
                         time: event.time,
-                        pattern: this.patterns.indexOf(event.pattern),
+                        pattern: column.instrument.patterns.indexOf(event.pattern),
                     })),
                 })),
             },
@@ -620,6 +624,29 @@ export class SongDocument extends EventTarget {
             const sysex = jsonInstrument.sysex ? decompressBase64ToUint8Array(jsonInstrument.sysex) : null;
             const i = this.createInstrument(jsonInstrument.ref, jsonInstrument.name, jsonInstrument.x, jsonInstrument.y, jsonInstrument.parameterValues);
 
+            if (Array.isArray(jsonInstrument.patterns)) {
+                for (let jsonPattern of json.patterns) {
+                    const p = this.createPattern(i, jsonPattern.name, jsonPattern.duration, jsonPattern.subdivision ?? 4);
+
+                    for (let jsonColumn of jsonPattern.columns) {
+                        const instrument = this.instruments[jsonColumn.instrument];
+                        if (!instrument) {
+                            throw new Error("Invalid or missing instrument in pattern column");
+                        }
+
+                        if (!Array.isArray(jsonColumn.events)) {
+                            throw new Error("Invalid or missing events in pattern column");
+                        }
+
+                        const pc = this.createPatternColumn(p, instrument, jsonColumn.type, jsonColumn.parameterName);
+
+                        for (let jsonEvent of jsonColumn.events) {
+                            this.createPatternEvent(pc, jsonEvent.time, jsonEvent.value, jsonEvent.data0, jsonEvent.data1, jsonEvent.channel);
+                        }
+                    }
+                }
+            }
+
             if (Array.isArray(jsonInstrument.waves)) {
                 for (let jsonWave of jsonInstrument.waves) {
                     const buffers = jsonWave.buffers.map(b => decompressBase64ToFloat32Array(b));
@@ -639,31 +666,11 @@ export class SongDocument extends EventTarget {
             this.createConnection(from, to, jsonConnection.gain??1);
         }
 
-        for (let jsonPattern of json.patterns) {
-            const p = this.createPattern(jsonPattern.name, jsonPattern.duration, jsonPattern.subdivision ?? 4);
-
-            for (let jsonColumn of jsonPattern.columns) {
-                const instrument = this.instruments[jsonColumn.instrument];
-                if (!instrument) {
-                    throw new Error("Invalid or missing instrument in pattern column");
-                }
-
-                if (!Array.isArray(jsonColumn.events)) {
-                    throw new Error("Invalid or missing events in pattern column");
-                }
-
-                const pc = this.createPatternColumn(p, instrument, jsonColumn.type, jsonColumn.parameterName);
-
-                for (let jsonEvent of jsonColumn.events) {
-                    this.createPatternEvent(pc, jsonEvent.time, jsonEvent.value, jsonEvent.data0, jsonEvent.data1, jsonEvent.channel);
-                }
-            }
-        }
-
         for (let jsonSequenceColumn of json.sequence.columns) {
-            const sc = this.createSequenceColumn();
+            const instrument = this.instruments[jsonSequenceColumn.instrument];
+            const sc = this.createSequenceColumn(instrument);
             for (let jsonEvent of jsonSequenceColumn.events) {
-                const pattern = this.patterns[jsonEvent.pattern];
+                const pattern = instrument.patterns[jsonEvent.pattern];
                 this.createSequenceEvent(sc, jsonEvent.time, pattern);
             }
         }

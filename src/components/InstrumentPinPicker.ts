@@ -1,121 +1,89 @@
 import { Appl } from "../App";
-import { PatternColumnType } from "../audio/SongDocument";
-import { FormGroup, IComponent, VInset, ModalButtonBar, FormGroupRadio } from "../nutz";
+import { PlayerSongAdapter } from "../audio/PlayerSongAdapter";
+import { InstrumentDocument, PatternColumnDocument, PatternColumnType } from "../audio/SongDocument";
+import { FormGroup, IComponent, VInset, ModalButtonBar, DataTable } from "../nutz";
+
+/** Defines a potential toggleable pattern column in the InstrumentPinPicker.*/
+export interface InstrumentColumn {
+    checked: boolean;
+    type: PatternColumnType;
+    name: string;
+}
+
+/** Compute InstrumentColumn[] from an instrument and existing columns in a pattern. */
+export function convertPatternToInstrumentColumns(playerSongAdapter: PlayerSongAdapter, instrument: InstrumentDocument, columns: PatternColumnDocument[]) {
+    const playerInstrument = playerSongAdapter.instrumentMap.get(instrument);
+
+    const result: InstrumentColumn[] = [];
+
+    if (playerInstrument.factory.maxPolyphony > 0) {
+        const column = columns.find(c => c.type === "midinote");
+        result.push({
+            checked: !!column,
+            type: "midinote",
+            name: undefined,
+        });
+    }
+
+    for (let parameter of playerInstrument.parameters) {
+        const column = columns.find(c => c.type === "midiparameter" && c.parameterName === parameter.name);
+
+        result.push({
+            checked: !!column,
+            type: "midiparameter",
+            name: parameter.name,
+        });
+    }
+
+    return result;
+}
 
 export class InstrumentPinPicker implements IComponent {
     app: Appl;
     container: HTMLElement;
-    buttonBar: HTMLElement;
+    buttonBar: ModalButtonBar;
+    list: DataTable;
 
-    instrumentSelect: HTMLSelectElement;
-    pinSelect: HTMLSelectElement;
+    columns: InstrumentColumn[];
 
-    instrumentIndex: number = -1;
-    type: PatternColumnType = "midiparameter";
-    parameterName: string = null;
-
-    constructor(app: Appl) {
+    constructor(app: Appl, columns: InstrumentColumn[]) {
         this.app = app;
+        this.columns = [ ...columns ];
         this.container = VInset(undefined, [ "flex-1", "gap-1" ]);
         this.container.tabIndex = -1;
 
-        this.instrumentSelect = document.createElement("select");
-        this.instrumentSelect.className = "w-full rounded-lg p-1 bg-neutral-800";
-        this.instrumentSelect.addEventListener("change", () => {
-            this.instrumentIndex = parseInt(this.instrumentSelect.value);
-            // console.log("VVout", this.currentOutputDeviceId)
-            this.bindPins();
-        });
+        this.list = new DataTable();
+        this.list.container.classList.add("h-60")
+        this.list.addColumn("", "checked");
+        this.list.addColumn("Name", "name");
+        (this.list.thead.childNodes[0] as HTMLElement).classList.add("w-2");
+        this.bindParameters();
 
-        const instrumentGroup = FormGroup("Instrument", this.instrumentSelect);
+        const parameterGroup = FormGroup("Parameters", [ VInset(this.list.getDomNode(), "flex-1") ]);
 
-        const noteRadio = new FormGroupRadio("type0", "type", "midinote", "Note", this.type === "midinote");
-        noteRadio.input.addEventListener("change", () => {
-            this.type = noteRadio.input.value as PatternColumnType;
-            this.pinSelect.disabled = true;
-        });
+        this.buttonBar = new ModalButtonBar(this.app);
 
-        const midiParameterRadio = new FormGroupRadio("type1", "type", "midiparameter", "Parameter", this.type === "midiparameter");
-        midiParameterRadio.input.addEventListener("change", () => {
-            this.type = noteRadio.input.value as PatternColumnType;
-            this.pinSelect.disabled = false;
-        });
-
-
-        this.pinSelect = document.createElement("select");
-        this.pinSelect.className = "w-full rounded-lg p-1 bg-neutral-800";
-        this.pinSelect.addEventListener("change", () => {
-            this.parameterName = this.pinSelect.value;
-        });
-
-        const parameterGroup = FormGroup("Column", [ noteRadio.getDomNode(), midiParameterRadio.getDomNode(), this.pinSelect ]);
-
-        const modalButtonBar = new ModalButtonBar(this.app);
-
-        this.container.appendChild(instrumentGroup);
         this.container.appendChild(parameterGroup);
-        this.container.appendChild(modalButtonBar.getDomNode());
-
-        this.container.addEventListener("nutz:mounted", this.onMounted);
-        this.container.addEventListener("nutz:unmounted", this.onUnmounted);
+        this.container.appendChild(this.buttonBar.getDomNode());
     }
 
-    onMounted = () => {
-        // this.app.song.addEventListener("createInstrument", this.onBindInstrument);
-        this.bindInstruments();
-        this.bindPins();
-    };
+    bindParameters() {
+        while (this.list.getRowCount()) this.list.removeRow(0);
 
-    onUnmounted = () => {
+        for (let column of this.columns) {
 
-    };
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.checked = column.checked;
 
-    bindPins() {
-        while (this.pinSelect.options.length) this.pinSelect.options.remove(0);
+            checkbox.addEventListener("change", () => {
+                column.checked = checkbox.checked;
+            });
 
-        const instrument = this.app.song.instruments[this.instrumentIndex];
-
-        if (!instrument) {
-            return;
-        }
-
-        const playerInstrument = this.app.playerSongAdapter.instrumentMap.get(instrument);
-        const pins = playerInstrument.parameters;
-
-        if (pins.length > 0 && !this.parameterName) {
-            this.parameterName = pins[0].name;
-        }
-
-        let index = 0;
-        for (let pin of pins) {
-            const option = document.createElement("option");
-            option.text = pin.name;
-            option.value = pin.name;
-            option.selected = pin.name === this.parameterName;
-
-            this.pinSelect.options.add(option);
-            index++;
-        }
-
-        // console.log("this.pinSelect.value", this.pinSelect.value)
-    }
-
-    bindInstruments() {
-        while (this.instrumentSelect.options.length) this.instrumentSelect.options.remove(0);
-
-        if (this.app.song.instruments.length > 0 && this.instrumentIndex === -1) {
-            this.instrumentIndex = 0;
-        }
-
-        let index = 0;
-        for (let instrument of this.app.song.instruments) {
-            const option = document.createElement("option");
-            option.text = instrument.name + " - " + instrument.instrumentId;
-            option.value = index.toString();
-            option.selected = index === this.instrumentIndex;
-
-            this.instrumentSelect.options.add(option);
-            index++;
+            this.list.addRow({
+                checked: checkbox,
+                name: column.type === "midinote" ? "Note" : column.name,
+            });
         }
     }
 
@@ -123,4 +91,3 @@ export class InstrumentPinPicker implements IComponent {
         return this.container;
     }
 }
-

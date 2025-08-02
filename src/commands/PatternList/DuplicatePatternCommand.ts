@@ -12,7 +12,7 @@ export class DuplicatePatternCommand implements ICommand {
             return ;
         }
 
-        const pattern = this.component.app.song.patterns[i];
+        const pattern = this.component.frame.instrument.patterns[i];
         const p = this.component.app.song.duplicatePattern(pattern);
         const panel = await this.component.app.executeCommand("show-pattern-editor") as PatternFrame;
         panel.setPattern(p);

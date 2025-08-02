@@ -60,6 +60,16 @@ export class PlayerSongAdapter {
         for (let i of this.song.instruments) {
             this.onCreateInstrument(new CustomEvent("createInstrument", { detail: i }));
 
+            for (let p of i.patterns) {
+                this.onCreatePattern(new CustomEvent("createPattern", { detail: p }));
+                for (let pc of p.columns) {
+                    this.onCreatePatternColumn(new CustomEvent("createPatternColumn", { detail: pc }));
+                    for (let pe of pc.events) {
+                        this.onCreatePatternEvent(new CustomEvent("createPatternEvent", { detail: pe }));
+                    }
+                }
+            }
+
             for (let w of i.waves) {
                 this.onCreateWave(new CustomEvent("createWave", { detail: w }));
             }
@@ -67,16 +77,6 @@ export class PlayerSongAdapter {
 
         for (let c of this.song.connections) {
             this.onCreateConnection(new CustomEvent("createConnection", { detail: c }));
-        }
-
-        for (let p of this.song.patterns) {
-            this.onCreatePattern(new CustomEvent("createPattern", { detail: p }));
-            for (let pc of p.columns) {
-                this.onCreatePatternColumn(new CustomEvent("createPatternColumn", { detail: pc }));
-                 for (let pe of pc.events) {
-                    this.onCreatePatternEvent(new CustomEvent("createPatternEvent", { detail: pe }));
-                 }
-            }
         }
 
         for (let sc of this.song.sequenceColumns) {
@@ -96,16 +96,6 @@ export class PlayerSongAdapter {
             this.onDeleteSequenceColumn(new CustomEvent("deleteSequenceColumn", { detail: sc }));
         }
 
-        for (let p of this.song.patterns) {
-            for (let pc of p.columns) {
-                for (let pe of pc.events) {
-                   this.onDeletePatternEvent(new CustomEvent("deletePatternEvent", { detail: pe }));
-                }
-                this.onDeletePatternColumn(new CustomEvent("deletePatternColumn", { detail: pc }));
-            }
-            this.onDeletePattern(new CustomEvent("deletePattern", { detail: p }));
-        }
-
         for (let c of this.song.connections) {
             this.onDeleteConnection(new CustomEvent("deleteConnection", { detail: c }));
         }
@@ -113,6 +103,16 @@ export class PlayerSongAdapter {
         for (let i of this.song.instruments) {
             for (let w of i.waves) {
                 this.onDeleteWave(new CustomEvent("deleteWave", { detail: w }));
+            }
+
+            for (let p of i.patterns) {
+                for (let pc of p.columns) {
+                    for (let pe of pc.events) {
+                        this.onDeletePatternEvent(new CustomEvent("deletePatternEvent", { detail: pe }));
+                    }
+                    this.onDeletePatternColumn(new CustomEvent("deletePatternColumn", { detail: pc }));
+                }
+                this.onDeletePattern(new CustomEvent("deletePattern", { detail: p }));
             }
 
             this.onDeleteInstrument(new CustomEvent("deleteInstrument", { detail: i }));

@@ -37,7 +37,7 @@ export class PasteCommand implements ICommand {
             }
 
             for (let e of events) {
-                const pattern = this.app.song.patterns[e.patternIndex];
+                const pattern = sequenceColumn.instrument.patterns[e.patternIndex];
                 if (!pattern) {
                     continue;
                 }

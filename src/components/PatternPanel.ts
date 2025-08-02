@@ -91,7 +91,7 @@ export class PatternPanel extends ViewFrame implements IComponent {
             },
             {
                 type: "button",
-                label: "Add Column...",
+                label: "Columns...",
                 action: "add-column",
             },
             {

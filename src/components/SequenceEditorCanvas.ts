@@ -28,7 +28,7 @@ class DragSelect extends DragTarget {
         const columnWidth = this.component.fontEm.width * 8;
 
         const c = Math.floor((e.offsetX - this.component.rowNumberWidth) / columnWidth);
-        const t = Math.floor(e.offsetY / fontHeight) + this.component.scrollRow;
+        const t = Math.floor(e.offsetY / fontHeight) + this.component.scrollRow - 1; // -1 for heading
 
         this.startColumn = c;
         this.startRow = t;
@@ -39,7 +39,7 @@ class DragSelect extends DragTarget {
         const columnWidth = this.component.fontEm.width * 8;
 
         const c = Math.floor((e.offsetX - this.component.rowNumberWidth) / columnWidth);
-        const t = Math.floor(e.offsetY / fontHeight) + this.component.scrollRow;
+        const t = Math.floor(e.offsetY / fontHeight) + this.component.scrollRow - 1; // -1 for heading
 
         this.endColumn = c;
         this.endRow = t;
@@ -53,7 +53,7 @@ class DragSelect extends DragTarget {
         const columnWidth = this.component.fontEm.width * 8;
 
         const c = Math.floor((e.offsetX - this.component.rowNumberWidth) / columnWidth);
-        const t = Math.floor(e.offsetY / fontHeight) + this.component.scrollRow;
+        const t = Math.floor(e.offsetY / fontHeight) + this.component.scrollRow - 1; // -1 for heading
 
         this.component.setCursorPosition(c, t);
         this.component.dispatchEvent(new CustomEvent("cursormove"));
@@ -263,6 +263,7 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
 
         if (sequenceEvent) {
             const panel = await this.app.executeCommand("show-pattern-editor") as PatternFrame;
+            panel.setInstrument(sequenceEvent.pattern.instrument);
             panel.setPattern(sequenceEvent.pattern);
         }
     }
@@ -270,7 +271,7 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
     editPatternIndex(patternIndex: number) {
         const sequenceColumn = this.app.song.sequenceColumns[this.cursorColumn];
         const sequenceEvent = sequenceColumn.events.find(e => e.time === this.cursorTime);
-        const pattern = this.app.song.patterns[patternIndex];
+        const pattern = sequenceColumn.instrument.patterns[patternIndex];
 
         if (!pattern) {
             return;
@@ -350,7 +351,7 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
         const rowNumberWidth = this.fontEm.width * 5;
         const columnWidth = this.fontEm.width * 8;
 
-        const visibleRows = Math.floor(this.canvas.height / fontHeight);
+        const visibleRows = Math.floor(this.canvas.height / fontHeight) - 1; // subtract one for the fixed heading
         const totalRows = maxSequencerLength;
         ctx.textAlign = "right";
         ctx.fillStyle = "#FFF";
@@ -369,11 +370,11 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
             let x = 0;
             if (rowColor) {
                 ctx.fillStyle = rowColor
-                ctx.fillRect(x, (i + 0) * fontHeight, this.canvas.width - x, fontHeight)
+                ctx.fillRect(x, (i + 1) * fontHeight, this.canvas.width - x, fontHeight)
             }
 
             ctx.fillStyle = "#FFF";
-            ctx.fillText(rowNumber.toString(), x + rowNumberWidth - this.fontEm.width, (i + 0) * fontHeight + this.fontEm.fontBoundingBoxAscent);
+            ctx.fillText(rowNumber.toString(), x + rowNumberWidth - this.fontEm.width, (i + 1) * fontHeight + this.fontEm.fontBoundingBoxAscent);
         }
 
         ctx.textAlign = "left";
@@ -388,15 +389,17 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
             ctx.lineTo(sequenceX + columnWidth, this.canvas.height);
             ctx.stroke();
 
+            ctx.fillText(sequenceColumn.instrument.name, sequenceX, this.fontEm.fontBoundingBoxAscent);
+
             for (let sequenceEvent of sequenceColumn.events) {
                 const pattern = sequenceEvent.pattern;
 
                 const patternBeats = pattern.duration / pattern.subdivision;
 
                 ctx.fillStyle = "#444";
-                ctx.fillRect(sequenceX, (sequenceEvent.time - this.scrollRow) * fontHeight, columnWidth - 1, patternBeats * fontHeight);
+                ctx.fillRect(sequenceX, (sequenceEvent.time - this.scrollRow) * fontHeight + fontHeight, columnWidth - 1, patternBeats * fontHeight);
                 ctx.fillStyle = "#FFF";
-                ctx.fillText(pattern.name, sequenceX, (sequenceEvent.time - this.scrollRow) * fontHeight + this.fontEm.fontBoundingBoxAscent)
+                ctx.fillText(pattern.name, sequenceX, (sequenceEvent.time - this.scrollRow) * fontHeight + fontHeight + this.fontEm.fontBoundingBoxAscent)
             }
         }
 
@@ -404,7 +407,7 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
         ctx.fillStyle = "#FFF";
         const ori = ctx.globalCompositeOperation;
         ctx.globalCompositeOperation = "difference";
-        ctx.fillRect(rowNumberWidth + this.cursorColumn * columnWidth, (this.cursorTime - this.scrollRow) * fontHeight, columnWidth - 1, fontHeight)
+        ctx.fillRect(rowNumberWidth + this.cursorColumn * columnWidth, (this.cursorTime - this.scrollRow) * fontHeight + fontHeight, columnWidth - 1, fontHeight)
         ctx.globalCompositeOperation = ori;
 
         // Selection
@@ -421,7 +424,7 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
 
             ctx.fillStyle = "#444";
             ctx.fillStyle = "#DDD";
-            ctx.fillRect(x + x1, y1, (x2 - x1), y2 - y1);
+            ctx.fillRect(x + x1, fontHeight + y1, (x2 - x1), y2 - y1);
 
             ctx.globalCompositeOperation = ori;
         }

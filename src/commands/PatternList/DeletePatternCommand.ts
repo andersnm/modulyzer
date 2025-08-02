@@ -12,7 +12,7 @@ export class DeletePatternCommand implements ICommand {
             return ;
         }
 
-        const pattern = this.component.app.song.patterns[i];
+        const pattern = this.component.frame.instrument.patterns[i];
         const p = this.component.app.song.deletePattern(pattern);
     }
 }

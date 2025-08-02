@@ -12,11 +12,12 @@ export function exportClipboardSequence(song: SongDocument, start: number, end: 
     };
 
     for (let i =  start; i <= end; i++) {
-        const events = song.sequenceColumns[i].events
+        const column = song.sequenceColumns[i];
+        const events = column.events
             .filter(e => e.time >= startRow && e.time <= endRow)
             .map(e => ({
                 time: e.time - startRow,
-                patternIndex: song.patterns.indexOf(e.pattern),
+                patternIndex: column.instrument.patterns.indexOf(e.pattern),
             } as ClipboardSequenceEvent)
         );
 

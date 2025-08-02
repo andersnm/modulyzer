@@ -10,7 +10,6 @@ import { RecordWaveCommand } from './RecordWaveCommand';
 import { OpenSongCommand } from './OpenSongCommand';
 import { PlaySongCommand } from './PlaySongCommand';
 import { StopSongCommand } from './StopSongCommand';
-import { CreatePatternCommand } from './CreatePatternCommand';
 import { ShowMixerCommand } from './ShowMixerCommand';
 import { ShowPinsCommand } from './ShowPinsCommand';
 import { ShowFileSystemConfigurationCommand } from './ShowFileSystemConfigurationCommand';
@@ -31,8 +30,6 @@ export function registerApplicationCommands(app: Appl) {
     app.registerCommand("stop-song", "hgi-stroke hgi-record", "Stop Playing Song", new StopSongCommand(app));
 
     app.registerCommand("record-wave", "hgi-stroke hgi-record", "Start/Stop Recording", new RecordWaveCommand(app));
-
-    app.registerCommand("create-pattern", "hgi-stroke hgi-plus-sign-square", "Create New Pattern", new CreatePatternCommand(app));
 
     app.registerHotkey("F2", "show-pattern-editor");
     app.registerHotkey("SHIFT+F2", "show-patterns");

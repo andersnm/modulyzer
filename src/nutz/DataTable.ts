@@ -163,7 +163,7 @@ export class DataTable extends EventTarget implements IComponent {
         this.selectedIndex = index;
 
         // bind old row and nw ro
-        if (oldIndex !== -1) {
+        if (oldIndex !== -1 && oldRow) {
             this.bindRow(oldRow)
         }
 

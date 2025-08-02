@@ -1,8 +1,7 @@
 import { Appl } from "../../App";
-import { Bank, Preset } from "../../audio/SongDocument";
 import { InstrumentFactoryPicker } from "../../components/InstrumentFactoryPicker";
 import { MixerPanel } from "../../components/MixerPanel";
-import { getOrCreateDirectory, ICommand, IComponent } from "../../nutz";
+import { getOrCreateDirectory, ICommand } from "../../nutz";
 import { importJsonPreset } from "../../presetfile/JsonPreset";
 
 export class AddInstrumentCommand implements ICommand {
@@ -25,6 +24,17 @@ export class AddInstrumentCommand implements ICommand {
         const clickPt = this.component.mixerCanvas.clickPt;
         const instrument = this.app.song.createInstrument(instrumentId, this.getInstrumentName(instrumentId), clickPt[0], clickPt[1], {});
 
+        // Create sequence column and empty pattern
+        const column = this.app.song.createSequenceColumn(instrument);
+        const pa = this.app.song.createPattern(instrument, "00", 64, 4);
+
+        // Add default pattern columns
+        const playerInstrument = this.app.playerSongAdapter.instrumentMap.get(instrument);
+        if (playerInstrument.factory.maxPolyphony > 0) {
+            this.app.song.createPatternColumn(pa, instrument, "midinote");
+        }
+
+        // Load default preset bank if exist
         const instrumentName = instrument.instrumentId.replace(/[\/\\:*?"<>|]/g, "_");
 
         const instrumentPresetHandle = await getOrCreateDirectory(this.component.app.homeDir, "presets", instrumentName)
