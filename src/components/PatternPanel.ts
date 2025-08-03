@@ -1,8 +1,7 @@
 import { Appl } from "../App";
 import { PatternDocument } from "../audio/SongDocument";
-import { registerPatternEditorCommands } from "../commands/PatternEditor/Register";
 import { patternMenu } from "../menu/menu";
-import { CommandButtonBar, IComponent, StatusBar } from "../nutz";
+import { CommandButtonBar, ICommandHost, IComponent, StatusBar } from "../nutz";
 import { ViewFrame } from "../nutz/ViewFrame";
 import { PatternEditorCanvas } from "./PatternEditorCanvas";
 import { formatNote, getCursorColumnAt, getPatternRenderColumns } from "./PatternEditorHelper";
@@ -58,11 +57,9 @@ export class PatternPanel extends ViewFrame implements IComponent {
     octaveInput: OctaveInput;
     statusBar: StatusBar;
 
-    constructor(app: Appl) {
-        super(app);
+    constructor(app: Appl, parent: ICommandHost) {
+        super(parent);
         this.app = app;
-
-        registerPatternEditorCommands(this)
 
         this.patternEditor = new PatternEditorCanvas(app);
         this.patternEditor.addEventListener("cursormove", this.onCursorMove);
@@ -120,26 +117,8 @@ export class PatternPanel extends ViewFrame implements IComponent {
         // NOTE: Adding statusbar in ViewFrame's container
         this.container.appendChild(this.statusBar.getDomNode());
 
-        this.container.addEventListener("nutz:mounted", this.onMounted);
-        this.container.addEventListener("nutz:unmounted", this.onUnmounted);
-
         this.bindButtons();
     }
-
-
-    onMounted = () => {
-        this.app.song.addEventListener("deletePattern", this.onDeletePattern);
-    };
-
-    onUnmounted = () => {
-        this.app.song.removeEventListener("deletePattern", this.onDeletePattern);
-    };
-
-    onDeletePattern = (ev: CustomEvent<PatternDocument>) => {
-        if (ev.detail === this.patternEditor.pattern) {
-            this.setPattern(null);
-        }
-    };
 
     onCursorMove = () => {
         this.updateStatusBar();

@@ -1,7 +1,7 @@
 import { Appl } from "../../App";
 import { PatternDocument, SongDocument } from "../../audio/SongDocument";
 import { convertPatternToInstrumentColumns, InstrumentColumn, InstrumentPinPicker } from "../../components/InstrumentPinPicker";
-import { PatternPanel } from "../../components/PatternPanel";
+import { PatternFrame } from "../../components/PatternFrame";
 import { ICommand } from "../../nutz";
 
 function updatePatternColumns(song: SongDocument, pattern: PatternDocument, columns: InstrumentColumn[]) {
@@ -24,12 +24,12 @@ function updatePatternColumns(song: SongDocument, pattern: PatternDocument, colu
 export class AddColumnCommand implements ICommand {
     app: Appl;
 
-    constructor(private component: PatternPanel) {
+    constructor(private component: PatternFrame) {
         this.app = component.app;
     }
 
     async handle(...args: any[]) {
-        const columns = convertPatternToInstrumentColumns(this.app.playerSongAdapter, this.component.patternEditor.pattern.instrument, this.component.patternEditor.pattern.columns);
+        const columns = convertPatternToInstrumentColumns(this.app.playerSongAdapter, this.component.pattern.instrument, this.component.pattern.columns);
         const panel = new InstrumentPinPicker(this.app, columns);
 
         const result = await this.app.modalDialogContainer.showModal("Select Pattern Columns", panel);
@@ -37,6 +37,6 @@ export class AddColumnCommand implements ICommand {
             return;
         }
 
-        updatePatternColumns(this.app.song, this.component.patternEditor.pattern, panel.columns);
+        updatePatternColumns(this.app.song, this.component.pattern, panel.columns);
     }
 }

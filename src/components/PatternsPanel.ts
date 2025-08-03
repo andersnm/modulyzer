@@ -1,24 +1,17 @@
 import { Appl } from "../App";
 import { InstrumentDocument, PatternDocument } from "../audio/SongDocument";
-import { registerPatternListCommands } from "../commands/PatternList/Register";
 import { patternListMenu } from "../menu/menu";
-import { ButtonToolbar, DataTable } from "../nutz";
-import { ViewFrame } from "../nutz/ViewFrame";
+import { ButtonToolbar, DataTable, GridFrame, ICommandHost, IComponent, VInset } from "../nutz";
 import { InstrumentDropdown } from "./InstrumentDropdown";
-import { PatternFrame } from "./PatternFrame";
 
-export class PatternsPanel extends ViewFrame {
+export class PatternsPanel extends GridFrame {
     app: Appl;
     instrumentDropdown: InstrumentDropdown;
     list: DataTable;
-    frame: PatternFrame; // TODO: should not short circuit parent access!
 
-    constructor(app: Appl, frame: PatternFrame) {
-        super(app);
+    constructor(app: Appl, parent: ICommandHost) {
+        super(parent);
         this.app = app;
-        this.frame = frame;
-
-        registerPatternListCommands(this);
 
         this.list = new DataTable();
         this.list.addColumn("Name", "name")
@@ -29,17 +22,18 @@ export class PatternsPanel extends ViewFrame {
 
         this.instrumentDropdown = new InstrumentDropdown();
 
-        this.addToolbar(this.instrumentDropdown.getDomNode() as HTMLElement);
+        this.grid.addFrame("top", VInset(this.instrumentDropdown.getDomNode()), undefined, 1);
 
-        this.addToolbar(ButtonToolbar(this, [
+        // TODO: move into context menu
+        this.grid.addFrame("top", VInset(ButtonToolbar(this, [
             {
                 type: "button",
                 label: "New...",
                 action: "create-pattern",
             },
-        ]));
+        ])), undefined, 1);
 
-        this.setView(this.list.getDomNode() as HTMLElement);
+        this.grid.addFrame("main", VInset(this.list.getDomNode() as HTMLElement, "flex-1"));
     }
 
     onContextMenu = (e: MouseEvent) => {

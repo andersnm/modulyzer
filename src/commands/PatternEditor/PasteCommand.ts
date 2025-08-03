@@ -1,5 +1,6 @@
 import { Appl } from "../../App";
 import { deletePatternEvents, editNote, editNoteOff, editValue } from "../../components/PatternEditorHelper";
+import { PatternFrame } from "../../components/PatternFrame";
 import { PatternPanel } from "../../components/PatternPanel";
 import { ICommand } from "../../nutz";
 import { readClipboardPattern } from "./Clipboard";
@@ -7,12 +8,12 @@ import { readClipboardPattern } from "./Clipboard";
 export class PasteCommand implements ICommand {
     app: Appl;
 
-    constructor(private component: PatternPanel) {
+    constructor(private component: PatternFrame) {
         this.app = component.app;
     }
 
     async handle(...args: any[]) {
-        const patternEditor = this.component.patternEditor;
+        const patternEditor = this.component.patternView.patternEditor;
 
         if (!patternEditor.renderColumns) {
             return;

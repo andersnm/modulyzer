@@ -1,18 +1,18 @@
 import { Appl } from "../../App";
 import { exportClipboardPattern } from "../../components/PatternEditorHelper";
-import { PatternPanel } from "../../components/PatternPanel";
+import { PatternFrame } from "../../components/PatternFrame";
 import { ICommand } from "../../nutz";
 import { writeClipboardPattern } from "./Clipboard";
 
 export class CopyCommand implements ICommand {
     app: Appl;
 
-    constructor(private component: PatternPanel) {
+    constructor(private component: PatternFrame) {
         this.app = component.app;
     }
 
     async handle(...args: any[]) {
-        const patternEditor = this.component.patternEditor;
+        const patternEditor = this.component.patternView.patternEditor;
         if (!patternEditor.selection) {
             return;
         }

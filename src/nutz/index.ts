@@ -17,3 +17,5 @@ export * from "./RectUtil.js";
 export * from "./ScrollableFlexContainer.js";
 export * from "./StatusBar.js";
 export * from "./FileUtil.js";
+export * from "./ViewFrame.js";
+export * from "./GridFrame.js";

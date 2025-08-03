@@ -1,12 +1,12 @@
 import { Appl } from "../App";
 import { InstrumentDocument, PatternColumnDocument, PatternDocument } from "../audio/SongDocument";
-import { GridFrameContainer, IComponent } from "../nutz";
+import { registerPatternEditorCommands } from "../commands/PatternEditor/Register";
+import { GridFrame } from "../nutz";
 import { PatternPanel } from "./PatternPanel";
 import { PatternsPanel } from "./PatternsPanel";
 
-export class PatternFrame implements IComponent {
+export class PatternFrame extends GridFrame {
     app: Appl;
-    container: GridFrameContainer;
     patternList: PatternsPanel;
     patternView: PatternPanel;
 
@@ -14,22 +14,25 @@ export class PatternFrame implements IComponent {
     pattern: PatternDocument | null = null;
 
     constructor(app: Appl) {
+        super(app);
+
         this.app = app;
-        this.container = new GridFrameContainer();
+
+        registerPatternEditorCommands(this);
+
         this.patternList = new PatternsPanel(app, this);
         this.patternList.list.addEventListener("change", this.onSelectPattern);
-        // this.patternList.list.addEventListener("dblclick", this.onDblClick);
         this.patternList.instrumentDropdown.instrumentSelect.addEventListener("change", this.onSelectInstrument);
 
-        this.patternView = new PatternPanel(app);
+        this.patternView = new PatternPanel(app, this);
 
-        this.container.addFrame("left", this.patternList, undefined, 1);
-        this.container.addFrame("main", this.patternView);
+        this.grid.addFrame("left", this.patternList.getDomNode() as HTMLElement, undefined, 1);
+        this.grid.addFrame("main", this.patternView.getDomNode() as HTMLElement);
 
-        this.container.outer.tabIndex = 0;
-        this.container.outer.addEventListener("focus", this.onFocus);
-        this.container.outer.addEventListener("nutz:mounted", this.onMounted);
-        this.container.outer.addEventListener("nutz:unmounted", this.onUnmounted);
+        this.container.tabIndex = 0;
+        this.container.addEventListener("focus", this.onFocus);
+        this.container.addEventListener("nutz:mounted", this.onMounted);
+        this.container.addEventListener("nutz:unmounted", this.onUnmounted);
     }
 
     onMounted = async (ev) => {
@@ -48,7 +51,7 @@ export class PatternFrame implements IComponent {
 
         this.app.song.addEventListener("createPattern", this.onUpdatePattern);
         this.app.song.addEventListener("updatePattern", this.onUpdatePattern);
-        this.app.song.addEventListener("deletePattern", this.onUpdatePattern);
+        this.app.song.addEventListener("deletePattern", this.onDeletePattern);
         this.app.song.addEventListener("createPatternColumn", this.onUpdatePatternColumn);
         this.app.song.addEventListener("deletePatternColumn", this.onUpdatePatternColumn);
     };
@@ -56,7 +59,7 @@ export class PatternFrame implements IComponent {
     onUnmounted = async (ev) => {
         this.app.song.removeEventListener("createPattern", this.onUpdatePattern);
         this.app.song.removeEventListener("updatePattern", this.onUpdatePattern);
-        this.app.song.removeEventListener("deletePattern", this.onUpdatePattern);
+        this.app.song.removeEventListener("deletePattern", this.onDeletePattern);
         this.app.song.removeEventListener("createPatternColumn", this.onUpdatePatternColumn);
         this.app.song.removeEventListener("deletePatternColumn", this.onUpdatePatternColumn);
     };
@@ -87,6 +90,22 @@ export class PatternFrame implements IComponent {
         this.patternList.bindPatternList(this.instrument.patterns);
     };
 
+    onDeletePattern = (ev: CustomEvent<PatternDocument>) => {
+        if (ev.detail.instrument !== this.instrument) {
+            return;
+        }
+
+        this.patternList.bindPatternList(this.instrument.patterns);
+
+        if (this.pattern === ev.detail) {
+            this.setPattern(null);
+
+            if (ev.detail.instrument.patterns.length > 0) {
+                this.setPattern(ev.detail.instrument.patterns[0]);
+            }
+        }
+    };
+
     onUpdatePatternColumn = (ev: CustomEvent<PatternColumnDocument>) => {
         if (ev.detail.pattern.instrument !== this.instrument) {
             return;
@@ -94,10 +113,6 @@ export class PatternFrame implements IComponent {
 
         this.patternList.bindPatternList(this.instrument.patterns);
     };
-
-    getDomNode(): Node {
-        return this.container.getDomNode();
-    }
 
     setPattern(pattern: PatternDocument) {
         this.pattern = pattern;

@@ -19,8 +19,8 @@ export class WaveFrame implements IComponent {
 
         this.waveView = new WavePanel(app);
 
-        this.container.addFrame("left", this.waveList, undefined, 1);
-        this.container.addFrame("main", this.waveView);
+        this.container.addFrame("left", this.waveList.getDomNode() as HTMLElement, undefined, 1);
+        this.container.addFrame("main", this.waveView.getDomNode() as HTMLElement);
     }
 
     onSelectWave = (ev: CustomEvent<number>) => {

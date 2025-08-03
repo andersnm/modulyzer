@@ -1,13 +1,13 @@
-import { PatternPanel } from "../../components/PatternPanel";
+import { PatternFrame } from "../../components/PatternFrame";
 import { ICommand } from "../../nutz";
 
 export class DoubleSubdivideCommand implements ICommand {
-    constructor(private component: PatternPanel) {
+    constructor(private component: PatternFrame) {
     }
 
     handle(...args: any[]) {
         const app = this.component.app;
-        const pattern = this.component.patternEditor.pattern;
+        const pattern = this.component.pattern;
         app.song.updatePattern(pattern, pattern.name, pattern.duration * 2, pattern.subdivision * 2, pattern.swing);
 
         for (let column of pattern.columns) {

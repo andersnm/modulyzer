@@ -1,13 +1,13 @@
-import { PatternPanel } from "../../components/PatternPanel";
+import { PatternFrame } from "../../components/PatternFrame";
 import { ICommand } from "../../nutz";
 
 export class HalveSubdivideCommand implements ICommand {
-    constructor(private component: PatternPanel) {
+    constructor(private component: PatternFrame) {
     }
 
     handle(...args: any[]) {
         const app = this.component.app;
-        const pattern = this.component.patternEditor.pattern;
+        const pattern = this.component.pattern;
         if ((pattern.subdivision % 2) == 1) {
             console.warn("TODO: not subdividing odd subdivision")
             return;

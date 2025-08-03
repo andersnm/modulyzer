@@ -5,7 +5,7 @@ export type FrameStack = "vertical" | "horizontal";
 
 export interface FrameInfo2 {
     where: FrameWhere;
-    content: IComponent;
+    content: HTMLElement;
     stack?: FrameStack;
     gap?: number;
 }
@@ -19,7 +19,7 @@ export class GridFrameContainer implements IComponent {
         this.outer.className = "flex flex-1";
     }
 
-    addFrame(where: FrameWhere, content: IComponent, stack?: FrameStack, gap?: number) {
+    addFrame(where: FrameWhere, content: HTMLElement, stack?: FrameStack, gap?: number) {
         this.frames.push({
             where,
             content,
@@ -65,7 +65,7 @@ export class GridFrameContainer implements IComponent {
             const inner = document.createElement("div");
             inner.className = "flex " + flexStacking + " w-80 border-transparent";
 
-            const frameContent = frame.content.getDomNode();
+            const frameContent = frame.content;
             inner.appendChild(frameContent);
 
             outer.appendChild(inner);
@@ -82,7 +82,7 @@ export class GridFrameContainer implements IComponent {
             const inner = document.createElement("div");
             inner.className = "flex " + flexStacking + " border-transparent";
 
-            const frameContent = frame.content.getDomNode();
+            const frameContent = frame.content;
             inner.appendChild(frameContent);
 
             outer.appendChild(inner);
@@ -99,7 +99,7 @@ export class GridFrameContainer implements IComponent {
             const inner = document.createElement("div");
             inner.className = "flex " + flexStacking + " border-transparent";
 
-            const frameContent = frame.content.getDomNode();
+            const frameContent = frame.content;
             inner.appendChild(frameContent);
 
             if (innerFrame) {
@@ -114,7 +114,7 @@ export class GridFrameContainer implements IComponent {
             const inner = document.createElement("div");
             inner.className = "flex " + flexStacking + " flex-1 frame-main";
 
-            const frameContent = frame.content.getDomNode();
+            const frameContent = frame.content;
             inner.appendChild(frameContent); // childOrChildNodes
 
             return inner;

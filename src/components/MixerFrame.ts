@@ -15,8 +15,8 @@ export class MixerFrame implements IComponent {
         this.list = new PinsPanel(app);
         this.view = new MixerPanel(app);
 
-        this.container.addFrame("left", this.list, undefined, 1);
-        this.container.addFrame("main", this.view);
+        this.container.addFrame("left", this.list.getDomNode() as HTMLElement, undefined, 1);
+        this.container.addFrame("main", this.view.getDomNode() as HTMLElement);
     }
 
     getDomNode(): Node {
