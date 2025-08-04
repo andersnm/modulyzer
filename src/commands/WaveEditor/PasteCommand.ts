@@ -1,17 +1,17 @@
 import { Appl } from "../../App";
-import { WavePanel } from "../../components/WavePanel";
+import { WaveFrame } from "../../components/WaveFrame";
 import { readClipboardWave, writeClipboardWave } from "../../Clipboard";
 import { ICommand } from "../../nutz";
 
 export class PasteCommand implements ICommand {
     app: Appl;
 
-    constructor(private component: WavePanel) {
+    constructor(private component: WaveFrame) {
         this.app = component.app;
     }
 
     async handle(...args: any[]) {
-        const waveEditor = this.component.waveEditor;
+        const waveEditor = this.component.waveView.waveEditor;
         if (!waveEditor.selection) {
             return;
         }
@@ -27,7 +27,7 @@ export class PasteCommand implements ICommand {
             offset = Math.max(waveEditor.selection.start, waveEditor.selection.end);
         }
 
-        const wave = this.component.document;
+        const wave = this.component.wave;
         wave.insertRange(offset, wavFile.channels);
         this.app.song.updateWave(wave, wave.name, wave.note, wave.selection, wave.zoom);
 

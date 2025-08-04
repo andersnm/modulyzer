@@ -1,4 +1,4 @@
-import { WavePanel } from "../../components/WavePanel";
+import { WaveFrame } from "../../components/WaveFrame";
 import { CopyCommand } from "./CopyCommand";
 import { CropCommand } from "./CropCommand";
 import { CutCommand } from "./CutCommand";
@@ -12,8 +12,12 @@ import { ZoomClearCommand } from "./ZoomClearCommand";
 import { ZoomCommand } from "./ZoomCommand";
 import { ZoomInCommand } from "./ZoomInCommand";
 import { ZoomOutCommand } from "./ZoomOutCommand";
+import { CreateWaveCommand } from "./CreateWaveCommand";
+import { DeleteWaveCommand } from "./DeleteWaveCommand";
+import { OpenWaveCommand } from "./OpenWaveCommand";
+import { PasteNewWaveCommand } from "./PasteNewWaveCommand";
 
-export function registerWaveEditorCommands(component: WavePanel) {
+export function registerWaveEditorCommands(component: WaveFrame) {
     component.registerCommand("save-wave", "hgi-stroke hgi-folder-02", "Save...", new SaveWaveCommand(component));
     component.registerCommand("edit-wave", "hgi-stroke hgi-edit-01", "Properties...", new EditWaveCommand(component));
     component.registerCommand("cut", "hgi-stroke hgi-scissor-01", "Cut", new CutCommand(component));
@@ -28,6 +32,15 @@ export function registerWaveEditorCommands(component: WavePanel) {
     component.registerCommand("play-wave", "hgi-stroke hgi-next", "Play Wave", new PlayWaveCommand(component));
 
     component.registerCommand("select-all", null, null, new SelectAllCommand(component));
+
+    component.registerCommand("create-wave", "hgi-stroke hgi-plus-sign-square", "Create New Wave", new CreateWaveCommand(component));
+    component.registerCommand("open-wave", "hgi-stroke hgi-folder-02", "Load Wave", new OpenWaveCommand(component));
+    component.registerCommand("paste-new-wave", "hgi-stroke hgi-task-add-01", "Import New Wave from Clipboard", new PasteNewWaveCommand(component));
+    component.registerCommand("delete-wave", "hgi-stroke hgi-folder", null, new DeleteWaveCommand(component));
+
+    component.registerHotkey("CTRL+SHIFT+V", "paste-new-wave");
+    component.registerHotkey("CTRL+SHIFT+N", "create-wave");
+    component.registerHotkey("CTRL+SHIFT+Delete", "delete-wave");
 
     component.registerHotkey("CTRL+A", "select-all");
     component.registerHotkey("CTRL+C", "copy");

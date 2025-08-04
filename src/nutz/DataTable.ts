@@ -148,6 +148,10 @@ export class DataTable extends EventTarget implements IComponent {
     }
 
     setSelectedIndex(index: number) {
+        if (index === this.selectedIndex) {
+            return;
+        }
+
         const totalRows = this.tbody.childNodes.length;
         if (index < -1) {
             index = -1;

@@ -1,6 +1,6 @@
 import { Appl } from "../App";
 import { InstrumentDocument } from "../audio/SongDocument";
-import { findAvailableNote } from "../commands/WaveTable/PasteNewWaveCommand";
+import { findAvailableNote } from "../commands/WaveEditor/PasteNewWaveCommand";
 import { CreateWavePanel } from "../components/CreateWavePanel";
 
 export async function showCreateNewWaveDialog(app: Appl, instrument: InstrumentDocument) {

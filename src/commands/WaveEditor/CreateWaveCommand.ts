@@ -1,12 +1,12 @@
 import { Appl } from "../../App";
-import { WavesPanel } from "../../components/WavesPanel";
+import { WaveFrame } from "../../components/WaveFrame";
 import { showCreateNewWaveDialog } from "../../dialogs/CreateNewWaveDialog";
 import { ICommand } from "../../nutz";
 
 export class CreateWaveCommand implements ICommand {
     app: Appl;
 
-    constructor(private component: WavesPanel) {
+    constructor(private component: WaveFrame) {
         this.app = component.app;
     }
 

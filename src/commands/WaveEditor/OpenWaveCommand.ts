@@ -1,5 +1,5 @@
 import { Appl } from "../../App";
-import { WavesPanel } from "../../components/WavesPanel";
+import { WaveFrame } from "../../components/WaveFrame";
 import { ICommand } from "../../nutz";
 import { DrumkitReader } from "../../wavefile/DrumkitReader";
 import { WAVDecoder } from "../../wavefile/WAVDecoder";
@@ -8,7 +8,7 @@ import { findAvailableNote } from "./PasteNewWaveCommand";
 export class OpenWaveCommand implements ICommand {
     app: Appl;
 
-    constructor(private component: WavesPanel) {
+    constructor(private component: WaveFrame) {
         this.app = component.app;
     }
 

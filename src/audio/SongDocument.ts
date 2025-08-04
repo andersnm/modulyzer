@@ -517,6 +517,26 @@ export class SongDocument extends EventTarget {
         this.dispatchEvent(new CustomEvent("deleteWave", { detail: wave }));
     }
 
+    validInstrument(instrument: InstrumentDocument): boolean {
+        return !!this.instruments.find(i => i === instrument);
+    }
+
+    validWave(wave: WaveDocument): boolean {
+        if (!this.validInstrument(wave?.instrument)) {
+            return false;
+        }
+
+        return !!wave.instrument.waves.find(w => w === wave);
+    }
+
+    validPattern(pattern: PatternDocument): boolean {
+        if (!this.validInstrument(pattern?.instrument)) {
+            return false;
+        }
+
+        return !!pattern.instrument.patterns.find(p => p === pattern);
+    }
+
     replaceWaveBuffer(wave: WaveDocument, offset: number, inputs: Float32Array[]) {
 
         for (let i = 0; i < wave.buffers.length; i++) {
@@ -600,6 +620,7 @@ export class SongDocument extends EventTarget {
             })),
             sequence: {
                 columns: this.sequenceColumns.map(column => ({
+                    instrument: this.instruments.indexOf(column.instrument),
                     events: column.events.map(event => ({
                         time: event.time,
                         pattern: column.instrument.patterns.indexOf(event.pattern),
@@ -621,11 +642,10 @@ export class SongDocument extends EventTarget {
         }
 
         for (let jsonInstrument of json.instruments) {
-            const sysex = jsonInstrument.sysex ? decompressBase64ToUint8Array(jsonInstrument.sysex) : null;
             const i = this.createInstrument(jsonInstrument.ref, jsonInstrument.name, jsonInstrument.x, jsonInstrument.y, jsonInstrument.parameterValues);
 
             if (Array.isArray(jsonInstrument.patterns)) {
-                for (let jsonPattern of json.patterns) {
+                for (let jsonPattern of jsonInstrument.patterns) {
                     const p = this.createPattern(i, jsonPattern.name, jsonPattern.duration, jsonPattern.subdivision ?? 4);
 
                     for (let jsonColumn of jsonPattern.columns) {
@@ -668,9 +688,17 @@ export class SongDocument extends EventTarget {
 
         for (let jsonSequenceColumn of json.sequence.columns) {
             const instrument = this.instruments[jsonSequenceColumn.instrument];
+            if (!instrument) {
+                throw new Error("Invalid instrument in sequence column");
+            }
+
             const sc = this.createSequenceColumn(instrument);
             for (let jsonEvent of jsonSequenceColumn.events) {
                 const pattern = instrument.patterns[jsonEvent.pattern];
+                if (!pattern) {
+                    throw new Error("Invalid pattern in sequence column events")
+                }
+
                 this.createSequenceEvent(sc, jsonEvent.time, pattern);
             }
         }

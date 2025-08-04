@@ -36,18 +36,22 @@ export class PatternFrame extends GridFrame {
     }
 
     onMounted = async (ev) => {
+        // NOTE: Validate document objects on (re)mount. It's one of two approaches. EITHER:
+        //   - Detach event handlers when view is hidden, and validate the document objects here, OR
+        //   - Let the event handlers run also when hidden and maintain document objects, no need 
+        //     for validation, but needs some kind of "destroy()"-pattern to detach the handlers.
+        if (!this.app.song.validPattern(this.pattern)) {
+            if (!this.app.song.validInstrument(this.instrument)) {
+                this.instrument = this.app.song.instruments[0] ?? null;
+            }
 
-        this.patternList.bindInstruments(this.app.song.instruments);
-
-        if (!this.instrument) {
-            this.instrument = this.app.song.instruments[0] ?? null;
             this.pattern = this.instrument?.patterns[0] ?? null;
         }
 
-        this.patternList.setInstrument(this.instrument);
-        this.patternList.setPattern(this.pattern);
-
-        this.patternView.setPattern(this.pattern);
+        this.patternList.bindInstruments(this.app.song.instruments);
+        this.setInstrument(this.instrument)
+        this.patternList.bindPatternList(this.instrument?.patterns ?? []);
+        this.setPattern(this.pattern);
 
         this.app.song.addEventListener("createPattern", this.onUpdatePattern);
         this.app.song.addEventListener("updatePattern", this.onUpdatePattern);
@@ -120,7 +124,7 @@ export class PatternFrame extends GridFrame {
         this.patternList.setPattern(pattern);
     }
 
-    setInstrument(instrument: InstrumentDocument, pattern: PatternDocument = null) {
+    setInstrument(instrument: InstrumentDocument) {
         this.instrument = instrument;
 
         this.patternList.setInstrument(instrument);

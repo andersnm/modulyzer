@@ -1,7 +1,9 @@
 import { Appl } from "../../App";
 import { WaveDocument } from "../../audio/SongDocument";
 import { readClipboardWave } from "../../Clipboard";
+import { WaveFrame } from "../../components/WaveFrame";
 import { WavesPanel } from "../../components/WavesPanel";
+import { ICommand } from "../../nutz";
 
 export function findAvailableNote(waves: WaveDocument[]) {
     let note = 48; // 48 = C-3
@@ -18,10 +20,10 @@ export function findAvailableNote(waves: WaveDocument[]) {
     return 1;
 }
 
-export class PasteNewWaveCommand {
+export class PasteNewWaveCommand implements ICommand {
     app: Appl;
 
-    constructor(private component: WavesPanel) {
+    constructor(private component: WaveFrame) {
         this.app = component.app;
     }
 

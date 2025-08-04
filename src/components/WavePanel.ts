@@ -1,9 +1,8 @@
 import { WaveEditorCanvas } from "./WaveEditorCanvas";
 import { WaveScrollCanvas } from "./WaveScrollCanvas";
 import { Appl } from "../App";
-import { ButtonToolbar, IComponent, StatusBar } from "../nutz";
+import { ButtonToolbar, ICommandHost, StatusBar } from "../nutz";
 import { InstrumentDocument, WaveDocument } from "../audio/SongDocument";
-import { registerWaveEditorCommands } from "../commands/WaveEditor/Register";
 import { ViewFrame } from "../nutz/ViewFrame";
 import { formatNote } from "./PatternEditorHelper";
 import { MenuItem as NutzMenuItem } from "../nutz";
@@ -17,11 +16,9 @@ export class WavePanel extends ViewFrame {
     waveScroll: WaveScrollCanvas;
     statusBar: StatusBar;
 
-    constructor(app: Appl) {
-        super(app);
+    constructor(app: Appl, parent: ICommandHost) {
+        super(parent);
         this.app = app;
-
-        registerWaveEditorCommands(this);
 
         this.view = document.createElement("div");
         this.view.className = "flex flex-col flex-1";
@@ -114,38 +111,7 @@ export class WavePanel extends ViewFrame {
 
         // NOTE: Adding statusbar in ViewFrame's container
         this.container.appendChild(this.statusBar.getDomNode());
-
-        this.container.addEventListener("nutz:mounted", this.onMounted);
-        this.container.addEventListener("nutz:unmounted", this.onUnmounted);
     }
-
-    onMounted = () => {
-        this.app.song.addEventListener("updateWave", this.onUpdate);
-        this.app.song.addEventListener("deleteWave", this.onDeleteWave);
-    };
-
-    onUnmounted = () => {
-        this.app.song.removeEventListener("updateWave", this.onUpdate);
-        this.app.song.removeEventListener("deleteWave", this.onDeleteWave);
-    };
-
-    onUpdate = (ev: CustomEvent<WaveDocument>) => {
-        this.waveEditor.buffers = ev.detail.buffers;
-        this.waveEditor.redrawCanvas();
-
-        this.waveScroll.buffers = ev.detail.buffers;
-        this.waveScroll.redrawCanvas();
-    };
-
-    onDeleteWave = (ev: CustomEvent<WaveDocument>) => {
-        if (ev.detail !== this.document) {
-            return;
-        }
-
-        this.waveEditor.clear();
-        this.waveScroll.clear();
-        this.document = null;
-    };
 
     onStatusBarInstrumentContextMenu = async (ev: MouseEvent) => {
         const instruments = this.getWaveTableInstruments();
@@ -186,6 +152,10 @@ export class WavePanel extends ViewFrame {
     };
 
     onWaveEditorSelChange = () => {
+        if (!this.document) {
+            return;
+        }
+
         if (this.waveEditor.selection) {
             const start = this.waveEditor.selection.start;
             const end = this.waveEditor.selection.end;
@@ -198,6 +168,10 @@ export class WavePanel extends ViewFrame {
     }
 
     onWaveEditorZoomChange = () => {
+        if (!this.document) {
+            return;
+        }
+
         if (this.waveEditor.zoom) {
             const start = this.waveEditor.zoom.start;
             const end = this.waveEditor.zoom.end;
@@ -252,10 +226,6 @@ export class WavePanel extends ViewFrame {
         }
 
         return result;
-    }
-
-    getDomNode(): Node {
-        return this.container;
     }
 
     setWave(wave: WaveDocument) {

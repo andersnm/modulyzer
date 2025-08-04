@@ -1,20 +1,19 @@
 import { Appl } from "../../App";
-import { WavePanel } from "../../components/WavePanel";
+import { WaveFrame } from "../../components/WaveFrame";
 import { ICommand } from "../../nutz";
 
 export class PlayWaveCommand implements ICommand {
     app: Appl;
 
-    constructor(private component: WavePanel) {
+    constructor(private component: WaveFrame) {
         this.app = component.app;
     }
 
     async handle(...args: any[]) {
-        const waveEditor = this.component.waveEditor;
-        if (!this.component.document) {
+        if (!this.component.wave) {
             return ;
         }
 
-        await this.app.wavePlayer.playWave(this.component.document);
+        await this.app.wavePlayer.playWave(this.component.wave);
     }
 }
