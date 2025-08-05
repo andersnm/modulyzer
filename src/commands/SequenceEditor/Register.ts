@@ -3,6 +3,7 @@ import { AddColumnCommand } from "./AddColumnCommand";
 import { CopyCommand } from "./CopyCommand";
 import { CutCommand } from "./CutCommand";
 import { PasteCommand } from "./PasteCommand";
+import { PlaySongFromCursorCommand } from "./PlaySongFromCursorCommand";
 import { SetLoopEndCommand } from "./SetLoopEndCommand";
 import { SetLoopStartCommand } from "./SetLoopStartCommand";
 
@@ -15,7 +16,10 @@ export function registerSequenceEditorCommands(component: SequencePanel) {
     component.registerCommand("set-loop-start", null, null, new SetLoopStartCommand(component));
     component.registerCommand("set-loop-end", null, null, new SetLoopEndCommand(component));
 
+    component.registerCommand("play-song-from-cursor", null, null, new PlaySongFromCursorCommand(component));
+
     // component.registerHotkey("CTRL+A", "select-all");
+    component.registerHotkey("F6", "play-song-from-cursor");
     component.registerHotkey("CTRL++", "add-column");
     component.registerHotkey("CTRL+X", "cut");
     component.registerHotkey("CTRL+C", "copy");

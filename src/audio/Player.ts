@@ -143,7 +143,8 @@ export class Player extends EventTarget {
     }
 
     playInterval;
-    play() {
+
+    play(startBeat: number = 0) {
         if (this.playing) {
             return;
         }
@@ -151,7 +152,7 @@ export class Player extends EventTarget {
         this.playing = true;
 
         this.currentTime = 0;
-        this.currentBeat = 0;
+        this.currentBeat = startBeat;
         this.startTime = this.context.currentTime;
 
         // schedule 1 second first, then reschedule after 500ms to fill so we remain 1 second ahead
