@@ -1,12 +1,8 @@
 import { Bank, Preset } from "../audio/SongDocument";
 
-export async function importJsonPreset(bankHandle: FileSystemFileHandle) {
-    const bankFile = await bankHandle.getFile();
-    const buffer = await bankFile.text();
-
-    const bankObject = JSON.parse(buffer); // TODO: not instance
+export function importJsonPresets(name: string, bankObject: any) {
     const bank = new Bank();
-    bank.name = bankHandle.name;
+    bank.name = name;
 
     for (let preset of bankObject) {
         const p = new Preset();
@@ -16,6 +12,14 @@ export async function importJsonPreset(bankHandle: FileSystemFileHandle) {
     }
 
     return bank;
+}
+
+export async function importJsonPreset(bankHandle: FileSystemFileHandle) {
+    const bankFile = await bankHandle.getFile();
+    const buffer = await bankFile.text();
+
+    const bankObject = JSON.parse(buffer);
+    return importJsonPresets(bankHandle.name, bankObject);
 }
 
 export async function saveJsonPreset(saveHandle: FileSystemFileHandle, bank: Bank) {

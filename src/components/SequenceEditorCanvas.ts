@@ -434,8 +434,8 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
 
         ctx.strokeStyle = "#FFF";
         ctx.beginPath();
-        ctx.moveTo(0, playPos * fontHeight);
-        ctx.lineTo(this.canvas.width, playPos * fontHeight);
+        ctx.moveTo(0, (playPos - this.scrollRow) * fontHeight + fontHeight);
+        ctx.lineTo(this.canvas.width, (playPos - this.scrollRow) * fontHeight + fontHeight);
         ctx.stroke();
 
         // loop start
@@ -443,16 +443,16 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
         ctx.strokeStyle = "#F44";
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(0, loopStartPos * fontHeight);
-        ctx.lineTo(this.canvas.width, loopStartPos * fontHeight);
+        ctx.moveTo(0, (loopStartPos - this.scrollRow) * fontHeight + fontHeight);
+        ctx.lineTo(this.canvas.width, (loopStartPos - this.scrollRow) * fontHeight + fontHeight);
         ctx.stroke();
 
         // loop end
         const loopEndPos = this.app.song.loopEnd;
         ctx.strokeStyle = "#F44 3px";
         ctx.beginPath();
-        ctx.moveTo(0, loopEndPos * fontHeight);
-        ctx.lineTo(this.canvas.width, loopEndPos * fontHeight);
+        ctx.moveTo(0, (loopEndPos - this.scrollRow) * fontHeight + fontHeight);
+        ctx.lineTo(this.canvas.width, (loopEndPos - this.scrollRow) * fontHeight + fontHeight);
         ctx.stroke();
 
         ctx.lineWidth = 1;

@@ -1,5 +1,5 @@
 import { Appl } from "../App";
-import { GridFrameContainer, IComponent, TabFrameContainer, VInset, VOutset } from "../nutz";
+import { GridFrameContainer, IComponent } from "../nutz";
 import { MixerPanel } from "./MixerPanel";
 import { PinsPanel } from "./PinsPanel";
 

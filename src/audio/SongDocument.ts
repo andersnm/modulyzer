@@ -1,5 +1,6 @@
 import { deflate, inflate } from 'pako';
 import { getNewPatternName } from '../components/PatternEditorHelper';
+import { importJsonPresets } from '../presetfile/JsonPreset';
 
 function compressFloat32ArrayToBase64(data: Float32Array): string {
     const uint8Array = new Uint8Array(data.buffer);
@@ -612,6 +613,10 @@ export class SongDocument extends EventTarget {
                         })),
                     })),
                 })),
+                bank: {
+                    name: instrument.bank.name,
+                    presets: instrument.bank.presets,
+                },
             })),
             connections: this.connections.map(connection => ({
                 from: this.instruments.indexOf(connection.from),
@@ -619,6 +624,8 @@ export class SongDocument extends EventTarget {
                 gain: connection.gain,
             })),
             sequence: {
+                loopStart: this.loopStart,
+                loopEnd: this.loopEnd,
                 columns: this.sequenceColumns.map(column => ({
                     instrument: this.instruments.indexOf(column.instrument),
                     events: column.events.map(event => ({
@@ -643,6 +650,11 @@ export class SongDocument extends EventTarget {
 
         for (let jsonInstrument of json.instruments) {
             const i = this.createInstrument(jsonInstrument.ref, jsonInstrument.name, jsonInstrument.x, jsonInstrument.y, jsonInstrument.parameterValues);
+
+            if (jsonInstrument.bank instanceof Object) {
+                const bank = importJsonPresets(jsonInstrument.bank.name, jsonInstrument.bank.presets);
+                this.setInstrumentBank(i, bank);
+            }
 
             if (Array.isArray(jsonInstrument.patterns)) {
                 for (let jsonPattern of jsonInstrument.patterns) {
@@ -684,6 +696,10 @@ export class SongDocument extends EventTarget {
             }
 
             this.createConnection(from, to, jsonConnection.gain??1);
+        }
+
+        if (json.sequence.hasOwnProperty("loopStart") && json.sequence.hasOwnProperty("loopEnd")) {
+            this.setLoop(json.sequence.loopStart, json.sequence.loopEnd);
         }
 
         for (let jsonSequenceColumn of json.sequence.columns) {
