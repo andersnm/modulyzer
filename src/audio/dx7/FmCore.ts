@@ -20,6 +20,16 @@ import { Sin } from "./Sin";
 export const LG_N = 6
 export const N  = (1 << LG_N)
 
+const Q24 = 1 << 24;
+
+function fromQ24(x: number): number {
+  return x / Q24;
+}
+
+function toQ24(x: number): number {
+  return Math.floor(x * Q24);
+}
+
 export class FmOpParams {
   gain: [number, number] = [0, 0];
   freq: number = 0;
@@ -82,7 +92,7 @@ function n_out(alg: FmAlgorithm) {
   return count;
 } 
 
-function FmOpKernel_compute(output: Int32Array, input: Int32Array,
+function FmOpKernel_compute(output: Float32Array, input: Float32Array,
                          phase0: number, freq: number,
                          gain1: number, gain2: number, add: boolean)
 {
@@ -92,21 +102,21 @@ function FmOpKernel_compute(output: Int32Array, input: Int32Array,
   if (add) {
     for (let i = 0; i < N; i++) {
       gain += dgain;
-      const y = Sin.lookup(phase + input[i]);
-      output[i] += Number((BigInt(y) * BigInt(gain)) >> 24n);
+      const y = Sin.lookup(phase + toQ24(input[i]));
+      output[i] += fromQ24(y) * fromQ24(gain);
       phase += freq;
     }
   } else {
     for (let i = 0; i < N; i++) {
       gain += dgain;
-      const y = Sin.lookup(phase + input[i]);
-      output[i] = Number((BigInt(y) * BigInt(gain)) >> 24n);
+      const y = Sin.lookup(phase + toQ24(input[i]));
+      output[i] = fromQ24(y) * fromQ24(gain);
       phase += freq;
     }
   }
 }
 
-function FmOpKernel_compute_pure(output: Int32Array, phase0: number, freq: number,
+function FmOpKernel_compute_pure(output: Float32Array, phase0: number, freq: number,
                               gain1: number, gain2: number, add: boolean) {
   const dgain = (gain2 - gain1 + (N >> 1)) >> LG_N;
   let gain = gain1;
@@ -115,20 +125,20 @@ function FmOpKernel_compute_pure(output: Int32Array, phase0: number, freq: numbe
     for (let i = 0; i < N; i++) {
       gain += dgain;
       const y = Sin.lookup(phase);
-      output[i] += Number((BigInt(y) * BigInt(gain)) >> 24n);
+      output[i] += fromQ24(y) * fromQ24(gain);
       phase += freq;
     }
   } else {
     for (let i = 0; i < N; i++) {
       gain += dgain;
       const y = Sin.lookup(phase);
-      output[i] = Number((BigInt(y) * BigInt(gain)) >> 24n);
+      output[i] = fromQ24(y) * fromQ24(gain);
       phase += freq;
     }
   }
 }
 
-function FmOpKernel_compute_fb(output: Int32Array, phase0: number, freq: number,
+function FmOpKernel_compute_fb(output: Float32Array, phase0: number, freq: number,
                             gain1: number, gain2: number,
                             fb_buf: number[], fb_shift: number, add: boolean) {
 
@@ -144,8 +154,9 @@ function FmOpKernel_compute_fb(output: Int32Array, phase0: number, freq: number,
       const scaled_fb = (y0 + y) >> (fb_shift + 1);
       y0 = y;
       y = Sin.lookup(phase + scaled_fb);
-      y = Number((BigInt(y) * BigInt(gain)) >> 24n);
-      output[i] += y;
+      const yf = fromQ24(y) * fromQ24(gain);
+      y = toQ24(yf);
+      output[i] += yf; // y
       phase += freq;
     }
   } else {
@@ -154,8 +165,9 @@ function FmOpKernel_compute_fb(output: Int32Array, phase0: number, freq: number,
       const scaled_fb = (y0 + y) >> (fb_shift + 1);
       y0 = y;
       y = Sin.lookup(phase + scaled_fb);
-      y = Number((BigInt(y) * BigInt(gain)) >> 24n);
-      output[i] = y;
+      const yf = fromQ24(y) * fromQ24(gain);
+      y = toQ24(yf);
+      output[i] = yf; // y
       phase += freq;
     }
   }
@@ -183,7 +195,7 @@ export class FmCore {
           } */
     }
 
-    compute(output: Int32Array, params: FmOpParams[], algorithm: number, fb_buf: [number, number], feedback_shift: number): any {
+    compute(output: Float32Array, params: FmOpParams[], algorithm: number, fb_buf: [number, number], feedback_shift: number): any {
         const kLevelThresh = 1120;
 
         const alg = algorithms[algorithm];
@@ -225,5 +237,5 @@ export class FmCore {
           param.phase += param.freq << LG_N;
         } 
     }
-    buf_: [Int32Array, Int32Array] = [ new Int32Array(N), new Int32Array(N) ];
+    buf_: [Float32Array, Float32Array] = [ new Float32Array(N), new Float32Array(N) ];
 };

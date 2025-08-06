@@ -60,7 +60,7 @@ export class SynthUnit {
   extra_buf_size_: number = 0;
 
   // Extra buffering for when GetSamples wants a buffer not a multiple of N
-  extra_buf_ = new Int16Array(N); // [N];
+  extra_buf_ = new Float32Array(N); // [N];
 
   static Init(sample_rate) {
     Freqlut.init(sample_rate);
@@ -87,7 +87,7 @@ export class SynthUnit {
     this.lfo_.reset(this.parsed_patch);
 
     this.current_note_ = 0;
-    this.filter_control_[0] = 258847126;
+    this.filter_control_[0] = 258847126; // 258847126 / (1<<24) = 15.428490996360779
     this.filter_control_[1] = 0;
     this.filter_control_[2] = 0;
     this.controllers_.values_[kControllerPitch] = 0x2000;
@@ -110,8 +110,8 @@ export class SynthUnit {
     } 
 
     for (; i < n_samples; i += N) { 
-      const audiobuf = new Int32Array(N);
-      const audiobuf2 = new Int32Array(N);
+      const audiobuf = new Float32Array(N);
+      const audiobuf2 = new Float32Array(N);
       const lfovalue = this.lfo_.getsample();
       const lfodelay = this.lfo_.getdelay(); 
 
@@ -122,19 +122,21 @@ export class SynthUnit {
       }
 
       // Dexed re-implemented the filter at the plugin-level  https://github.com/asb2m10/dexed/tree/master/Source/msfa
-      this.filter_.process(audiobuf, this.filter_control_, this.filter_control_, audiobuf2); 
+      // this.filter_.process(audiobuf, this.filter_control_, this.filter_control_, audiobuf2); 
 
       // audiobuf
       let jmax = n_samples - i;
       for (let j = 0; j < N; ++j) {
-        let val = audiobuf2[j] >> 4;
+        const val = audiobuf[j] / 16;
+        // let val = audiobuf2[j] >> 4;
 
-        let clip_val = val < -(1 << 24) ? 0x8000 : val >= (1 << 24) ? 0x7fff : val >> 9;
+        const clip_val = val < -1 ? -1 : val >= 1 ? 1 : val;
+        // let clip_val = val < -(1 << 24) ? 0x8000 : val >= (1 << 24) ? 0x7fff : val >> 9;
         // TODO: maybe some dithering?
         if (j < jmax) {
-          buffer[i + j] = clip_val / 0x8000;
+          buffer[i + j] = clip_val;
         } else {
-          this.extra_buf_[j - jmax] = clip_val / 0x8000;
+          this.extra_buf_[j - jmax] = clip_val;
         }
       } 
       this.extra_buf_size_ = i - n_samples;

@@ -173,7 +173,7 @@ export class Dx7Note {
 
   // Note: this _adds_ to the buffer. Interesting question whether it's
   // worth it...
-  compute(buf: Int32Array, lfo_val: number, lfo_delay: number, ctrls: Controllers) {
+  compute(buf: Float32Array, lfo_val: number, lfo_delay: number, ctrls: Controllers) {
     let pitchmod = this.pitchenv_.getsample();
     const pmd = this.pitchmoddepth_ * lfo_delay;  // Q32
     // TODO: add modulation sources (mod wheel, etc)
