@@ -14,21 +14,11 @@
  * limitations under the License.
  */ 
 
-import { Sin } from "./Sin";
+import { fromQ24 } from "./Q24";
 
 // TODO(raph): move from fixed to variable N 
 export const LG_N = 6
 export const N  = (1 << LG_N)
-
-const Q24 = 1 << 24;
-
-function fromQ24(x: number): number {
-  return x / Q24;
-}
-
-function toQ24(x: number): number {
-  return Math.floor(x * Q24);
-}
 
 export class FmOpParams {
   gain: [number, number] = [0, 0];
@@ -96,21 +86,25 @@ function FmOpKernel_compute(output: Float32Array, input: Float32Array,
                          phase0: number, freq: number,
                          gain1: number, gain2: number, add: boolean)
 {
-  const dgain = (gain2 - gain1 + (N >> 1)) >> LG_N;
+  gain1 = fromQ24(gain1);
+  gain2 = fromQ24(gain2); // TODO: port Env
+  const dgain = (gain2 - gain1) / N;
   let gain = gain1;
   let phase = phase0;
   if (add) {
     for (let i = 0; i < N; i++) {
       gain += dgain;
-      const y = Sin.lookup(phase + toQ24(input[i]));
-      output[i] += fromQ24(y) * fromQ24(gain);
+      const y = Math.sin((phase + input[i]) * 2 * Math.PI);
+
+      output[i] += y * gain;
       phase += freq;
     }
   } else {
     for (let i = 0; i < N; i++) {
       gain += dgain;
-      const y = Sin.lookup(phase + toQ24(input[i]));
-      output[i] = fromQ24(y) * fromQ24(gain);
+      const y = Math.sin((phase + input[i]) * 2 * Math.PI);
+
+      output[i] = y * gain;
       phase += freq;
     }
   }
@@ -118,21 +112,23 @@ function FmOpKernel_compute(output: Float32Array, input: Float32Array,
 
 function FmOpKernel_compute_pure(output: Float32Array, phase0: number, freq: number,
                               gain1: number, gain2: number, add: boolean) {
-  const dgain = (gain2 - gain1 + (N >> 1)) >> LG_N;
+  gain1 = fromQ24(gain1);
+  gain2 = fromQ24(gain2); // TODO: port Env
+  const dgain = (gain2 - gain1) / N;
   let gain = gain1;
   let phase = phase0;
   if (add) {
     for (let i = 0; i < N; i++) {
       gain += dgain;
-      const y = Sin.lookup(phase);
-      output[i] += fromQ24(y) * fromQ24(gain);
+      const y = Math.sin(phase * 2 * Math.PI);
+      output[i] += y * gain;
       phase += freq;
     }
   } else {
     for (let i = 0; i < N; i++) {
       gain += dgain;
-      const y = Sin.lookup(phase);
-      output[i] = fromQ24(y) * fromQ24(gain);
+      const y = Math.sin(phase * 2 * Math.PI);
+      output[i] = y * gain;
       phase += freq;
     }
   }
@@ -141,9 +137,9 @@ function FmOpKernel_compute_pure(output: Float32Array, phase0: number, freq: num
 function FmOpKernel_compute_fb(output: Float32Array, phase0: number, freq: number,
                             gain1: number, gain2: number,
                             fb_buf: number[], fb_shift: number, add: boolean) {
-
-
-  const dgain = (gain2 - gain1 + (N >> 1)) >> LG_N;
+  gain1 = fromQ24(gain1);
+  gain2 = fromQ24(gain2); // TODO: port Env
+  const dgain = (gain2 - gain1) / N;
   let gain = gain1;
   let phase = phase0;
   let y0 = fb_buf[0];
@@ -151,23 +147,20 @@ function FmOpKernel_compute_fb(output: Float32Array, phase0: number, freq: numbe
   if (add) {
     for (let i = 0; i < N; i++) {
       gain += dgain;
-      const scaled_fb = (y0 + y) >> (fb_shift + 1);
+      const scaled_fb = (y0 + y) / (1 << (fb_shift + 1));
+
       y0 = y;
-      y = Sin.lookup(phase + scaled_fb);
-      const yf = fromQ24(y) * fromQ24(gain);
-      y = toQ24(yf);
-      output[i] += yf; // y
+      y = Math.sin((phase + scaled_fb) * 2 * Math.PI) * gain;
+      output[i] += y;
       phase += freq;
     }
   } else {
     for (let i = 0; i < N; i++) {
       gain += dgain;
-      const scaled_fb = (y0 + y) >> (fb_shift + 1);
+      const scaled_fb = (y0 + y) / (1 << (fb_shift + 1));
       y0 = y;
-      y = Sin.lookup(phase + scaled_fb);
-      const yf = fromQ24(y) * fromQ24(gain);
-      y = toQ24(yf);
-      output[i] = yf; // y
+      y = Math.sin((phase + scaled_fb) * 2 * Math.PI) * gain;
+      output[i] = y;
       phase += freq;
     }
   }
@@ -234,7 +227,7 @@ export class FmCore {
           } else if (!add) {
             has_contents[outbus] = false;
           }
-          param.phase += param.freq << LG_N;
+          param.phase += param.freq * N;
         } 
     }
     buf_: [Float32Array, Float32Array] = [ new Float32Array(N), new Float32Array(N) ];

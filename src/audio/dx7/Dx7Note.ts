@@ -20,6 +20,7 @@ import { FmCore, FmOpParams } from "./FmCore"
 import { Freqlut } from "./Freqlut";
 import { PitchEnv } from "./PitchEnv"
 import { Dx7Patch } from "./Dx7Patch";
+import { fromQ24 } from "./Q24";
 
 // This is the logic to put together a note from the MIDI description
 // and run the low-level modules.
@@ -189,7 +190,7 @@ export class Dx7Note {
       const level = this.env_[op].getsample();
       const gain = Exp2.lookup(level - (14 * (1 << 24)));
       //int32_t gain = pow(2, 10 + level * (1.0 / (1 << 24)));
-      this.params_[op].freq = Freqlut.lookup(this.basepitch_[op] + pitchmod);
+      this.params_[op].freq = fromQ24(Freqlut.lookup(this.basepitch_[op] + pitchmod));
       this.params_[op].gain[1] = gain;
     }
 

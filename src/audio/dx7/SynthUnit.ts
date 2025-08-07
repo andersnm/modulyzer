@@ -20,6 +20,7 @@ import { Exp2 } from "./Exp2";
 import { Freqlut } from "./Freqlut";
 import { Lfo } from "./Lfo";
 import { PitchEnv } from "./PitchEnv";
+import { toQ24 } from "./Q24";
 import { ResoFilter } from "./ResoFilter";
 
 const max_active_notes = 16;
@@ -112,8 +113,8 @@ export class SynthUnit {
     for (; i < n_samples; i += N) { 
       const audiobuf = new Float32Array(N);
       const audiobuf2 = new Float32Array(N);
-      const lfovalue = this.lfo_.getsample();
-      const lfodelay = this.lfo_.getdelay(); 
+      const lfovalue = toQ24(this.lfo_.getsample());
+      const lfodelay = toQ24(this.lfo_.getdelay());
 
       for (let note = 0; note < max_active_notes; ++note) {
         if (this.active_note_[note].live) {
