@@ -86,8 +86,6 @@ function FmOpKernel_compute(output: Float32Array, input: Float32Array,
                          phase0: number, freq: number,
                          gain1: number, gain2: number, add: boolean)
 {
-  gain1 = fromQ24(gain1);
-  gain2 = fromQ24(gain2); // TODO: port Env
   const dgain = (gain2 - gain1) / N;
   let gain = gain1;
   let phase = phase0;
@@ -112,8 +110,6 @@ function FmOpKernel_compute(output: Float32Array, input: Float32Array,
 
 function FmOpKernel_compute_pure(output: Float32Array, phase0: number, freq: number,
                               gain1: number, gain2: number, add: boolean) {
-  gain1 = fromQ24(gain1);
-  gain2 = fromQ24(gain2); // TODO: port Env
   const dgain = (gain2 - gain1) / N;
   let gain = gain1;
   let phase = phase0;
@@ -137,8 +133,6 @@ function FmOpKernel_compute_pure(output: Float32Array, phase0: number, freq: num
 function FmOpKernel_compute_fb(output: Float32Array, phase0: number, freq: number,
                             gain1: number, gain2: number,
                             fb_buf: number[], fb_shift: number, add: boolean) {
-  gain1 = fromQ24(gain1);
-  gain2 = fromQ24(gain2); // TODO: port Env
   const dgain = (gain2 - gain1) / N;
   let gain = gain1;
   let phase = phase0;
@@ -189,7 +183,7 @@ export class FmCore {
     }
 
     compute(output: Float32Array, params: FmOpParams[], algorithm: number, fb_buf: [number, number], feedback_shift: number): any {
-        const kLevelThresh = 1120;
+        const kLevelThresh = fromQ24(1120);
 
         const alg = algorithms[algorithm];
         const has_contents: [boolean, boolean, boolean] =  [ true, false, false ];

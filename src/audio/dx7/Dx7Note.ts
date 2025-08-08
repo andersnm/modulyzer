@@ -191,7 +191,7 @@ export class Dx7Note {
       const gain = Exp2.lookup(level - (14 * (1 << 24)));
       //int32_t gain = pow(2, 10 + level * (1.0 / (1 << 24)));
       this.params_[op].freq = fromQ24(Freqlut.lookup(this.basepitch_[op] + pitchmod));
-      this.params_[op].gain[1] = gain;
+      this.params_[op].gain[1] = fromQ24(gain);
     }
 
     this.core_.compute(buf, this.params_, this.algorithm_, this.fb_buf_, this.fb_shift_); 
