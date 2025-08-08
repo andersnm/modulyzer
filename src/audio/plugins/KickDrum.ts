@@ -1,5 +1,5 @@
 import { Player } from "../Player";
-import { describeUnit, Instrument, InstrumentFactory, VirtualParameter, WebAudioParameter } from "./InstrumentFactory";
+import { describeTable, describeUnit, Instrument, InstrumentFactory, VirtualParameter, WebAudioParameter } from "./InstrumentFactory";
 
 const oscTypeTable: OscillatorType[] = [ "sine", "square", "sawtooth", "triangle" ];
 
@@ -89,7 +89,7 @@ export class KickDrum extends Instrument {
             new VirtualParameter("Waveform", 0, oscTypeTable.length - 1, 0, "linear", (time, value) => {
                 // description: "sine, square, sawtooth, triangle",
                 this.oscNode.type = oscTypeTable[Math.round(value)];
-            }),
+            }, describeTable(oscTypeTable)),
         ];
     }
 

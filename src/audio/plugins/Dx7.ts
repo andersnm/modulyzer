@@ -30,7 +30,7 @@ export class Dx7 extends Instrument {
         // Enumerate parameters in well-known midi CC order
         for (let parameterDescriptor of parameterDescriptors) {
             const parameter = this.dx7Node.parameters.get(parameterDescriptor.name);
-            this.parameters.push(new WebAudioParameter(parameterDescriptor.name, parameter, "linear"));
+            this.parameters.push(new WebAudioParameter(parameterDescriptor.name, parameter, parameterDescriptor.curve ?? "linear", parameterDescriptor.describer));
         }
     }
 

@@ -1,5 +1,5 @@
 import { Player } from "../Player";
-import { Instrument, InstrumentFactory, VirtualParameter } from "./InstrumentFactory";
+import { describeTable, Instrument, InstrumentFactory, VirtualParameter } from "./InstrumentFactory";
 
 function noteToFreq(note) {
     let a = 440; //frequency of A (coomon value is 440Hz)
@@ -48,7 +48,7 @@ export class Oscillator extends Instrument {
             new VirtualParameter("Waveform", 0, oscTypeTable.length - 1, 0, "linear", (time, value) => {
                 // description: "sine, square, sawtooth, triangle",
                 this.oscNode.type = oscTypeTable[Math.round(value)];
-            }),
+            }, describeTable(oscTypeTable)),
         ];
 
     }

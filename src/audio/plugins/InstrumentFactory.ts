@@ -8,6 +8,15 @@ export function describeUnit(suffix: string = "", multiplier: number = 1) {
     return (value: number) => (value * multiplier).toFixed(2) + suffix;
 }
 
+export function describeTable(table: string[]) {
+    return (value: number) => table[Math.round(value)];
+}
+
+export interface AudioParamDescriptorEx extends AudioParamDescriptor {
+    describer?: DescriberType;
+    curve?: ParameterCurveType;
+}
+
 export abstract class Parameter {
     abstract get name(): string;
     abstract get minValue(): number;
@@ -75,7 +84,7 @@ export class VirtualParameter extends Parameter {
     setter: (time, value: number) => void;
     value: number;
 
-    constructor(name: string, minValue: number, maxValue: number, defaultValue: number, ccCurve: ParameterCurveType, setter: (time, value: number) => void) {
+    constructor(name: string, minValue: number, maxValue: number, defaultValue: number, ccCurve: ParameterCurveType, setter: (time, value: number) => void, describer?: DescriberType) {
         super();
         this.name = name;
         this.minValue = minValue;
@@ -83,6 +92,9 @@ export class VirtualParameter extends Parameter {
         this.defaultValue = defaultValue;
         this.ccCurve = ccCurve;
         this.setter = setter;
+        if (describer) {
+            this.describer = describer;
+        }
         this.value = defaultValue;
     }
 

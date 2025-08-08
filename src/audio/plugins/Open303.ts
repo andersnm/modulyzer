@@ -31,7 +31,7 @@ export class Open303 extends Instrument {
         // TODO: cutoff and decay to be exponential
         for (let parameterDescriptor of parameterDescriptors) {
             const parameter = this.open303Node.parameters.get(parameterDescriptor.name);
-            this.parameters.push(new WebAudioParameter(parameterDescriptor.name, parameter, "linear"));
+            this.parameters.push(new WebAudioParameter(parameterDescriptor.name, parameter, parameterDescriptor.curve ?? "linear", parameterDescriptor.describer));
         }
 
     }

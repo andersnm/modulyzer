@@ -1,6 +1,10 @@
+import { AudioParamDescriptorEx, describeTable } from "../plugins/InstrumentFactory";
+
+const lfoWaveTable = [ "Triangle", "Saw Down", "Saw Up", "Square", "Sine", "S&H" ];
+
 // Parameter descriptors are shared by dom side and audio worker side
 // Ordered by midi CC index
-export const parameterDescriptors: AudioParamDescriptor[] = [
+export const parameterDescriptors: AudioParamDescriptorEx[] = [
     { name: "op0rate0", defaultValue: 95, minValue: 0, maxValue: 99, automationRate: "k-rate" },
     { name: "op0rate1", defaultValue: 29, minValue: 0, maxValue: 99, automationRate: "k-rate" },
     { name: "op0rate2", defaultValue: 20, minValue: 0, maxValue: 99, automationRate: "k-rate" },
@@ -143,7 +147,7 @@ export const parameterDescriptors: AudioParamDescriptor[] = [
     { name: "pitchModDep", defaultValue: 0, minValue: 0, maxValue: 99, automationRate: "k-rate" },
     { name: "ampModDep", defaultValue: 0, minValue: 0, maxValue: 99, automationRate: "k-rate" },
     { name: "pitchModeSens", defaultValue: 3, minValue: 0, maxValue: 7, automationRate: "k-rate" },
-    { name: "wave", defaultValue: 4, minValue: 0, maxValue: 5, automationRate: "k-rate" },
+    { name: "wave", defaultValue: 4, minValue: 0, maxValue: 5, automationRate: "k-rate", describer: describeTable(lfoWaveTable) },
     { name: "sync", defaultValue: 0, minValue: 0, maxValue: 1, automationRate: "k-rate" },
     { name: "transpose", defaultValue: 24, minValue: 0, maxValue: 48, automationRate: "k-rate" }
 ];
