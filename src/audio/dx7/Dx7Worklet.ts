@@ -10,8 +10,8 @@ interface MidiMessage {
 
 class Dx7Processor extends AudioWorkletProcessor {
   synthUnit: SynthUnit;
-
   midiInput: MidiMessage[] = [];
+  quit: boolean = false;
 
   static get parameterDescriptors(): AudioParamDescriptor[] {
     return parameterDescriptors;
@@ -22,24 +22,27 @@ class Dx7Processor extends AudioWorkletProcessor {
 
     SynthUnit.Init(sampleRate);
 
-    console.log("dx7 inits");
     this.synthUnit = new SynthUnit();
 
     this.port.addEventListener("message", (ev) => {
-      // schedule midi messages with timestamp
-      // console.log("dx7 got midi", ev);
       if (ev.data.type === "midi") {
         this.midiInput.push(ev.data);
+      } else if (ev.data.type === "quit") {
+        this.quit = true;
       } else {
         throw new Error("Unknown message: " + ev.data.type);
       }
     });
 
     this.port.start();
-    console.log("dx7 started");
   }
 
   process(inputs: Float32Array[][], outputs: Float32Array[][], parameters: Record<string, Float32Array>) {
+    if (this.quit) {
+      this.port.close();
+      return false;
+    }
+
     if (!outputs.length || !outputs[0].length) {
       return true;
     }

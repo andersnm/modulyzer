@@ -37,4 +37,8 @@ export class Dx7 extends Instrument {
     processMidi(time: any, command: any, value: any, data: any) {
         this.dx7Node.port.postMessage({type:"midi", time, command, value, data});
     }
+
+    destroy() {
+        this.dx7Node.port.postMessage({type: "quit"});
+    }
 }

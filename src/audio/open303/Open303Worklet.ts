@@ -11,8 +11,8 @@ interface MidiMessage {
 
 class Open303Processor extends AudioWorkletProcessor {
   synthUnit: Open303;
-
   midiInput: MidiMessage[] = [];
+  quit: boolean = false;
 
   static get parameterDescriptors(): AudioParamDescriptor[] {
     return parameterDescriptors;
@@ -21,24 +21,32 @@ class Open303Processor extends AudioWorkletProcessor {
   constructor() {
     super();
 
-    console.log("303 inits");
     this.synthUnit = new Open303();
     this.synthUnit.setSampleRate(sampleRate);
-    this.synthUnit.setCutoff(500); // expToLin( 500.0,  314.0,  2394.0, 0.0,  1.0);
-    this.synthUnit.setResonance(50); // linToLin(  50.0,    0.0,   100.0, 0.0,  1.0);
+    this.synthUnit.setCutoff(500);
+    this.synthUnit.setResonance(50);
     this.synthUnit.setEnvMod(0.25)
     this.synthUnit.setDecay(400)
 
     this.port.addEventListener("message", (ev) => {
-      // schedule midi messages with timestamp
-      this.midiInput.push(ev.data);
+      if (ev.data.type === "midi") {
+        this.midiInput.push(ev.data);
+      } else if (ev.data.type === "quit") {
+        this.quit = true;
+      } else {
+        throw new Error("Unknown message: " + ev.data.type);
+      }
     });
 
     this.port.start();
-    console.log("303 started");
   }
 
   process(inputs: Float32Array[][], outputs: Float32Array[][], parameters: Record<string, Float32Array>) {
+    if (this.quit) {
+      this.port.close();
+      return false;
+    }
+
     if (!outputs.length || !outputs[0].length) {
       return true;
     }
@@ -95,28 +103,6 @@ class Open303Processor extends AudioWorkletProcessor {
             console.log("All Notes off", this.midiInput)
             this.midiInput.length = 0;
             this.synthUnit.allNotesOff();
-            break;
-          case 7:
-            this.synthUnit.setVolume(linToLin(midiMessage.data, 0.0, 1.0, -60.0, 0.0));
-            break;
-          case 74:
-            this.synthUnit.setCutoff(linToExp(midiMessage.data, 0.0, 127.0, 314.0,  2394.0));
-            break;
-          case 71:
-            this.synthUnit.setResonance(linToLin(midiMessage.data, 0.0, 127.0, 0.0, 100.0));
-            break;
-          case 81:
-            this.synthUnit.setEnvMod(linToLin(midiMessage.data, 0.0, 127.0, 0.0, 100.0));
-            break;
-          case 100:
-            this.synthUnit.setWaveform(linToLin(midiMessage.data, 0.0, 127.0, 0.0, 1.0));
-            break;
-          case 101:
-            this.synthUnit.setDecay(linToExp(midiMessage.data, 0.0, 127.0, 200.0, 2000.0));
-            this.synthUnit.setAccentDecay(linToExp(midiMessage.data, 0.0, 127.0, 200.0, 2000.0));
-            break;
-          case 102:
-            this.synthUnit.setAccent(linToLin(midiMessage.data, 0.0, 127.0, 0.0, 100.0));
             break;
         }
         break;

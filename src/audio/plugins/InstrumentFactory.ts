@@ -136,6 +136,10 @@ export abstract class Instrument extends EventTarget {
     disconnect(destination: AudioNode) {
         this.outputNode.disconnect(destination);
     }
+
+    destroy() {
+        // Override to shutdown f.ex audioworklets
+    }
 }
 
 export abstract class InstrumentFactory {

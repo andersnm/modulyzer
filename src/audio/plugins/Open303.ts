@@ -33,10 +33,13 @@ export class Open303 extends Instrument {
             const parameter = this.open303Node.parameters.get(parameterDescriptor.name);
             this.parameters.push(new WebAudioParameter(parameterDescriptor.name, parameter, parameterDescriptor.curve ?? "linear", parameterDescriptor.describer));
         }
-
     }
 
     processMidi(time: number, command: number, value: number, data: number) {
         this.open303Node.port.postMessage({type:"midi", time, command, value, data});
+    }
+
+    destroy() {
+        this.open303Node.port.postMessage({type: "quit"});
     }
 }

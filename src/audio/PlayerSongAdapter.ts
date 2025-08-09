@@ -210,6 +210,7 @@ export class PlayerSongAdapter {
 
         const ix = this.player.instruments.indexOf(instrument);
         this.player.instruments.splice(ix, 1);
+        instrument.destroy();
 
         this.instrumentMap.delete(i);
     };
