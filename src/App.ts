@@ -19,6 +19,7 @@ import { registerApplicationCommands } from "./commands/Application/Register";
 import { ContextMenuContainer } from "./nutz/ContextMenuContainer";
 import { KickDrumFactory } from "./audio/plugins/KickDrum";
 import { IndexedDBMap } from "./IndexedDBMap";
+import { InflictorFactory } from "./audio/plugins/Inflictor";
 
 class BpmInput implements IComponent {
 
@@ -86,7 +87,8 @@ export class Appl extends CommandHost implements IComponent {
         new Dx7Factory(),
         new WaveTrackerFactory(),
         new Open303Factory(),
-        new KickDrumFactory()
+        new KickDrumFactory(),
+        new InflictorFactory(),
     ];
 
     constructor() {

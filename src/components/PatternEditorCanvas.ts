@@ -441,7 +441,7 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
         if (note !== -1) {
             const instrument = cursorColumn.renderColumn.patternColumn.instrument;
             const playerInstrument = this.app.playerSongAdapter.instrumentMap.get(instrument);
-            playerInstrument.sendMidi(0, 0x90, note, 0);
+            playerInstrument.sendMidi(this.app.device.context.currentTime, 0x90, note, 0);
         }
     }
 

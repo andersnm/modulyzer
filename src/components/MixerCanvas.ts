@@ -218,7 +218,7 @@ export class MixerCanvas implements IComponent {
         console.log("key up note " + note)
         if (note !== -1) {
             const playerInstrument = this.app.playerSongAdapter.instrumentMap.get(this.selectedInstrument);
-            playerInstrument.sendMidi(0, 0x90, note, 0);
+            playerInstrument.sendMidi(this.app.device.context.currentTime, 0x90, note, 0);
             return true;
         }
 
