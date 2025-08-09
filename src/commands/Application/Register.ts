@@ -10,6 +10,7 @@ import { RecordWaveCommand } from './RecordWaveCommand';
 import { OpenSongCommand } from './OpenSongCommand';
 import { PlaySongCommand } from './PlaySongCommand';
 import { StopSongCommand } from './StopSongCommand';
+import { PlaySongFromCursorCommand } from "./PlaySongFromCursorCommand";
 import { ShowMixerCommand } from './ShowMixerCommand';
 import { ShowPinsCommand } from './ShowPinsCommand';
 import { ShowFileSystemConfigurationCommand } from './ShowFileSystemConfigurationCommand';
@@ -28,6 +29,7 @@ export function registerApplicationCommands(app: Appl) {
     app.registerCommand("open-song", "hgi-stroke hgi-folder-02", "Load Song", new OpenSongCommand(app));
     app.registerCommand("play-song", "hgi-stroke hgi-next", "Play Song", new PlaySongCommand(app));
     app.registerCommand("stop-song", "hgi-stroke hgi-record", "Stop Playing Song", new StopSongCommand(app));
+    app.registerCommand("play-song-from-cursor", null, null, new PlaySongFromCursorCommand(app));
 
     app.registerCommand("record-wave", "hgi-stroke hgi-record", "Start/Stop Recording", new RecordWaveCommand(app));
 
@@ -37,6 +39,7 @@ export function registerApplicationCommands(app: Appl) {
     app.registerHotkey("SHIFT+F3", "show-pins");
     app.registerHotkey("F4", "show-sequence-editor");
     app.registerHotkey("F5", "play-song");
+    app.registerHotkey("F6", "play-song-from-cursor");
     app.registerHotkey("F8", "stop-song");
     app.registerHotkey("F9", "show-wave-editor");
     app.registerHotkey("SHIFT+F9", "show-waves");
