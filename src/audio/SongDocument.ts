@@ -256,7 +256,15 @@ export class SongDocument extends EventTarget {
             const connection = this.connections[c];
             if (connection.from === instrument || connection.to === instrument) {
                 this.deleteConnection(connection);
-                this.connections.splice(c, 1);
+            } else {
+                c++;
+            }
+        }
+
+        for (let c = 0; c < this.sequenceColumns.length; ) {
+            const column = this.sequenceColumns[c];
+            if (column.instrument === instrument) {
+                this.deleteSequenceColumn(column);
             } else {
                 c++;
             }
@@ -571,10 +579,6 @@ export class SongDocument extends EventTarget {
     clearAll() {
         while (this.instruments.length) {
             this.deleteInstrument(this.instruments[this.instruments.length - 1]);
-        }
-
-        while (this.sequenceColumns.length) {
-            this.deleteSequenceColumn(this.sequenceColumns[this.sequenceColumns.length - 1]);
         }
     }
 
