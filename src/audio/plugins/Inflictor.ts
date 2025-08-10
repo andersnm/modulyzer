@@ -6,7 +6,7 @@ const oscTypeTable: OscillatorType[] = [ "sine", "square", "sawtooth", "triangle
 const biquadFilterTypeTable: BiquadFilterType[] = [ "lowpass", "highpass" ]
 
 export class InflictorFactory extends InstrumentFactory {
-    maxPolyphony = 16;
+    maxPolyphony = 8;
 
     get identifier(): string {
         return "@modulyzer/Inflictor";

@@ -1,5 +1,4 @@
 import { Appl } from "../../App";
-import { SaveAsPanel } from "../../components/SaveAsPanel";
 
 export class SaveSongCommand {
     constructor(private app: Appl) {
@@ -7,25 +6,23 @@ export class SaveSongCommand {
 
     async handle() {
 
-        const savePanel = new SaveAsPanel(this.app, this.app.song.name + ".json");
-
-        const result = await this.app.modalDialogContainer.showModal("Save As", savePanel);
-
-        if (!result) {
-            return;
-        }
+        const saveHandle = await window.showSaveFilePicker({
+            startIn: this.app.projectFile ?? this.app.homeDir,
+            types: [
+                {
+                    accept: {
+                        "application/json": [".json" ],
+                    }
+                }
+            ],
+            suggestedName: this.app.projectFile?.name ?? this.app.song.name,
+        });
 
         const json = this.app.song.exportProjectJson();
-        let blob = new Blob([JSON.stringify(json, null, 1)], {type: "application/json"});
+        const presetsFile = await saveHandle.createWritable({keepExistingData: false});
+        await presetsFile.write(JSON.stringify(json, null, " "));
+        await presetsFile.close();
 
-        var a = window.document.createElement("a");
-        window.document.body.appendChild(a);
-        a.style.display = "none";
-
-        var url = window.URL.createObjectURL(blob);
-        a.href = url;
-        a.download = savePanel.name;
-        a.click();
-        window.URL.revokeObjectURL(url);
+        this.app.projectFile = saveHandle;
     }
 }

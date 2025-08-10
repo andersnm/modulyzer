@@ -14,6 +14,7 @@ import { PlaySongFromCursorCommand } from "./PlaySongFromCursorCommand";
 import { ShowMixerCommand } from './ShowMixerCommand';
 import { ShowPinsCommand } from './ShowPinsCommand';
 import { ShowFileSystemConfigurationCommand } from './ShowFileSystemConfigurationCommand';
+import { ClearSongCommand } from './ClearSongCommand';
 
 export function registerApplicationCommands(app: Appl) {
     app.registerCommand("show-audio-configuration", null, null, new ShowAudioConfigurationCommand(app));
@@ -27,6 +28,7 @@ export function registerApplicationCommands(app: Appl) {
     app.registerCommand("show-pins", null, null, new ShowPinsCommand(app));
     app.registerCommand("save-song", "hgi-stroke hgi-download-04", "Save Song", new SaveSongCommand(app));
     app.registerCommand("open-song", "hgi-stroke hgi-folder-02", "Load Song", new OpenSongCommand(app));
+    app.registerCommand("clear-song", "hgi-stroke hgi-file-01", "Clear Song", new ClearSongCommand(app));
     app.registerCommand("play-song", "hgi-stroke hgi-next", "Play Song", new PlaySongCommand(app));
     app.registerCommand("stop-song", "hgi-stroke hgi-record", "Stop Playing Song", new StopSongCommand(app));
     app.registerCommand("play-song-from-cursor", null, null, new PlaySongFromCursorCommand(app));
@@ -44,6 +46,7 @@ export function registerApplicationCommands(app: Appl) {
     app.registerHotkey("F9", "show-wave-editor");
     app.registerHotkey("SHIFT+F9", "show-waves");
 
+    app.registerHotkey("CTRL+N", "clear-song");
     app.registerHotkey("CTRL+O", "open-song");
     app.registerHotkey("CTRL+S", "save-song");
 }

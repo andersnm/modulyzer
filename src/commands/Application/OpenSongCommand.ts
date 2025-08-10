@@ -6,25 +6,22 @@ export class OpenSongCommand implements ICommand {
     }
 
     async handle() {
-        const input = document.createElement("input");
-        input.type = "file";
-        input.accept = ".json";
+        const [ openHandle ] = await window.showOpenFilePicker({
+            startIn: this.app.projectFile ?? this.app.homeDir,
+            types: [
+                {
+                    accept: {
+                        "application/json": [".json" ],
+                    }
+                }
+            ],
+        });
 
-        input.onchange = (event: Event) => {
-            const target = event.target as HTMLInputElement;
-            const file = target.files?.[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = () => {
-                    const json = JSON.parse(reader.result as string);
-                    this.app.song.importProjectJson(json);
-                    // callback(reader.result);
-                };
-                reader.readAsText(file);
-            }
-        };
+        const songFile = await openHandle.getFile();
+        const buffer = await songFile.text();
+        const json = JSON.parse(buffer);
+        this.app.song.importProjectJson(json);
 
-        input.click();
-
+        this.app.projectFile = openHandle;
     }
 }

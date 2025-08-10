@@ -30,7 +30,7 @@ export class PasteCommand implements ICommand {
         const startCursorColumn = patternEditor.cursorColumns[patternEditor.cursorColumn];
         const renderIndex = patternEditor.renderColumns.indexOf(startCursorColumn.renderColumn);
 
-        deletePatternEvents(this.app.song, patternEditor.renderColumns, renderIndex, renderIndex + clipboardObject.width, patternEditor.cursorTime, patternEditor.cursorTime + clipboardObject.height);
+        deletePatternEvents(this.app.song, patternEditor.renderColumns, renderIndex, renderIndex + clipboardObject.width - 1, patternEditor.cursorTime, patternEditor.cursorTime + clipboardObject.height - 1);
 
         for (let i = 0; i < clipboardObject.width; i++) {
             const renderColumn = patternEditor.renderColumns[renderIndex + i];

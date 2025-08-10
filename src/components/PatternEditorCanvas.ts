@@ -2,7 +2,7 @@ import { DragTarget, formatHotkey, IComponent } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 import { Appl } from "../App";
 import { InstrumentDocument, PatternDocument } from "../audio/SongDocument";
-import { CursorColumnInfo, deleteValue, editNote, editNoteOff, editValue, editVelocity, formatNote, formatU8, getCursorColumnAt, getCursorColumnAtPosition, getCursorColumnIndex, getCursorColumns, getNoteForKey, getPatternRenderColumns, getRenderColumnPosition, getRenderColumnWidth, RenderColumnInfo } from "./PatternEditorHelper";
+import { CursorColumnInfo, deletePatternEvents, deleteValue, editNote, editNoteOff, editValue, editVelocity, formatNote, formatU8, getCursorColumnAt, getCursorColumnAtPosition, getCursorColumnIndex, getCursorColumns, getNoteForKey, getPatternRenderColumns, getRenderColumnPosition, getRenderColumnWidth, RenderColumnInfo } from "./PatternEditorHelper";
 
 interface PatternSelection {
     startColumn: number;
@@ -219,7 +219,11 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
                 this.moveCursor(1, 0, e.shiftKey);
                 return true;
             case "Delete":
-                this.deleteAtCursor();
+                if (this.selection) {
+                    this.deleteSelection();
+                } else {
+                    this.deleteAtCursor();
+                }
                 return true;
             case "Backspace":
                 if (this.moveCursor(0, -1)) {
@@ -407,6 +411,20 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
         // Returns true if all events were deleted at this position = can shift
         const events = cursorColumn.renderColumn.patternColumn.events.filter(e => e.channel === cursorColumn.channel && e.time === this.cursorTime);
         return events.length === 0;
+    }
+
+    deleteSelection() {
+        if (!this.selection) {
+            return;
+        }
+
+        const start = Math.min(this.selection.startColumn, this.selection.endColumn);
+        const end = Math.max(this.selection.startColumn, this.selection.endColumn);
+
+        const startRow = Math.min(this.selection.startRow, this.selection.endRow);
+        const endRow = Math.max(this.selection.startRow, this.selection.endRow);
+
+        deletePatternEvents(this.app.song, this.renderColumns, start, end, startRow, endRow);
     }
 
     private editNoteKeyDown(ev: KeyboardEvent, cursorColumn: CursorColumnInfo) {

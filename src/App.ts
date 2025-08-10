@@ -74,6 +74,7 @@ export class Appl extends CommandHost implements IComponent {
     playerSongAdapter: PlayerSongAdapter;
     wavePlayer: WavePlayer;
     homeDir: FileSystemDirectoryHandle;
+    projectFile: FileSystemFileHandle;
 
     modalDialogContainer: ModalDialogContainer;
     contextMenuContainer: ContextMenuContainer;
