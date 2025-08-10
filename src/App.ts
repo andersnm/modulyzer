@@ -20,6 +20,7 @@ import { ContextMenuContainer } from "./nutz/ContextMenuContainer";
 import { KickDrumFactory } from "./audio/plugins/KickDrum";
 import { IndexedDBMap } from "./IndexedDBMap";
 import { InflictorFactory } from "./audio/plugins/Inflictor";
+import { FilterFactory } from "./audio/plugins/Filter";
 
 class BpmInput implements IComponent {
 
@@ -89,6 +90,7 @@ export class Appl extends CommandHost implements IComponent {
         new Open303Factory(),
         new KickDrumFactory(),
         new InflictorFactory(),
+        new FilterFactory(),
     ];
 
     constructor() {
