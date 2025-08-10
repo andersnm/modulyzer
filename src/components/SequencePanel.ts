@@ -41,6 +41,11 @@ export class SequencePanel extends ViewFrame {
                 type: "button",
                 label: "Add Column",
                 action: "add-column",
+            },
+            {
+                type: "button",
+                label: "Delete Column",
+                action: "delete-column",
             }
         ]);
 

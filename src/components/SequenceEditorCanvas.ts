@@ -113,6 +113,7 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
         this.app.song.addEventListener("stopped", this.onStopped);
         this.app.song.addEventListener("updateDocument", this.onResize);
         this.app.song.addEventListener("createSequenceColumn", this.onResize);
+        this.app.song.addEventListener("deleteSequenceColumn", this.onResize);
         this.app.song.addEventListener("createSequenceEvent", this.onResize);
         this.app.song.addEventListener("updateSequenceEvent", this.onResize);
         this.app.song.addEventListener("deleteSequenceEvent", this.onResize);
@@ -123,6 +124,7 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
         this.app.song.removeEventListener("stopped", this.onStopped);
         this.app.song.removeEventListener("updateDocument", this.onResize);
         this.app.song.removeEventListener("createSequenceColumn", this.onResize);
+        this.app.song.removeEventListener("deleteSequenceColumn", this.onResize);
         this.app.song.removeEventListener("createSequenceEvent", this.onResize);
         this.app.song.removeEventListener("updateSequenceEvent", this.onResize);
         this.app.song.removeEventListener("deleteSequenceEvent", this.onResize);

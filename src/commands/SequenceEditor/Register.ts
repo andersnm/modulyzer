@@ -2,6 +2,7 @@ import { SequencePanel } from "../../components/SequencePanel";
 import { AddColumnCommand } from "./AddColumnCommand";
 import { CopyCommand } from "./CopyCommand";
 import { CutCommand } from "./CutCommand";
+import { DeleteColumnCommand } from "./DeleteColumnCommand";
 import { PasteCommand } from "./PasteCommand";
 import { SetLoopEndCommand } from "./SetLoopEndCommand";
 import { SetLoopStartCommand } from "./SetLoopStartCommand";
@@ -12,11 +13,13 @@ export function registerSequenceEditorCommands(component: SequencePanel) {
     component.registerCommand("paste", "hgi-stroke hgi-column-insert", "Paste", new PasteCommand(component));
 
     component.registerCommand("add-column", "hgi-stroke hgi-plus-sign", null, new AddColumnCommand(component));
+    component.registerCommand("delete-column", "hgi-stroke hgi-minus-sign", null, new DeleteColumnCommand(component));
     component.registerCommand("set-loop-start", null, null, new SetLoopStartCommand(component));
     component.registerCommand("set-loop-end", null, null, new SetLoopEndCommand(component));
 
     // component.registerHotkey("CTRL+A", "select-all");
     component.registerHotkey("CTRL++", "add-column");
+    component.registerHotkey("CTRL+-", "delete-column");
     component.registerHotkey("CTRL+X", "cut");
     component.registerHotkey("CTRL+C", "copy");
     component.registerHotkey("CTRL+V", "paste");
