@@ -86,21 +86,17 @@ class Open303Processor extends AudioWorkletProcessor {
     switch (midiMessage.command) {
       case 0x90:
         if (midiMessage.data !== 0) {
-          // console.log("303 note on", midiMessage)
           this.synthUnit.noteOn(midiMessage.value, midiMessage.data, 0);
         } else {
-          // console.log("303 note off (0x90)")
           this.synthUnit.noteOn(midiMessage.value, 0, 0);
         }
         break;
       case 0x80:
-        // console.log("303 note off (0x80)")
         this.synthUnit.noteOn(midiMessage.value, 0, 0);
         break;
       case 0xB0:
         switch (midiMessage.value) {
-          case 0x7b:
-            console.log("All Notes off", this.midiInput)
+          case 0x7B:
             this.midiInput.length = 0;
             this.synthUnit.allNotesOff();
             break;

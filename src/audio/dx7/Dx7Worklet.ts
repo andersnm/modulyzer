@@ -82,6 +82,14 @@ class Dx7Processor extends AudioWorkletProcessor {
       case 0x80:
         this.synthUnit.noteOff(value);
         break;
+      case 0xB0:
+        switch (value) {
+          case 0x7B:
+            this.midiInput.length = 0;
+            this.synthUnit.allNotesOff();
+            break;
+        }
+        break;
     }
   }
 }

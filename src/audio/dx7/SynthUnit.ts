@@ -181,4 +181,13 @@ export class SynthUnit {
       }
     }
   }
+
+  allNotesOff() {
+    for (let note = 0; note < max_active_notes; ++note) {
+      if (this.active_note_[note].keydown) {
+        this.active_note_[note].dx7_note.keyup();
+        this.active_note_[note].keydown = false;
+      }
+    }
+  }
 }
