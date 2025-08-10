@@ -222,16 +222,16 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
                 if (this.selection) {
                     this.deleteSelection();
                 } else {
-                    this.deleteAtCursor();
+                    if (this.deleteAtCursor()) {
+                        this.shiftEventsAfterCursor(-1);
+                    }
                 }
                 return true;
             case "Backspace":
-                if (this.moveCursor(0, -1)) {
-                    if (this.deleteAtCursor()) {
-                        this.shiftEventsAfterCursor(-1);
-                    } else {
-                        this.moveCursor(0, 1);
-                    }
+                if (this.selection) {
+                    this.deleteSelection();
+                } else {
+                    this.deleteAtCursor();
                 }
                 return true;
             case "Insert":
