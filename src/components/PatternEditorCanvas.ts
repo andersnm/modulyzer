@@ -377,7 +377,7 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
         const em = ctx.measureText("M");
         const fontHeight = em.fontBoundingBoxAscent + em.fontBoundingBoxDescent;
 
-        const visibleRows = Math.floor(this.canvas.height / fontHeight);
+        const visibleRows = Math.floor(this.canvas.height / fontHeight) - 1; // -1 for the heading
         if (visibleRows <= 0) return;
 
         // The +1 is to ensure the whole row is in view
@@ -573,7 +573,7 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
         let x = 0;
         let lastInstrument: InstrumentDocument;
 
-        const visibleRows = Math.floor(this.canvas.height / fontHeight);
+        const visibleRows = Math.floor(this.canvas.height / fontHeight) - 1; // -1 for the heading
         const totalRows = this.pattern?.duration ?? 0;
 
         const rowNumberWidth = this.fontEm.width * 5;

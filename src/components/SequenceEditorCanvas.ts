@@ -237,7 +237,7 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
     scrollIntoView() {
         const fontHeight = this.fontEm.fontBoundingBoxAscent + this.fontEm.fontBoundingBoxDescent;
 
-        const visibleRows = Math.floor(this.canvas.height / fontHeight);
+        const visibleRows = Math.floor(this.canvas.height / fontHeight) - 1; // -1 for the heading
         if (visibleRows <= 0) return;
 
         // The +1 is to ensure the whole row is in view
@@ -391,18 +391,29 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
             ctx.lineTo(sequenceX + columnWidth, this.canvas.height);
             ctx.stroke();
 
-            ctx.fillText(sequenceColumn.instrument.name, sequenceX, this.fontEm.fontBoundingBoxAscent);
+            ctx.fillText(sequenceColumn.instrument.name, sequenceX, this.fontEm.fontBoundingBoxAscent, columnWidth);
+
+            // Clip header
+            ctx.save();
+            ctx.rect(0, fontHeight, this.canvas.width, this.canvas.height - fontHeight)
+            ctx.clip();
 
             for (let sequenceEvent of sequenceColumn.events) {
-                const pattern = sequenceEvent.pattern;
 
+                const pattern = sequenceEvent.pattern;
                 const patternBeats = pattern.duration / pattern.subdivision;
+
+                if (sequenceEvent.time + patternBeats - this.scrollRow < 0) {
+                    continue;
+                }
 
                 ctx.fillStyle = "#444";
                 ctx.fillRect(sequenceX, (sequenceEvent.time - this.scrollRow) * fontHeight + fontHeight, columnWidth - 1, patternBeats * fontHeight);
                 ctx.fillStyle = "#FFF";
                 ctx.fillText(pattern.name, sequenceX, (sequenceEvent.time - this.scrollRow) * fontHeight + fontHeight + this.fontEm.fontBoundingBoxAscent)
             }
+
+            ctx.restore();
         }
 
         // Cursor
