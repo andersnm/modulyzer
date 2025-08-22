@@ -294,8 +294,6 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
     }
 
     moveCursor(dx: number, dy: number, withSelection: boolean = false) {
-        console.log("MOEV", dx, dy)
-
         if (!withSelection) {
             this.clearSelection();
         } else {

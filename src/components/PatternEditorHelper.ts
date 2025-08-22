@@ -249,6 +249,8 @@ export function editNote(song: SongDocument, patternColumn: PatternColumnDocumen
         } else {
             console.warn("Not updating note off, missing note off, invalid pattern event")
         }
+
+        return editNoteEvent;
     } else {
         // if previous note is a note -> split, find noteend and move it to here
         // if previous note is a noteoff or none -> insert plain
@@ -264,8 +266,9 @@ export function editNote(song: SongDocument, patternColumn: PatternColumnDocumen
             }
         }
 
-        song.createPatternEvent(patternColumn, time, note, 127, 0, channel);
+        const noteEvent = song.createPatternEvent(patternColumn, time, note, 127, 0, channel);
         song.createPatternEvent(patternColumn, time + 1, note, 0, 0, channel);
+        return noteEvent;
     }
 }
 

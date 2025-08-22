@@ -1,5 +1,5 @@
 import { Appl } from "../../App";
-import { deletePatternEvents, editNote, editNoteOff, editValue } from "../../components/PatternEditorHelper";
+import { deletePatternEvents, editNote, editNoteOff, editValue, editVelocity } from "../../components/PatternEditorHelper";
 import { PatternFrame } from "../../components/PatternFrame";
 import { PatternPanel } from "../../components/PatternPanel";
 import { ICommand } from "../../nutz";
@@ -46,8 +46,11 @@ export class PasteCommand implements ICommand {
 
                 if (renderColumn.type === "note") {
                     if (e.data0 !== 0) {
-                        editNote(this.app.song, patternColumn, patternEditor.cursorTime + e.time, renderColumn.channel, e.value);
-                        // TODO: velo <- data0
+                        const patternEvent = editNote(this.app.song, patternColumn, patternEditor.cursorTime + e.time, renderColumn.channel, e.value);
+                        if (patternEvent) {
+                            // velo <- data0
+                            editVelocity(this.app.song, patternEvent, e.data0);
+                        }
                     } else {
                         editNoteOff(this.app.song, patternColumn, patternEditor.cursorTime + e.time, renderColumn.channel);
                     }
