@@ -35,7 +35,15 @@ export class AudioDevice {
         await this.context.audioWorklet.addModule(dx7WorkletUrl);
         await this.context.audioWorklet.addModule(open303WorkletUrl);
 
-        const stream = await navigator.mediaDevices.getUserMedia({audio: {advanced: [{ deviceId: inputDeviceId}]}, video: false});
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+                echoCancellation: false,
+                noiseSuppression: false,
+                autoGainControl: false,
+                advanced: [{ deviceId: inputDeviceId}]
+            },
+            video: false,
+        });
         this.inputNode = this.context.createMediaStreamSource(stream);
 
         this.recorder = new Recorder(this.context);
