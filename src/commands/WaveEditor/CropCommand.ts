@@ -25,6 +25,6 @@ export class CropCommand implements ICommand {
         waveEditor.clearSelection();
         waveEditor.clearZoom();
 
-        this.app.song.updateWave(wave, wave.name, wave.note, null, null);
+        this.app.song.updateWave(wave, wave.name, wave.note, null, null, wave.sampleRate);
     }
 }

@@ -21,6 +21,6 @@ export class DeleteCommand implements ICommand {
         const wave = this.component.wave;
         wave.deleteRange(start, end);
         waveEditor.clearSelection();
-        this.app.song.updateWave(wave, wave.name, wave.note, null, wave.zoom);
+        this.app.song.updateWave(wave, wave.name, wave.note, null, wave.zoom, wave.sampleRate);
     }
 }

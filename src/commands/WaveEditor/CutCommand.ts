@@ -25,6 +25,6 @@ export class CutCommand implements ICommand {
 
         wave.deleteRange(start, end);
         waveEditor.clearSelection();
-        this.app.song.updateWave(wave, wave.name, wave.note, null, wave.zoom);
+        this.app.song.updateWave(wave, wave.name, wave.note, null, wave.zoom, wave.sampleRate);
     }
 }

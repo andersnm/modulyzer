@@ -29,7 +29,7 @@ export class PasteCommand implements ICommand {
 
         const wave = this.component.wave;
         wave.insertRange(offset, wavFile.channels);
-        this.app.song.updateWave(wave, wave.name, wave.note, wave.selection, wave.zoom);
+        this.app.song.updateWave(wave, wave.name, wave.note, wave.selection, wave.zoom, wave.sampleRate);
 
     }
 }

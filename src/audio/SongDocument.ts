@@ -507,11 +507,12 @@ export class SongDocument extends EventTarget {
         return wave;
     }
 
-    updateWave(wave: WaveDocument, name: string, note: number, selection: WaveRange, zoom: WaveRange) {
+    updateWave(wave: WaveDocument, name: string, note: number, selection: WaveRange, zoom: WaveRange, sampleRate: number) {
         wave.name = name;
         wave.note = note;
         wave.selection = selection;
         wave.zoom = zoom;
+        wave.sampleRate = sampleRate;
 
         this.dispatchEvent(new CustomEvent("updateWave", { detail: wave }));
     }
