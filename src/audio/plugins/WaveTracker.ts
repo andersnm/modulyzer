@@ -17,6 +17,8 @@ export class WaveTrackerFactory extends InstrumentFactory {
 interface WaveNode {
     wave: Wave;
     node: AudioBufferSourceNode;
+    gain: GainNode;
+    active: boolean;
 }
 
 export class WaveTracker extends Instrument {
@@ -63,7 +65,7 @@ export class WaveTracker extends Instrument {
         }
     }
 
-    noteOn(note, velocity, time) {
+    noteOn(note: number, velocity: number, time: number) {
         const wave = this.getWaveByNote(note);
         if (!wave) {
             return;
@@ -81,7 +83,7 @@ export class WaveTracker extends Instrument {
         const gainValue = Math.pow(10, dB / 20);
         waveGain.gain.setValueAtTime(gainValue, 0);
 
-        const waveNode = {wave, node};
+        const waveNode = {wave, node, gain: waveGain, active: true};
         this.nodes.push(waveNode); // there may be two same notes here, but will sort out after the "ended" event
 
         node.addEventListener("ended", () => {
@@ -97,25 +99,25 @@ export class WaveTracker extends Instrument {
         node.start(time);
     }
 
-    noteOff(note, time) {
-        for (let i = 0; i < this.nodes.length; ) {
+    noteOff(note: number, time: number) {
+        for (let i = 0; i < this.nodes.length; i++) {
             const n = this.nodes[i];
-            if (n.wave.note === note) {
-                n.node.stop(time);
-                this.nodes.splice(i, 1); // TODO: is it needed if "ended" also splices
+            if (n.wave.note === note && n.active) {
+                n.gain.gain.setTargetAtTime(0, time, 0.01);
+                n.node.stop(time + 0.1);
+                n.active = false;
                 break;
             }
-
-            i++;
         }
     }
 
     allNotesOff(time: number) {
-        for (let i = 0; i < this.nodes.length; ) {
+        for (let i = 0; i < this.nodes.length; i++) {
             const n = this.nodes[i];
-            n.node.stop(time);
+            if (n.active) {
+                n.active = false;
+                n.node.stop(time);
+            }
         }
-
-        this.nodes.length = 0;
     }
 }
