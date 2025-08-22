@@ -55,7 +55,11 @@ export class WaveTracker extends Instrument {
                 this.noteOff(value, time);
             }
         } else if (command === 0xB0) {
-            // controller #1;
+            switch (value) {
+                case 0x7B:
+                    this.allNotesOff(time);
+                    break;
+            }
         }
     }
 
@@ -104,5 +108,14 @@ export class WaveTracker extends Instrument {
 
             i++;
         }
+    }
+
+    allNotesOff(time: number) {
+        for (let i = 0; i < this.nodes.length; ) {
+            const n = this.nodes[i];
+            n.node.stop(time);
+        }
+
+        this.nodes.length = 0;
     }
 }

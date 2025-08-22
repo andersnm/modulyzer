@@ -68,6 +68,10 @@ export class WaveFrame extends GridFrame {
         }
 
         this.waveList.bindWaves(this.instrument.waves);
+
+        if (!this.wave) {
+            this.setWave(ev.detail);
+        }
     }
 
     onUpdateWave = (ev: CustomEvent<WaveDocument>) => {

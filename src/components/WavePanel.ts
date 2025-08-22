@@ -229,6 +229,11 @@ export class WavePanel extends ViewFrame {
     }
 
     setWave(wave: WaveDocument) {
+        this.waveEditor.clearZoom();
+        this.waveScroll.clearZoom();
+        this.waveEditor.clearSelection();
+        this.waveScroll.clearSelection();
+
         this.document = wave;
         if (wave) {
             this.waveEditor.buffers = this.document.buffers;
@@ -236,6 +241,10 @@ export class WavePanel extends ViewFrame {
         } else {
             this.waveEditor.buffers = this.waveScroll.buffers = [ new Float32Array(0) ] ;
         }
+
+        // TODO: invalidate when assigning buffers
+        this.waveEditor.redrawCanvas();
+        this.waveScroll.redrawCanvas();
 
         if (wave?.zoom) {
             this.waveEditor.setZoom(wave.zoom.start, wave.zoom.end);
