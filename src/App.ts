@@ -21,6 +21,7 @@ import { KickDrumFactory } from "./audio/plugins/KickDrum";
 import { IndexedDBMap } from "./IndexedDBMap";
 import { InflictorFactory } from "./audio/plugins/Inflictor";
 import { FilterFactory } from "./audio/plugins/Filter";
+import { ChorusFactory } from "./audio/plugins/Chorus";
 
 class BpmInput implements IComponent {
 
@@ -92,6 +93,7 @@ export class Appl extends CommandHost implements IComponent {
         new KickDrumFactory(),
         new InflictorFactory(),
         new FilterFactory(),
+        new ChorusFactory(),
     ];
 
     constructor() {
