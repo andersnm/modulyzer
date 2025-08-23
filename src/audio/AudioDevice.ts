@@ -37,10 +37,10 @@ export class AudioDevice {
 
         const stream = await navigator.mediaDevices.getUserMedia({
             audio: {
+                deviceId: { exact: inputDeviceId },
                 echoCancellation: false,
                 noiseSuppression: false,
                 autoGainControl: false,
-                advanced: [{ deviceId: inputDeviceId}]
             },
             video: false,
         });
