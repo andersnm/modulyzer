@@ -51,8 +51,8 @@ export class AudioDevice {
     }
 
     async close() {
-        // this.recorder.close();
         this.inputNode.disconnect(this.recorder.recordNode);
+        this.recorder.destroy();
 
         await this.context.close();
         this.context = null;
