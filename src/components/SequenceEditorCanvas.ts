@@ -83,13 +83,14 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
         this.container.tabIndex = 0;
 
         this.canvas = FlexCanvas();
-        this.canvas.classList.add("rounded-lg");
+        this.canvas.classList.add("rounded-lg", "touch-none"); // touch-none class fixes pointermove
 
         this.canvas.addEventListener("pointerdown", this.onMouseDown);
         this.canvas.addEventListener("pointerup", this.onMouseUp);
         this.canvas.addEventListener("pointermove", this.onMouseMove);
         this.canvas.addEventListener("contextmenu", this.onContextMenu);
         this.canvas.addEventListener("resize", this.onResize);
+        this.canvas.addEventListener("wheel", this.onMouseWheel);
 
         this.container.appendChild(this.canvas);
 
@@ -170,6 +171,17 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
 
         this.dragTarget.move(e);
     };
+
+    onMouseWheel = (e: WheelEvent) => {
+        e.preventDefault();
+
+        const fontHeight = this.fontEm.fontBoundingBoxAscent + this.fontEm.fontBoundingBoxDescent;
+        const visibleRows = Math.floor(this.canvas.height / fontHeight) - 1; // -1 for heading
+
+        let deltaRows = Math.sign(e.deltaY) * Math.max(1, Math.round(Math.abs(e.deltaY) / 40));
+        this.scrollRow = Math.max(0, Math.min(maxSequencerLength - visibleRows, this.scrollRow + deltaRows));
+        this.redrawCanvas();
+    }
 
     onContextMenu = (ev: MouseEvent) => {
         // console.log("onContextMenu")

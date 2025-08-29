@@ -92,7 +92,7 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
         this.container.addEventListener("keyup", this.onKeyUp);
 
         this.canvas = FlexCanvas();
-        this.canvas.classList.add("rounded-lg");
+        this.canvas.classList.add("rounded-lg", "touch-none"); // touch-none class fixes pointermove
 
         this.canvas.addEventListener("pointerdown", this.onMouseDown);
         this.canvas.addEventListener("pointerup", this.onMouseUp);

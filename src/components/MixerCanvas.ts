@@ -145,7 +145,7 @@ export class MixerCanvas implements IComponent {
         this.container.tabIndex = 0;
         
         this.canvas = FlexCanvas();
-        this.canvas.classList.add("rounded-lg");
+        this.canvas.classList.add("rounded-lg", "touch-none"); // touch-none class fixes pointermove
 
         this.canvas.addEventListener("pointerdown", this.onMouseDown);
         this.canvas.addEventListener("pointerup", this.onMouseUp);
@@ -235,6 +235,8 @@ export class MixerCanvas implements IComponent {
                     this.selectedInstrument = null;
                     this.selectedConnection = connection;
                     this.dragTarget = new DragConnectionGain(this, connection, e);
+                    this.canvas.setPointerCapture(e.pointerId);
+
                     this.redrawCanvas();
                 } else {
                     const p: PointType = [ e.offsetX, e.offsetY ];
@@ -253,6 +255,8 @@ export class MixerCanvas implements IComponent {
                 this.dragTarget = new DragMove(this, instrument, e);
                 console.log("CCK INSTRU", instrument)
             }
+
+            this.canvas.setPointerCapture(e.pointerId);
 
             this.redrawCanvas();
         }
@@ -368,6 +372,7 @@ export class MixerCanvas implements IComponent {
     }
 
     redrawCanvas() {
+        console.log("mixer redraw")
         const ctx = this.canvas.getContext("2d");
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
