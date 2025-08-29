@@ -36,33 +36,25 @@ export class MenuBar implements IComponent {
     }
 
     onMenuAction = (ev: CustomEvent) => {
-        const oldNode = this.menuContainer.childNodes[this.selectedIndex] as HTMLElement;
-        const oldIndex = this.selectedIndex;
-
         if (!this.hovering) {
-            this.selectedIndex = -1; // unless hover - grr
+            this.setSelectedIndex(-1);
         }
 
-        this.bindMenubarItemStyle(oldNode, oldIndex);
-
         this.menu.hide();
+        this.open = false;
+        window.removeEventListener("pointerdown", this.onGlobalPointerDown, true);
 
         this.app.executeCommand(ev.detail);
     };
 
-    onMenuKeyDown = (ev: CustomEvent) => {
+    onMenuKeyDown = (ev: CustomEvent<KeyboardEvent>) => {
         const keyEv = ev.detail;
 
-        const oldNode = this.menuContainer.childNodes[this.selectedIndex] as HTMLElement;
-        const oldIndex = this.selectedIndex;
-
         if (keyEv.key === "ArrowRight") {
-            this.selectedIndex = (this.selectedIndex + 1) % this.menuItems.length;
+            this.setSelectedIndex((this.selectedIndex + 1) % this.menuItems.length);
         } else if (keyEv.key === "ArrowLeft") {
-            this.selectedIndex = (this.selectedIndex + this.menuItems.length - 1) % this.menuItems.length;
+            this.setSelectedIndex((this.selectedIndex + this.menuItems.length - 1) % this.menuItems.length);
         }
-
-        this.bindMenubarItemStyle(oldNode, oldIndex);
 
         this.menu.hide();
 
@@ -75,14 +67,36 @@ export class MenuBar implements IComponent {
         this.bindMenubarItemStyle(el, this.selectedIndex);
     };
 
+    onGlobalPointerDown = (ev: PointerEvent) => {
+        if (
+            !this.menu.containsNode(ev.target as Node) &&
+            !this.menuContainer.contains(ev.target as Node)
+        ) {
+            this.setSelectedIndex(-1);
+            this.menu.hide();
+            this.open = false;
+            window.removeEventListener("pointerdown", this.onGlobalPointerDown, true);
+        }
+    };
+
+    setSelectedIndex(index: number) {
+        const oldNode = this.menuContainer.childNodes[this.selectedIndex] as HTMLElement;
+        const oldIndex = this.selectedIndex;
+
+        this.selectedIndex = index;
+        if (oldNode) {
+            this.bindMenubarItemStyle(oldNode, oldIndex);
+        }
+
+        const newNode = this.menuContainer.childNodes[index] as HTMLElement;
+        if (newNode) {
+            this.bindMenubarItemStyle(newNode, index);
+        }
+    }
+
     bindMenubarItemStyle(itemNode: HTMLElement, index: number) {
-        // const itemNode = this.menuContainer.childNodes[index] as HTMLElement;
-
-        // console.log("BINDITEM", itemNode, index)
         const hover = index == this.selectedIndex;
-
         itemNode.className = "px-1 rounded " + (hover ? "bg-neutral-700 text-neutral-100" : "bg-neutral-800 text-neutral-300"); // hover:bg-neutral-700 hover:text-neutral-100";
-        // itemNode.className = "bg-neutral-800 text-neutral-300 hover:bg-neutral-700 hover:text-neutral-100 px-1 rounded";
     }
 
     bindMenubarMenu(menu: MenuItem[]) {
@@ -110,6 +124,7 @@ export class MenuBar implements IComponent {
                 if (this.open) {
                     this.menu.hide();
                     this.open = false;
+                    window.removeEventListener("pointerdown", this.onGlobalPointerDown, true);
                     return;
                 }
 
@@ -120,40 +135,25 @@ export class MenuBar implements IComponent {
                 this.selectedIndex = itemIndex;
 
                 this.open = true;
+                window.addEventListener("pointerdown", this.onGlobalPointerDown, true);
             });
 
             itemNode.addEventListener("mouseleave", (ev) => {
-                const oldIndex = this.selectedIndex;
-                const oldNode = this.menuContainer.childNodes[this.selectedIndex] as HTMLElement;
-
                 this.hovering = false;
                 if (this.open) {
                     return;
                 }
 
-                this.selectedIndex = -1;
-                if (oldNode) {
-                    this.bindMenubarItemStyle(oldNode, oldIndex);
-                }
-
+                this.setSelectedIndex(-1);
             });
 
             itemNode.addEventListener("mouseenter", (ev) => {
 
-                // const el = this.menuContainer.childNodes[this.selectedIndex] as HTMLElement;
                 this.hovering = true;
 
-                // this.bindMenubarItemStyle()
-                const oldIndex = this.selectedIndex;
-                const oldNode = this.menuContainer.childNodes[this.selectedIndex] as HTMLElement;
-
                 const el = ev.target as HTMLElement;
-                this.selectedIndex  = Array.prototype.indexOf.call(this.menuContainer.childNodes, el); ;
-                if (oldNode) {
-                    this.bindMenubarItemStyle(oldNode, oldIndex);
-                }
-
-                this.bindMenubarItemStyle(el, this.selectedIndex);
+                const index = Array.prototype.indexOf.call(this.menuContainer.childNodes, el);
+                this.setSelectedIndex(index);
 
                 if (!this.open) {
                     return;

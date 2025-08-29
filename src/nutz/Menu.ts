@@ -1,5 +1,3 @@
-import { IComponent } from "./IComponent";
-
 export interface MenuItem {
     label: string;
     action?: any;
@@ -9,7 +7,7 @@ export interface MenuItem {
     items?: MenuItem[]; 
 }
 
-export class Menu extends EventTarget implements IComponent {
+export class Menu extends EventTarget {
     menuContainer: HTMLElement;
     inner: HTMLElement;
     submenu: Menu = null;
@@ -245,6 +243,14 @@ export class Menu extends EventTarget implements IComponent {
         }
     }
 
+    containsNode(node: Node) {
+        if (this.submenu?.containsNode(node)) {
+            return true;
+        }
+
+        return this.menuContainer.contains(node);
+    }
+
     onSubMenuAction = (ev: CustomEvent) => {
         this.dispatchEvent(new CustomEvent("action", { detail: ev.detail }));
     };
@@ -259,8 +265,4 @@ export class Menu extends EventTarget implements IComponent {
             this.dispatchEvent(new CustomEvent("keydown", { detail: ev.detail }));
         }
     };
-
-    getDomNode(): Node {
-        return null;
-    }
 };
