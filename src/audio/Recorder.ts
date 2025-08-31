@@ -1,72 +1,43 @@
-export interface RecorderBuffer {
-    buffer: Float32Array;
-    bufferPosition: number;
-}
+/*
+v1. allocated Float32Array all the time
+v2. used SharedArrayBuffer, deep rabbithole of cross-origin-isolation
+v3. uses transferable ArrayBuffer pool
+*/
 
-const bufferSize = 8192 * 4; // size of the shared ringbuffer
-const outputSize = bufferSize / 4; // return quarter chunks of the ringbuffer as they're ready
+const bufferSize = 8192 * 4; // number of samples per buffer in the pool - must be multiple of 128
 
 export class Recorder extends EventTarget {
     context: AudioContext;
     recordNode: AudioWorkletNode;
-    sharedState: SharedArrayBuffer;
-    sharedBuffers: SharedArrayBuffer[];
     buffers: Float32Array[];
-    state: Int32Array;
-    pollingInterval: number;
-    lastReadPosition: number = 0;
-    outBuffers: Float32Array[];
 
     constructor(context: AudioContext) {
         super();
         this.context = context;
 
-        this.sharedState = new SharedArrayBuffer(16); // write, 3 reserved * sizeof(int32)
-        this.sharedBuffers = [
-            new SharedArrayBuffer(bufferSize * 4), // * sizeof(float)
-            new SharedArrayBuffer(bufferSize * 4)
-        ];
-
-        this.state = new Int32Array(this.sharedState);
-        this.buffers = [
-            new Float32Array(this.sharedBuffers[0]),
-            new Float32Array(this.sharedBuffers[1]),
-        ];
-
-        this.outBuffers = [
-            new Float32Array(outputSize),
-            new Float32Array(outputSize)
-        ];
+        const bufferPool: ArrayBuffer[] = [];
+        for (let i = 0; i < 16; i++) {
+            bufferPool.push(new ArrayBuffer(bufferSize * Float32Array.BYTES_PER_ELEMENT));
+        }
 
         this.recordNode = new AudioWorkletNode(this.context, "record-processor");
-        this.recordNode.port.postMessage({ type: "init", buffers: this.sharedBuffers, state: this.sharedState });
+        this.recordNode.port.addEventListener("message", this.onMessage);
         this.recordNode.connect(context.destination);
 
-        // TODO: compute a poll interval such that a quarter of the ringbuffer is always ready
-        this.pollingInterval = window.setInterval(this.onPoll, 90);
+        this.recordNode.port.start();
+        this.recordNode.port.postMessage({ type: "init", buffers: bufferPool });
     }
 
-    onPoll = () => {
-        const writePosition = Atomics.load(this.state, 0);
-        const available = (writePosition >= this.lastReadPosition)
-            ? writePosition - this.lastReadPosition
-            : bufferSize - this.lastReadPosition + writePosition;
-
-        if (available < outputSize) return; // wait until enough data
-
-        const left = this.buffers[0].subarray(this.lastReadPosition, this.lastReadPosition + outputSize);
-        const right = this.buffers[1].subarray(this.lastReadPosition, this.lastReadPosition + outputSize);
-
-        this.lastReadPosition += outputSize;
-
-        this.dispatchEvent(new CustomEvent("input", {
-            detail: [left, right]
-        }));
-    }
+    onMessage = (ev: MessageEvent<{type, buffers}>) => {
+        if (ev.data.type === "input") {
+            const left = new Float32Array(ev.data.buffers[0]);
+            const right = new Float32Array(ev.data.buffers[1]);
+            this.dispatchEvent(new CustomEvent("input", { detail: [ left, right ] }));
+            this.recordNode.port.postMessage({ type: "recycle", buffers: ev.data.buffers }, ev.data.buffers);
+        }
+    };
 
     destroy() {
         this.recordNode.port.postMessage({ type: "quit" });
-        clearInterval(this.pollingInterval);
-        this.pollingInterval = undefined;
     }
 }
