@@ -1,3 +1,4 @@
+import { AudioDevice } from "./AudioDevice";
 import { Instrument, InstrumentFactory } from "./plugins/InstrumentFactory";
 import { PatternColumnType } from "./SongDocument";
 
@@ -110,7 +111,7 @@ class PatternPlayer {
 }
 
 export class Player extends EventTarget {
-    context: AudioContext;
+    device: AudioDevice;
     playing: boolean = false;
     startTime: number;
     currentTime: number;
@@ -126,10 +127,10 @@ export class Player extends EventTarget {
     loopEnd: number = 8;
     playingPatterns: PatternPlayer[] = [];
 
-    constructor(instrumentFactories: InstrumentFactory[], context: AudioContext) {
+    constructor(instrumentFactories: InstrumentFactory[], device: AudioDevice) {
         super();
         this.instrumentFactories = instrumentFactories;
-        this.context = context;
+        this.device = device;
     }
 
     getInstrumentFactoryById(id: string) {
@@ -153,14 +154,14 @@ export class Player extends EventTarget {
 
         this.currentTime = 0;
         this.currentBeat = startBeat;
-        this.startTime = this.context.currentTime;
+        this.startTime = this.device.context.currentTime;
 
         // schedule 1 second first, then reschedule after 500ms to fill so we remain 1 second ahead
         this.scheduleSequence(SCHEDULE_INTERVAL);
 
         this.playInterval = setInterval(() => {
 
-            const until = this.context.currentTime + SCHEDULE_INTERVAL;
+            const until = this.device.context.currentTime + SCHEDULE_INTERVAL;
             const duration = until - (this.startTime + this.currentTime);
 
             // console.log("Player time", this.currentTime, "Duration", duration, "Dvic time", this.context.currentTime, "relative to", this.startTime, " compute beat", this.currentBeat);

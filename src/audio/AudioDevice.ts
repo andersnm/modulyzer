@@ -12,6 +12,7 @@ export class AudioDevice {
     context: AudioContext | null = null;
     inputNode: MediaStreamAudioSourceNode;
     recorder: Recorder;
+    masterGainNode: GainNode
     inputMode: "stereo" | "left" | "right";
 
     constructor() {
@@ -48,6 +49,9 @@ export class AudioDevice {
 
         this.recorder = new Recorder(this.context);
         this.inputNode.connect(this.recorder.recordNode);
+
+        this.masterGainNode = new GainNode(this.context, { gain: 1.0 });
+        this.masterGainNode.connect(this.context.destination);
     }
 
     async close() {

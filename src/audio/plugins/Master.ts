@@ -1,3 +1,4 @@
+import { Player } from "../Player";
 import { Instrument, InstrumentFactory } from "./InstrumentFactory";
 
 export class MasterFactory extends InstrumentFactory {
@@ -5,18 +6,18 @@ export class MasterFactory extends InstrumentFactory {
         return "@modulyzer/Master";
     }
 
-    createInstrument(context: AudioContext): Instrument {
-        return new Master(context, this);
+    createInstrument(context: AudioContext, player: Player): Instrument {
+        return new Master(this, player);
     }
 }
 
 export class Master extends Instrument {
-    context: AudioContext;
+    player: Player;
 
-    constructor(context: AudioContext, factory: InstrumentFactory) {
+    constructor(factory: InstrumentFactory, player: Player) {
         super(factory);
         this.outputNode = null;
-        this.inputNode = context.destination;
+        this.inputNode = player.device.masterGainNode;
         this.parameters = [];
     }
 

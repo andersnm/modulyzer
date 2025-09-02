@@ -182,7 +182,7 @@ export class PlayerSongAdapter {
             return;
         }
 
-        const instrument = factory.createInstrument(this.player.context, this.player);
+        const instrument = factory.createInstrument(this.player.device.context, this.player);
 
         this.player.instruments.push(instrument);
         this.instrumentMap.set(i, instrument);
@@ -221,7 +221,7 @@ export class PlayerSongAdapter {
         const connection = new Connection();
         connection.from = this.instrumentMap.get(c.from);
         connection.to = this.instrumentMap.get(c.to);
-        connection.gainNode = this.player.context.createGain();
+        connection.gainNode = this.player.device.context.createGain();
         connection.gainNode.gain.setValueAtTime(c.gain, 0);
 
         connection.from.connect(connection.gainNode);
@@ -233,7 +233,7 @@ export class PlayerSongAdapter {
 
     onUpdateConnection = (ev: CustomEvent<ConnectionDocument>) => {
         const connection = this.connectionMap.get(ev.detail);
-        connection.gainNode.gain.linearRampToValueAtTime(ev.detail.gain, this.player.context.currentTime + 0.050);
+        connection.gainNode.gain.linearRampToValueAtTime(ev.detail.gain, this.player.device.context.currentTime + 0.050);
     }; 
 
     onDeleteConnection = (ev: CustomEvent<ConnectionDocument>) => {
@@ -255,7 +255,7 @@ export class PlayerSongAdapter {
 
         const instrument = this.instrumentMap.get(w.instrument);
 
-        const audioBuffer = this.player.context.createBuffer(w.buffers.length, w.sampleCount, w.sampleRate);
+        const audioBuffer = this.player.device.context.createBuffer(w.buffers.length, w.sampleCount, w.sampleRate);
         for (let i = 0; i < w.buffers.length; i++) {
             const buffer = audioBuffer.getChannelData(i);
             buffer.set(w.buffers[i]);
@@ -281,7 +281,7 @@ export class PlayerSongAdapter {
         wave.name = w.name;
 
         if (w.sampleCount !== wave.sampleCount) {
-            const audioBuffer = this.player.context.createBuffer(w.buffers.length, w.sampleCount, w.sampleRate);
+            const audioBuffer = this.player.device.context.createBuffer(w.buffers.length, w.sampleCount, w.sampleRate);
             for (let i = 0; i < w.buffers.length; i++) {
                 const buffer = audioBuffer.getChannelData(i);
                 buffer.set(w.buffers[i]);

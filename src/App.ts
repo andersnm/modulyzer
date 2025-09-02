@@ -23,6 +23,89 @@ import { InflictorFactory } from "./audio/plugins/Inflictor";
 import { FilterFactory } from "./audio/plugins/Filter";
 import { ChorusFactory } from "./audio/plugins/Chorus";
 
+class PeakMeter implements IComponent {
+    app: Appl;
+    container: HTMLDivElement;
+    canvas: HTMLCanvasElement;
+    analyserNode: AnalyserNode;
+    dataArray: Uint8Array;
+    intervalId: number | null = null;
+
+    constructor(app: Appl) {
+        this.app = app;
+
+        this.container = document.createElement("div");
+        this.container.classList.add("flex", "items-center", "w-48", "bg-neutral-900", "rounded");
+
+        this.canvas = document.createElement("canvas");
+        this.canvas.width = 192;
+        this.canvas.height = 32;
+        this.canvas.style.display = "block";
+        this.container.appendChild(this.canvas);
+    }
+
+    onUpdate = () => {
+        this.analyserNode.getByteTimeDomainData(this.dataArray as Uint8Array<ArrayBuffer>); // WTF
+
+        let max = 0;
+        for (let i = 0; i < this.dataArray.length; i++) {
+            max = Math.max(Math.abs(this.dataArray[i] - 128), max);
+        }
+
+        const level = Math.log10(1 + max) / Math.log10(128) * 100;
+
+        const width = this.canvas.width;
+        const height = this.canvas.height;
+        const fillWidth = (level / 100) * width;
+
+        const context = this.canvas.getContext("2d");
+        context.clearRect(0, 0, width, height);
+
+        const greenEnd = 0.7 * width;
+        if (fillWidth > 0) {
+            context.fillStyle = "green";
+            context.fillRect(0, 0, Math.min(fillWidth, greenEnd), height);
+        }
+
+        const yellowEnd = 0.8 * width;
+        if (fillWidth > greenEnd) {
+            context.fillStyle = "yellow";
+            context.fillRect(greenEnd, 0, Math.min(fillWidth, yellowEnd) - greenEnd, height);
+        }
+
+        if (fillWidth > yellowEnd) {
+            context.fillStyle = "red";
+            context.fillRect(yellowEnd, 0, fillWidth - yellowEnd, height);
+        }
+    }
+
+    setDevice() {
+        this.stopPolling();
+
+        this.analyserNode = new AnalyserNode(this.app.device.context, {
+            fftSize: 1024,
+        });
+
+        this.app.device.masterGainNode.connect(this.analyserNode);
+
+        const bufferLength = this.analyserNode.frequencyBinCount;
+        this.dataArray = new Uint8Array(bufferLength);
+
+        this.intervalId = window.setInterval(this.onUpdate, 25);
+    }
+
+    stopPolling() {
+        if (this.intervalId !== null) {
+            clearInterval(this.intervalId);
+            this.intervalId = null;
+        }
+    }
+
+    getDomNode(): Node {
+        return this.container;
+    }
+}
+
 class BpmInput implements IComponent {
 
     app: Appl;
@@ -65,6 +148,7 @@ export class Appl extends CommandHost implements IComponent {
     fullscreen: FullScreen;
     menuBar: MenuBar;
     bpmInput: BpmInput;
+    peakMeter: PeakMeter;
     toolbar: HTMLElement;
     frame: GridFrameContainer;
     mainTabs: TabFrameContainer;
@@ -137,8 +221,9 @@ export class Appl extends CommandHost implements IComponent {
         ]);
 
         this.bpmInput = new BpmInput(this);
+        this.peakMeter = new PeakMeter(this);
 
-        const toolbarContainer = HFlex([toolbar, this.bpmInput.getDomNode()], "gap-1");
+        const toolbarContainer = HFlex([toolbar, this.bpmInput.getDomNode(), this.peakMeter.getDomNode()], "gap-1");
 
         this.mainTabs = new TabFrameContainer(false);
 
@@ -226,8 +311,10 @@ export class Appl extends CommandHost implements IComponent {
     async setAudioDevice(outputDeviceId: string, inputDeviceId: string, latencySec: number) {
         await this.device.create(outputDeviceId, inputDeviceId, latencySec);
 
-        this.player = new Player(this.instrumentFactories, this.device.context);
+        this.player = new Player(this.instrumentFactories, this.device);
         this.playerSongAdapter.attachPlayer(this.player);
+
+        this.peakMeter.setDevice();
 
         await this.writeSetting("OutputDevice", outputDeviceId);
         await this.writeSetting("InputDevice", inputDeviceId);
