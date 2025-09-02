@@ -22,6 +22,7 @@ import { IndexedDBMap } from "./IndexedDBMap";
 import { InflictorFactory } from "./audio/plugins/Inflictor";
 import { FilterFactory } from "./audio/plugins/Filter";
 import { ChorusFactory } from "./audio/plugins/Chorus";
+import { CompressorFactory } from "./audio/plugins/Compressor";
 
 class PeakMeter implements IComponent {
     app: Appl;
@@ -178,6 +179,7 @@ export class Appl extends CommandHost implements IComponent {
         new InflictorFactory(),
         new FilterFactory(),
         new ChorusFactory(),
+        new CompressorFactory(),
     ];
 
     constructor() {
