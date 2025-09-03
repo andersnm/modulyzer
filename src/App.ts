@@ -24,6 +24,7 @@ import { FilterFactory } from "./audio/plugins/Filter";
 import { ChorusFactory } from "./audio/plugins/Chorus";
 import { CompressorFactory } from "./audio/plugins/Compressor";
 import { MasterizerFactory } from "./audio/plugins/Masterizer";
+import { SaturationFactory } from "./audio/plugins/Saturation";
 
 class PeakMeter implements IComponent {
     app: Appl;
@@ -182,6 +183,7 @@ export class Appl extends CommandHost implements IComponent {
         new ChorusFactory(),
         new CompressorFactory(),
         new MasterizerFactory(),
+        new SaturationFactory(),
     ];
 
     constructor() {
