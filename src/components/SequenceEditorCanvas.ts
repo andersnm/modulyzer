@@ -113,6 +113,7 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
         this.app.song.addEventListener("playing", this.onPlaying);
         this.app.song.addEventListener("stopped", this.onStopped);
         this.app.song.addEventListener("updateDocument", this.onResize);
+        this.app.song.addEventListener("setInstrumentMuted", this.onResize);
         this.app.song.addEventListener("createSequenceColumn", this.onResize);
         this.app.song.addEventListener("deleteSequenceColumn", this.onResize);
         this.app.song.addEventListener("createSequenceEvent", this.onResize);
@@ -124,6 +125,7 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
         this.app.song.removeEventListener("playing", this.onPlaying);
         this.app.song.removeEventListener("stopped", this.onStopped);
         this.app.song.removeEventListener("updateDocument", this.onResize);
+        this.app.song.removeEventListener("setInstrumentMuted", this.onResize);
         this.app.song.removeEventListener("createSequenceColumn", this.onResize);
         this.app.song.removeEventListener("deleteSequenceColumn", this.onResize);
         this.app.song.removeEventListener("createSequenceEvent", this.onResize);
@@ -401,7 +403,8 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
             ctx.lineTo(sequenceX + columnWidth, this.canvas.height);
             ctx.stroke();
 
-            ctx.fillText(sequenceColumn.instrument.name, sequenceX, this.fontEm.fontBoundingBoxAscent, columnWidth);
+            const name = sequenceColumn.instrument.muted ? "(" + sequenceColumn.instrument.name + ")" : sequenceColumn.instrument.name;
+            ctx.fillText(name, sequenceX, this.fontEm.fontBoundingBoxAscent, columnWidth);
 
             // Clip header
             ctx.save();

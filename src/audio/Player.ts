@@ -242,6 +242,10 @@ export class Player extends EventTarget {
         }
 
         for (let ev of patternEvents) {
+            if (ev.instrumenteer.muted) {
+                continue;
+            }
+
             const evTime = ev.time * (durationSec / durationBeats);
             const playTime = this.startTime + this.currentTime + evTime;
             if (ev.type === "midinote") {

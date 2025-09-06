@@ -6,6 +6,13 @@ import { PinsPanel } from "./PinsPanel";
 import { MenuItem } from "../menu/menu";
 import { getNoteForKey } from "./PatternEditorHelper";
 
+function colorWithBrightness(r: number, g: number, b: number, brightness: number) {
+    const red = Math.max(0, Math.min(255, Math.round(r * brightness)));
+    const green = Math.max(0, Math.min(255, Math.round(g * brightness)));
+    const blue = Math.max(0, Math.min(255, Math.round(b * brightness)));
+    return "rgb(" + red + ", " + green + ", " + blue + ")";
+}
+
 const boxWidth = 100;
 const boxHeight = 61; // 1.618
 const arrowSize = 10;
@@ -170,6 +177,7 @@ export class MixerCanvas implements IComponent {
         this.app.song.addEventListener("createInstrument", this.onResize);
         this.app.song.addEventListener("updateInstrument", this.onResize);
         this.app.song.addEventListener("deleteInstrument", this.onResize);
+        this.app.song.addEventListener("setInstrumentMuted", this.onResize);
         this.app.song.addEventListener("createConnection", this.onResize);
         this.app.song.addEventListener("deleteConnection", this.onResize);
     };
@@ -178,6 +186,7 @@ export class MixerCanvas implements IComponent {
         this.app.song.removeEventListener("createInstrument", this.onResize);
         this.app.song.removeEventListener("updateInstrument", this.onResize);
         this.app.song.removeEventListener("deleteInstrument", this.onResize);
+        this.app.song.removeEventListener("setInstrumentMuted", this.onResize);
         this.app.song.removeEventListener("createConnection", this.onResize);
         this.app.song.removeEventListener("deleteConnection", this.onResize);
     };
@@ -469,14 +478,16 @@ export class MixerCanvas implements IComponent {
                 ctx.lineWidth = 3;
             }
 
-            const hasIn = this.app.song.connections.find(c => c.to === instrument);
-            const hasOut = this.app.song.connections.find(c => c.from === instrument);
+            const instrumenteer = this.app.playerSongAdapter.instrumentMap.get(instrument);
+            const hasIn = !!instrumenteer.instrument.inputNode;
+            const hasOut = !!instrumenteer.instrument.outputNode;
+            const brightness = instrument.muted ? 0.6 : 1.0;
             if (hasIn && !hasOut) {
-                ctx.fillStyle = "#5C704C";
+                ctx.fillStyle = colorWithBrightness(92, 112, 76, brightness);
             } else if (hasIn && hasOut) {
-                ctx.fillStyle = "#101010";
+                ctx.fillStyle = colorWithBrightness(68, 68, 68, brightness);
             } else {
-                ctx.fillStyle = "#2A614B";
+                ctx.fillStyle = colorWithBrightness(42, 97, 75, brightness);
             }
 
             ctx.strokeStyle = "#000";
@@ -484,10 +495,11 @@ export class MixerCanvas implements IComponent {
             ctx.fillRect(c[0] - boxWidth / 2, c[1] - boxHeight / 2, boxWidth, boxHeight);
             ctx.strokeRect(c[0] - boxWidth / 2, c[1] - boxHeight / 2, boxWidth, boxHeight);
 
-            const mt = ctx.measureText(instrument.name);
+            const name = instrument.muted ? "(" + instrument.name + ")" : instrument.name;
+            const mt = ctx.measureText(name);
 
             ctx.fillStyle = "#FFF";
-            ctx.fillText(instrument.name, c[0] - mt.width / 2, c[1] + mt.fontBoundingBoxAscent - fontHeight / 2 );
+            ctx.fillText(name, c[0] - mt.width / 2, c[1] + mt.fontBoundingBoxAscent - fontHeight / 2 );
 
             ctx.restore();
 
