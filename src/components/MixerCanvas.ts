@@ -15,6 +15,10 @@ const connectionGainHandleHeight = 24;
 
 const instrumentMenu: MenuItem[] = [
     {
+        label: "Toggle Mute",
+        action: "mute",
+    },
+    {
         label: "Pins",
         action: "goto-pins",
     },
@@ -205,8 +209,8 @@ export class MixerCanvas implements IComponent {
         if (note !== -1) {
             // Send midi to instrumnt
             // TODO: stuck notes if canvas loses focus before key up
-            const playerInstrument = this.app.playerSongAdapter.instrumentMap.get(this.selectedInstrument);
-            playerInstrument.sendMidi(this.app.device.context.currentTime, 0x90, note, 127);
+            const instrumenteer = this.app.playerSongAdapter.instrumentMap.get(this.selectedInstrument);
+            instrumenteer.instrument.sendMidi(this.app.device.context.currentTime, 0x90, note, 127);
             return true;
         }
 
@@ -217,8 +221,8 @@ export class MixerCanvas implements IComponent {
         const note = getNoteForKey(ev.code, 4);
         console.log("key up note " + note)
         if (note !== -1) {
-            const playerInstrument = this.app.playerSongAdapter.instrumentMap.get(this.selectedInstrument);
-            playerInstrument.sendMidi(this.app.device.context.currentTime, 0x90, note, 0);
+            const instrumenteer = this.app.playerSongAdapter.instrumentMap.get(this.selectedInstrument);
+            instrumenteer.instrument.sendMidi(this.app.device.context.currentTime, 0x90, note, 0);
             return true;
         }
 

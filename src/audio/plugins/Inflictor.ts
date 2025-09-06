@@ -25,7 +25,6 @@ export class Inflictor extends Instrument {
     constructor(context: AudioContext, factory: InstrumentFactory) {
         super(factory);
         this.context = context;
-        this.factory = factory;
         this.notes = new Map();
         this.voicePool = Array.from({ length: factory.maxPolyphony }, () => new SynthNote(context));
 

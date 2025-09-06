@@ -12,11 +12,11 @@ export interface InstrumentColumn {
 
 /** Compute InstrumentColumn[] from an instrument and existing columns in a pattern. */
 export function convertPatternToInstrumentColumns(playerSongAdapter: PlayerSongAdapter, instrument: InstrumentDocument, columns: PatternColumnDocument[]) {
-    const playerInstrument = playerSongAdapter.instrumentMap.get(instrument);
+    const instrumenteer = playerSongAdapter.instrumentMap.get(instrument);
 
     const result: InstrumentColumn[] = [];
 
-    if (playerInstrument.factory.maxPolyphony > 0) {
+    if (instrumenteer.factory.maxPolyphony > 0) {
         const column = columns.find(c => c.type === "midinote");
         result.push({
             checked: !!column,
@@ -25,7 +25,7 @@ export function convertPatternToInstrumentColumns(playerSongAdapter: PlayerSongA
         });
     }
 
-    for (let parameter of playerInstrument.parameters) {
+    for (let parameter of instrumenteer.instrument.parameters) {
         const column = columns.find(c => c.type === "midiparameter" && c.parameterName === parameter.name);
 
         result.push({

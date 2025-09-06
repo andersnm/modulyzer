@@ -76,9 +76,9 @@ export class PinsPanel extends ViewFrame {
 
         this.instrument = instrument;
 
-        const playerInstrument = this.app.playerSongAdapter.instrumentMap.get(this.instrument);
+        const instrumenteer = this.app.playerSongAdapter.instrumentMap.get(this.instrument);
 
-        for (let parameter of playerInstrument.parameters) {
+        for (let parameter of instrumenteer.instrument.parameters) {
             const pinRow = new PinSlider(this.app, this.instrument, parameter.name);
             pinRow.setValue(parameter.getValue());
 

@@ -109,7 +109,6 @@ export class VirtualParameter extends Parameter {
 }
 
 export abstract class Instrument extends EventTarget {
-    factory: InstrumentFactory;
     inputNode: AudioNode | null;
     outputNode: AudioNode | null;
     waves: Wave[] = [];
@@ -118,7 +117,6 @@ export abstract class Instrument extends EventTarget {
     constructor(factory: InstrumentFactory) {
         super();
 
-        this.factory = factory;
         this.inputNode = null;
         this.outputNode = null;
     }
@@ -128,14 +126,6 @@ export abstract class Instrument extends EventTarget {
     }
 
     protected abstract processMidi(time: number, command: number, value: number, data: number): void;
-
-    connect(destination: AudioNode) {
-        this.outputNode.connect(destination);
-    }
-
-    disconnect(destination: AudioNode) {
-        this.outputNode.disconnect(destination);
-    }
 
     destroy() {
         // Override to shutdown f.ex audioworklets

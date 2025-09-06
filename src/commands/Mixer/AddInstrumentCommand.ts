@@ -25,8 +25,8 @@ export class AddInstrumentCommand implements ICommand {
         const instrument = this.app.song.createInstrument(instrumentId, this.getInstrumentName(instrumentId), clickPt[0], clickPt[1], {});
 
         // If instrument has notes: Create sequence column and empty pattern with default pattern columns
-        const playerInstrument = this.app.playerSongAdapter.instrumentMap.get(instrument);
-        if (playerInstrument.factory.maxPolyphony > 0) {
+        const instrumenteer = this.app.playerSongAdapter.instrumentMap.get(instrument);
+        if (instrumenteer.factory.maxPolyphony > 0) {
             const column = this.app.song.createSequenceColumn(instrument);
             const pa = this.app.song.createPattern(instrument, "00", 64, 4);
             this.app.song.createPatternColumn(pa, instrument, "midinote");

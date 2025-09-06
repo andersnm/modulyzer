@@ -64,6 +64,7 @@ export class InstrumentDocument {
     instrumentId: string;
     x: number = 0;
     y: number = 0;
+    muted: boolean = false;
     parameterValues: ParameterValueDictionary = {};
     waves: WaveDocument[] = [];
     patterns: PatternDocument[] = [];
@@ -296,6 +297,11 @@ export class SongDocument extends EventTarget {
     setInstrumentBank(instrument: InstrumentDocument, bank: Bank) {
         instrument.bank = bank;
         this.dispatchEvent(new CustomEvent<{instrument, bank}>("setInstrumentBank", { detail: { instrument, bank } }));
+    }
+
+    setInstrumentMuted(instrument: InstrumentDocument, muted: boolean) {
+        instrument.muted = muted;
+        this.dispatchEvent(new CustomEvent<{instrument}>("setInstrumentMuted", { detail: { instrument } }));
     }
 
     createConnection(from: InstrumentDocument, to: InstrumentDocument, gain: number = 1) {
@@ -591,6 +597,7 @@ export class SongDocument extends EventTarget {
                 ref: instrument.instrumentId,
                 x: instrument.x,
                 y: instrument.y,
+                muted: instrument.muted,
                 parameterValues: instrument.parameterValues,
                 waves: instrument.waves.map(wave => ({
                     name: wave.name,
@@ -655,6 +662,10 @@ export class SongDocument extends EventTarget {
 
         for (let jsonInstrument of json.instruments) {
             const i = this.createInstrument(jsonInstrument.ref, jsonInstrument.name, jsonInstrument.x, jsonInstrument.y, jsonInstrument.parameterValues);
+
+            if (jsonInstrument.muted) {
+                this.setInstrumentMuted(i, true);
+            }
 
             if (jsonInstrument.bank instanceof Object) {
                 const bank = importJsonPresets(jsonInstrument.bank.name, jsonInstrument.bank.presets);

@@ -1,11 +1,12 @@
 import { AudioDevice } from "./AudioDevice";
-import { Instrument, InstrumentFactory } from "./plugins/InstrumentFactory";
+import { Instrumenteer } from "./Instrumenteer";
+import { InstrumentFactory } from "./plugins/InstrumentFactory";
 import { PatternColumnType } from "./SongDocument";
 
 const SCHEDULE_INTERVAL = 0.5;
 
 export class PatternColumn {
-    instrument: Instrument;
+    instrumenteer: Instrumenteer;
     type: "midinote" | "midiparameter";
     parameterName?: string; // if type == "midiparameter"
     events: PatternEvent[] = [];
@@ -41,8 +42,8 @@ export class Sequence {
 }
 
 export class Connection {
-    from: Instrument;
-    to: Instrument;
+    from: Instrumenteer;
+    to: Instrumenteer;
     gainNode: GainNode;
 }
 
@@ -56,7 +57,7 @@ export class Wave {
 }
 
 interface PatternPlayerEvent {
-    instrument: Instrument;
+    instrumenteer: Instrumenteer;
     time: number;
     type: PatternColumnType;
     parameterName?: string;
@@ -90,7 +91,7 @@ class PatternPlayer {
 
     process(durationBeats: number, result: PatternPlayerEvent[]) {
         for (let column of this.pattern.columns) {
-            const instrument = column.instrument;
+            const instrumenteer = column.instrumenteer;
 
             for (let event of column.events) {
                 const eventTime = this.getSwingTime(event.time / this.pattern.subdivision);
@@ -98,7 +99,7 @@ class PatternPlayer {
                 if (eventTime >= this.currentBeat && eventTime < this.currentBeat + durationBeats) {
                     const deltaBeats = eventTime - this.currentBeat;
                     result.push({
-                        instrument, time: deltaBeats, type: column.type, parameterName: column.parameterName, value: event.value, data0: event.data0
+                        instrumenteer, time: deltaBeats, type: column.type, parameterName: column.parameterName, value: event.value, data0: event.data0
                     });
                 }
             }
@@ -118,7 +119,7 @@ export class Player extends EventTarget {
     currentBeat: number;
     instrumentFactories: InstrumentFactory[];
     patterns: Pattern[] = [];
-    instruments: Instrument[] = [];
+    instruments: Instrumenteer[] = [];
     connections: Connection[] = [];
 
     sequence: Sequence = new Sequence();
@@ -180,8 +181,8 @@ export class Player extends EventTarget {
         this.playInterval = null;
         this.playing = false;
 
-        for (let instrument of this.instruments) {
-            instrument.sendMidi(0, 0xB0, 0x7b, 0);
+        for (let instrumenteer of this.instruments) {
+            instrumenteer.instrument.sendMidi(0, 0xB0, 0x7b, 0);
         }
 
         this.playingPatterns.length = 0;
@@ -244,9 +245,9 @@ export class Player extends EventTarget {
             const evTime = ev.time * (durationSec / durationBeats);
             const playTime = this.startTime + this.currentTime + evTime;
             if (ev.type === "midinote") {
-                ev.instrument.sendMidi(playTime, 0x90, ev.value, ev.data0);
+                ev.instrumenteer.instrument.sendMidi(playTime, 0x90, ev.value, ev.data0);
             } else if (ev.type === "midiparameter") {
-                const parameter = ev.instrument.parameters.find(p => p.name === ev.parameterName);
+                const parameter = ev.instrumenteer.instrument.parameters.find(p => p.name === ev.parameterName);
                 if (!parameter) {
                     throw new Error("Unknown parameter " + ev.parameterName);
                 }

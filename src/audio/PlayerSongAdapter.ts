@@ -1,11 +1,12 @@
 import { Connection, Pattern, PatternColumn, PatternEvent, Player, SequenceColumn, SequenceEvent, Wave } from "./Player";
-import { Instrument, Parameter } from "./plugins/InstrumentFactory";
+import { Instrumenteer } from "./Instrumenteer";
+import { Parameter } from "./plugins/InstrumentFactory";
 import { ConnectionDocument, InstrumentDocument, PatternColumnDocument, PatternDocument, PatternEventDocument, SequenceColumnDocument, SequenceEventDocument, SetInstrumentParameterDetail, SongDocument, WaveDocument } from "./SongDocument";
 
 export class PlayerSongAdapter {
     player: Player; 
     song: SongDocument;
-    instrumentMap: Map<InstrumentDocument, Instrument> = new Map();
+    instrumentMap: Map<InstrumentDocument, Instrumenteer> = new Map();
     connectionMap: Map<ConnectionDocument, Connection>  = new Map();
     patternMap: Map<PatternDocument, Pattern>  = new Map();
     patternColumnMap: Map<PatternColumnDocument, PatternColumn>  = new Map();
@@ -30,6 +31,7 @@ export class PlayerSongAdapter {
         this.song.addEventListener("updateInstrument", this.onUpdateInstrument);
         this.song.addEventListener("deleteInstrument", this.onDeleteInstrument);
         this.song.addEventListener("setInstrumentParameter", this.onSetInstrumentParameter);
+        this.song.addEventListener("setInstrumentMuted", this.onSetInstrumentMuted);
         this.song.addEventListener("createConnection", this.onCreateConnection);
         this.song.addEventListener("updateConnection", this.onUpdateConnection);
         this.song.addEventListener("deleteConnection", this.onDeleteConnection);
@@ -123,6 +125,7 @@ export class PlayerSongAdapter {
         this.song.removeEventListener("updateInstrument", this.onUpdateInstrument);
         this.song.removeEventListener("deleteInstrument", this.onDeleteInstrument);
         this.song.removeEventListener("setInstrumentParameter", this.onSetInstrumentParameter);
+        this.song.removeEventListener("setInstrumentMuted", this.onSetInstrumentMuted);
         this.song.removeEventListener("createConnection", this.onCreateConnection);
         this.song.removeEventListener("updateConnection", this.onUpdateConnection);
         this.song.removeEventListener("deleteConnection", this.onDeleteConnection);
@@ -149,8 +152,8 @@ export class PlayerSongAdapter {
     }
 
     getParameter(instrument: InstrumentDocument, parameterName: string): Parameter {
-        const playerInstrument = this.instrumentMap.get(instrument);
-        return playerInstrument.parameters.find(p => p.name === parameterName);
+        const instrumenteer = this.instrumentMap.get(instrument);
+        return instrumenteer.instrument.parameters.find(p => p.name === parameterName);
     }
 
     onPlaying = () => {
@@ -169,8 +172,8 @@ export class PlayerSongAdapter {
 
     onSetInstrumentParameter = (ev: CustomEvent<SetInstrumentParameterDetail>) => {
         const parameterName = ev.detail.parameterName;
-        const playerInstrument = this.instrumentMap.get(ev.detail.instrument);
-        const parameter = playerInstrument.parameters.find(p => p.name === parameterName);
+        const instrumenteer = this.instrumentMap.get(ev.detail.instrument);
+        const parameter = instrumenteer.instrument.parameters.find(p => p.name === parameterName);
         parameter.setValue(0, ev.detail.value);
     };
 
@@ -183,9 +186,11 @@ export class PlayerSongAdapter {
         }
 
         const instrument = factory.createInstrument(this.player.device.context, this.player);
+        const instrumenteer = new Instrumenteer(factory, instrument, this.player.device.context);
+        instrumenteer.setMuted(i.muted);
 
-        this.player.instruments.push(instrument);
-        this.instrumentMap.set(i, instrument);
+        this.player.instruments.push(instrumenteer);
+        this.instrumentMap.set(i, instrumenteer);
 
         // Initialize player instrument parameter values, also initialize document-side parameters with defaults if not set
         for (let parameter of instrument.parameters) {
@@ -203,14 +208,20 @@ export class PlayerSongAdapter {
         // instrument.name = i.name;
     };
 
+    onSetInstrumentMuted = (ev: CustomEvent<{ instrument: InstrumentDocument }>) => {
+        const i = ev.detail.instrument;
+        const instrumenteer = this.instrumentMap.get(i);
+        instrumenteer.setMuted(i.muted);
+    }
+
     onDeleteInstrument = (ev: CustomEvent<InstrumentDocument>) => {
         const i = ev.detail;
 
-        const instrument = this.instrumentMap.get(i);
+        const instrumenteer = this.instrumentMap.get(i);
 
-        const ix = this.player.instruments.indexOf(instrument);
+        const ix = this.player.instruments.indexOf(instrumenteer);
         this.player.instruments.splice(ix, 1);
-        instrument.destroy();
+        instrumenteer.instrument.destroy();
 
         this.instrumentMap.delete(i);
     };
@@ -225,7 +236,7 @@ export class PlayerSongAdapter {
         connection.gainNode.gain.setValueAtTime(c.gain, 0);
 
         connection.from.connect(connection.gainNode);
-        connection.gainNode.connect(connection.to.inputNode);
+        connection.gainNode.connect(connection.to.instrument.inputNode);
         this.player.connections.push(connection);
 
         this.connectionMap.set(c, connection);
@@ -242,7 +253,7 @@ export class PlayerSongAdapter {
         const connection = this.connectionMap.get(c);
 
         connection.from.disconnect(connection.gainNode);
-        connection.gainNode.disconnect(connection.to.inputNode);
+        connection.gainNode.disconnect(connection.to.instrument.inputNode);
 
         const i = this.player.connections.indexOf(connection);
         this.player.connections.splice(i, 1);
@@ -253,7 +264,7 @@ export class PlayerSongAdapter {
     onCreateWave = (ev: CustomEvent<WaveDocument>) => {
         const w = ev.detail;
 
-        const instrument = this.instrumentMap.get(w.instrument);
+        const instrumenteer = this.instrumentMap.get(w.instrument);
 
         const audioBuffer = this.player.device.context.createBuffer(w.buffers.length, w.sampleCount, w.sampleRate);
         for (let i = 0; i < w.buffers.length; i++) {
@@ -268,7 +279,7 @@ export class PlayerSongAdapter {
         wave.note = w.note;
         wave.sampleCount = w.sampleCount;
         wave.sampleRate = w.sampleRate;
-        instrument.waves.push(wave);
+        instrumenteer.instrument.waves.push(wave);
 
         this.waveMap.set(w, wave);
     };
@@ -301,10 +312,10 @@ export class PlayerSongAdapter {
         const wave = ev.detail;
         const w = this.waveMap.get(wave);
 
-        const i = this.instrumentMap.get(wave.instrument);
+        const instrumenteer = this.instrumentMap.get(wave.instrument);
 
-        const index = i.waves.findIndex(e => e === w);
-        i.waves.splice(index, 1);
+        const index = instrumenteer.instrument.waves.findIndex(e => e === w);
+        instrumenteer.instrument.waves.splice(index, 1);
 
         this.waveMap.delete(wave);
     };
@@ -345,7 +356,7 @@ export class PlayerSongAdapter {
         const p = this.patternMap.get(pattern);
 
         const pc = new PatternColumn();
-        pc.instrument = this.instrumentMap.get(patternColumn.instrument);
+        pc.instrumenteer = this.instrumentMap.get(patternColumn.instrument);
         pc.type = patternColumn.type;
         pc.parameterName = patternColumn.parameterName;
         p.columns.push(pc);
