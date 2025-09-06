@@ -26,5 +26,6 @@ export function registerSequenceEditorCommands(component: SequencePanel) {
     component.registerHotkey("CTRL+C", "copy");
     component.registerHotkey("CTRL+V", "paste");
     component.registerHotkey("CTRL+B", "set-loop-start");
+    component.registerHotkey("CTRL+E", "set-loop-end");
     component.registerHotkey("CTRL+M", "mute");
 }

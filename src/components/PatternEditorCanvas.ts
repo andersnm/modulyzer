@@ -433,6 +433,10 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
             return false;
         }
 
+        if (ev.shiftKey || ev.ctrlKey || ev.altKey || ev.metaKey) {
+            return false;
+        }
+
         const note = getNoteForKey(ev.code, this.octave);
         if (note !== -1) {
             this.editNoteAtCursor(note);
@@ -523,11 +527,11 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
         if (cursorColumn.type === "u4-lower") {
             const patternEvent = patternColumn.events.find(e => e.channel === cursorColumn.channel && e.time == this.cursorTime);
             const newValue = ((patternEvent?.value??0) & 0xF0) | digit;
-            editValue(this.app.song, patternColumn, this.cursorTime, patternEvent.channel, newValue);
+            editValue(this.app.song, patternColumn, this.cursorTime, cursorColumn.channel, newValue);
         } else if (cursorColumn.type === "u4-upper") {
             const patternEvent = patternColumn.events.find(e => e.channel === cursorColumn.channel && e.time == this.cursorTime);
             const newValue = ((patternEvent?.value??0) & 0x0F) | (digit << 4);
-            editValue(this.app.song, patternColumn, this.cursorTime, patternEvent.channel, newValue);
+            editValue(this.app.song, patternColumn, this.cursorTime, cursorColumn.channel, newValue);
         } else if (cursorColumn.type == "u4-velo-lower") {
             const patternEvent = patternColumn.events.find(e => e.channel === cursorColumn.channel && e.time == this.cursorTime && e.data0 !== 0);
             const newValue = ((patternEvent?.data0??0) & 0xF0) | digit;

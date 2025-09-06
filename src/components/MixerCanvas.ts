@@ -213,6 +213,10 @@ export class MixerCanvas implements IComponent {
             return false;
         }
 
+        if (ev.shiftKey || ev.ctrlKey || ev.altKey || ev.metaKey) {
+            return false;
+        }
+
         const note = getNoteForKey(ev.code, 4);
         console.log("key down note " + note)
         if (note !== -1) {
