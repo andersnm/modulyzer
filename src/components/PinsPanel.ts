@@ -1,6 +1,7 @@
 import { Appl } from "../App";
 import { Bank, Preset, InstrumentDocument } from "../audio/SongDocument";
 import { registerPinsCommands } from "../commands/PinsList/Register";
+import { noteKeyDown, noteKeyStopAll, noteKeyUp } from "../KeyboardNoteHelper";
 import { presetMenu } from "../menu/menu";
 import { CommandButtonBar, ScrollableFlexContainer, StatusBar } from "../nutz";
 import { ViewFrame } from "../nutz/ViewFrame";
@@ -41,6 +42,10 @@ export class PinsPanel extends ViewFrame {
 
         // NOTE: Adding statusbar in ViewFrame's container
         this.container.appendChild(this.statusBar.getDomNode());
+
+        this.container.addEventListener("keydown", this.onKeyDown);
+        this.container.addEventListener("keyup", this.onKeyUp);
+        this.container.addEventListener("focusout", this.onFocusOut);
     }
 
     onPresetMenuClick = async (ev: MouseEvent) => {
@@ -57,6 +62,33 @@ export class PinsPanel extends ViewFrame {
         const index = parseInt(this.presetDropdown.presetSelect.value);
         const preset = this.instrument.bank.presets[index];
         this.setPreset(preset);
+    };
+
+    onKeyDown = (e: KeyboardEvent) => {
+        if (!this.instrument) {
+            return;
+        }
+
+        if (noteKeyDown(this.app, this.instrument, e)) {
+            return;
+        }
+    };
+
+    onKeyUp = (e: KeyboardEvent) => {
+        if (!this.instrument) {
+            return;
+        }
+
+        if (noteKeyUp(this.app, this.instrument,e)) {
+            return;
+        }
+    };
+
+    onFocusOut = (e: FocusEvent) => {
+        const nextFocused = e.relatedTarget as HTMLElement;
+        if (!nextFocused || !this.container.contains(nextFocused)) {
+            noteKeyStopAll(this.app);
+        }
     };
 
     unbind() {
