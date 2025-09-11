@@ -31,7 +31,7 @@ export class ContextMenuContainer {
     }
 
     // Returns the action property of the selected menu item, or null if canceled
-    async showPopup(x: number, y: number, menu: NutzMenuItem[]) {
+    async showPopup(x: number, y: number, menu: NutzMenuItem[]): Promise<string | null> {
 
         if (this.resolve) {
             this.resolve(null);

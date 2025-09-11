@@ -272,7 +272,7 @@ export class MixerCanvas implements IComponent {
         return;
     };
 
-    onContextMenu = (e: MouseEvent) => {
+    onContextMenu = async (e: MouseEvent) => {
         console.log("onContextMenu")
 
         const p: PointType = [ e.offsetX, e.offsetY ];
@@ -288,17 +288,34 @@ export class MixerCanvas implements IComponent {
             // create menu with instrument factory parameter
             const mixerMenu: MenuItem[] = [ {
                 label: "Create Instrument...",
-                action: "add-instrument"
+                items: []
+            },
+            {
+                label: "Create Effect...",
+                items: []
             }];
 
-            this.app.contextMenuContainer.show(this.commandHost, rc.left + e.offsetX, rc.top + e.offsetY, mixerMenu);
+            for (let factory of this.app.instrumentFactories) {
+                const index = factory.maxPolyphony > 0 ? 0 : 1;
+                mixerMenu[index].items.push({
+                    label: factory.identifier,
+                    action: factory.identifier,
+                });
+            }
+
+            mixerMenu[0].items.sort((a, b) => a.label.localeCompare(b.label));
+            mixerMenu[1].items.sort((a, b) => a.label.localeCompare(b.label));
+
             e.preventDefault();
+
+            const action = await this.app.contextMenuContainer.showPopup(rc.left + e.offsetX, rc.top + e.offsetY, mixerMenu);
+            await this.app.createInstrument(action, this.clickPt[0], this.clickPt[1]);
 
             return;
         }
 
-        this.app.contextMenuContainer.show(this.commandHost, rc.left + e.offsetX, rc.top + e.offsetY, instrumentMenu);
         e.preventDefault();
+        await this.app.contextMenuContainer.show(this.commandHost, rc.left + e.offsetX, rc.top + e.offsetY, instrumentMenu);
     };
 
     onDblClick = (e: MouseEvent) => {

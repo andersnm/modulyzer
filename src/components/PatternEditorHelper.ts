@@ -462,3 +462,21 @@ export function getNoteForKey(code: string, octave: number) {
 
     return -1;
 }
+
+export function getInstrumentName(instruments: InstrumentDocument[], instrumentId: string): string {
+    const ls = instrumentId.lastIndexOf("/");
+
+    const baseName = instrumentId.substring(ls + 1);
+    let name = baseName;
+    let counter = 2;
+    while (instrumentNameExists(instruments, name)) {
+        name = baseName + "-" + counter;
+        counter++;
+    }
+
+    return name;
+}
+
+export function instrumentNameExists(instruments: InstrumentDocument[], name: string) {
+    return instruments.findIndex(i => i.name === name) !== -1;
+}

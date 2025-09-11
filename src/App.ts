@@ -1,4 +1,4 @@
-import { ButtonToolbar, CommandHost, formatHotkey, FullScreen, GridFrameContainer, HFlex, ICommand, IComponent, StatusBar, TabFrameContainer, visitNodeAndChildNodesBreadth, visitNodeAndChildNodesDepth } from "./nutz";
+import { ButtonToolbar, CommandHost, formatHotkey, FullScreen, getOrCreateDirectory, GridFrameContainer, HFlex, ICommand, IComponent, StatusBar, TabFrameContainer, visitNodeAndChildNodesBreadth, visitNodeAndChildNodesDepth } from "./nutz";
 import { MenuBar } from "./nutz/Menubar";
 import { ModalDialogContainer } from "./nutz/ModalDialogContainer";
 import { mainMenu } from './menu/menu';
@@ -25,6 +25,8 @@ import { ChorusFactory } from "./audio/plugins/Chorus";
 import { CompressorFactory } from "./audio/plugins/Compressor";
 import { MasterizerFactory } from "./audio/plugins/Masterizer";
 import { SaturationFactory } from "./audio/plugins/Saturation";
+import { getInstrumentName } from "./components/PatternEditorHelper";
+import { importJsonPreset } from "./presetfile/JsonPreset";
 
 class PeakMeter implements IComponent {
     app: Appl;
@@ -381,6 +383,29 @@ export class Appl extends CommandHost implements IComponent {
         this.device.recorder.removeEventListener("input", this.onInput);
         this.recordWave = null;
         this.recordOffset = 0;
+    }
+
+    async createInstrument(instrumentId: string, x: number, y: number) {
+        const instrument = this.song.createInstrument(instrumentId, getInstrumentName(this.song.instruments, instrumentId), x, y, {});
+
+        // If instrument has notes: Create sequence column and empty pattern with default pattern columns
+        const instrumenteer = this.playerSongAdapter.instrumentMap.get(instrument);
+        if (instrumenteer.factory.maxPolyphony > 0) {
+            const column = this.song.createSequenceColumn(instrument);
+            const pa = this.song.createPattern(instrument, "00", 64, 4);
+            this.song.createPatternColumn(pa, instrument, "midinote");
+        }
+
+        // Load default preset bank if exist
+        const instrumentName = instrument.instrumentId.replace(/[\/\\:*?"<>|]/g, "_");
+
+        const instrumentPresetHandle = await getOrCreateDirectory(this.homeDir, "presets", instrumentName)
+
+        const bankHandle = await instrumentPresetHandle.getFileHandle("default.mprs")
+        const bank = await importJsonPreset(bankHandle);
+
+        console.log("Createing instrument with bank", bank)
+        this.song.setInstrumentBank(instrument, bank);
     }
 
     onInput = (ev: CustomEvent<Float32Array[]>) => {
