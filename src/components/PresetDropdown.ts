@@ -1,7 +1,6 @@
 import { Appl } from "../App";
 import { Preset } from "../audio/SongDocument";
-import { MenuItem } from "../menu/menu";
-import { Button, ICommandHost, IComponent } from "../nutz";
+import { Button, IComponent } from "../nutz";
 
 export class PresetDropdown implements IComponent {
     app: Appl;

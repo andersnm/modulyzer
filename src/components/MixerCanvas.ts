@@ -3,7 +3,7 @@ import { FlexCanvas } from "./FlexCanvas";
 import { Appl } from "../App";
 import { ConnectionDocument, InstrumentDocument } from "../audio/SongDocument";
 import { PinsPanel } from "./PinsPanel";
-import { MenuItem } from "../menu/menu";
+import { CommandMenuItem } from "../menu/menu";
 import { getNoteForKey } from "./PatternEditorHelper";
 import { noteKeyDown, noteKeyStopAll, noteKeyUp } from "../KeyboardNoteHelper";
 
@@ -21,7 +21,7 @@ const connectionGainHeight = 150;
 const connectionGainWidth = 32;
 const connectionGainHandleHeight = 24;
 
-const instrumentMenu: MenuItem[] = [
+const instrumentMenu: CommandMenuItem[] = [
     {
         label: "Toggle Mute",
         action: "mute",
@@ -286,7 +286,7 @@ export class MixerCanvas implements IComponent {
 
             // click mixer bg -> create insturment
             // create menu with instrument factory parameter
-            const mixerMenu: MenuItem[] = [ {
+            const mixerMenu: CommandMenuItem[] = [ {
                 label: "Create Instrument...",
                 items: []
             },
@@ -309,8 +309,11 @@ export class MixerCanvas implements IComponent {
             e.preventDefault();
 
             const action = await this.app.contextMenuContainer.showPopup(rc.left + e.offsetX, rc.top + e.offsetY, mixerMenu);
-            await this.app.createInstrument(action, this.clickPt[0], this.clickPt[1]);
+            if (!action || typeof action === "function") {
+                return;
+            }
 
+            await this.app.createInstrument(action, this.clickPt[0], this.clickPt[1]);
             return;
         }
 

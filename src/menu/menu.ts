@@ -7,14 +7,14 @@
     copy: "hgi-copy-01",
     paste: "hgi-column-insert",
 */
-export interface MenuItem {
+export interface CommandMenuItem {
     label: string;
     action?: string;
     checked?: boolean;
-    items?: MenuItem[];
+    items?: CommandMenuItem[];
 }
 
-export const fileMenu: MenuItem[] = [
+export const fileMenu: CommandMenuItem[] = [
     {
         label: "New...",
         action: "clear-song"
@@ -29,10 +29,10 @@ export const fileMenu: MenuItem[] = [
     },
 ];
 
-export const waveMenu: MenuItem[] = [
+export const waveMenu: CommandMenuItem[] = [
 ];
 
-export const editMenu: MenuItem[] = [
+export const editMenu: CommandMenuItem[] = [
     {
         label: "Undo",
         action: "YYY"
@@ -96,7 +96,7 @@ export const editMenu: MenuItem[] = [
 // TODO; dfin action lobally, wit labls (translatabl)
 // build mnus wit action rfs only
 
-const sidebarMenu: MenuItem[] = [
+const sidebarMenu: CommandMenuItem[] = [
     {
         label: "Waves",
         action: "show-waves"
@@ -111,7 +111,7 @@ const sidebarMenu: MenuItem[] = [
     },
 ];
 
-export const viewMenu: MenuItem[] = [
+export const viewMenu: CommandMenuItem[] = [
     {
         label: "Sequence",
         action: "show-sequence-editor"
@@ -144,7 +144,7 @@ export const viewMenu: MenuItem[] = [
 
 ];
 
-export const mainMenu: MenuItem[] = [
+export const mainMenu: CommandMenuItem[] = [
     {
         label: "File",
         action: "",
@@ -162,7 +162,7 @@ export const mainMenu: MenuItem[] = [
     },
 ];
 
-export const sequencerMenu: MenuItem[] = [
+export const sequencerMenu: CommandMenuItem[] = [
     {
         label: "Add Column",
         action: "sequence-add-track",
@@ -177,7 +177,7 @@ export const sequencerMenu: MenuItem[] = [
     }
 ];
 
-export const patternMenu: MenuItem[] = [
+export const patternMenu: CommandMenuItem[] = [
     {
         label: "Add Column...",
         action: "add-column"
@@ -192,7 +192,7 @@ export const patternMenu: MenuItem[] = [
     },
 ];
 
-export const patternListMenu: MenuItem[] = [
+export const patternListMenu: CommandMenuItem[] = [
     {
         label: "Edit",
         action: "goto-pattern-editor"
@@ -220,7 +220,7 @@ export const patternListMenu: MenuItem[] = [
     },
 ];
 
-export const waveListMenu: MenuItem[] = [
+export const waveListMenu: CommandMenuItem[] = [
     {
         label: "Edit",
         action: "goto-wave-editor"
@@ -252,7 +252,7 @@ export const waveListMenu: MenuItem[] = [
     },
 ];
 
-export const presetMenu: MenuItem[] = [
+export const presetMenu: CommandMenuItem[] = [
     {
         label: "Load local bank...",
         action: "import-local-bank",
@@ -267,7 +267,7 @@ export const presetMenu: MenuItem[] = [
     },
 ];
 
-export const waveInstrumentMenu: MenuItem[]= [
+export const waveInstrumentMenu: CommandMenuItem[]= [
     {
         label: "New Wave...",
         action: "create-wave",

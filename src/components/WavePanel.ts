@@ -5,7 +5,7 @@ import { ButtonToolbar, ICommandHost, StatusBar } from "../nutz";
 import { InstrumentDocument, WaveDocument } from "../audio/SongDocument";
 import { ViewFrame } from "../nutz/ViewFrame";
 import { formatNote } from "./PatternEditorHelper";
-import { MenuItem as NutzMenuItem } from "../nutz";
+import { MenuItem } from "../nutz";
 import { showCreateNewWaveDialog } from "../dialogs/CreateNewWaveDialog";
 
 export class WavePanel extends ViewFrame {
@@ -115,10 +115,10 @@ export class WavePanel extends ViewFrame {
 
     onStatusBarInstrumentContextMenu = async (ev: MouseEvent) => {
         const instruments = this.getWaveTableInstruments();
-        const menuItems: NutzMenuItem[] = [];
+        const menuItems: MenuItem[] = [];
         for (let instrument of instruments) {
 
-            const waveItems: NutzMenuItem[] = [
+            const waveItems: MenuItem[] = [
                 {
                     label: "Create new...",
                     action: () => this.statusCreateNewAndGotoWave(instrument),
@@ -142,7 +142,7 @@ export class WavePanel extends ViewFrame {
 
         const rc = (ev.target as HTMLElement).getBoundingClientRect();
         const action = await this.app.contextMenuContainer.showPopup(rc.left + ev.offsetX, rc.top + ev.offsetY, menuItems);
-        if (!action) {
+        if (!action || typeof action !== "function") {
             return false;
         }
 

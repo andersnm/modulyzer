@@ -1,11 +1,11 @@
-import { MenuItem } from "../menu/menu";
-import { MenuItem as NutzMenuItem } from "./Menu";
+import { CommandMenuItem } from "../menu/menu";
+import { MenuItem } from "./Menu";
 import { ICommandHost } from "./CommandHost";
 import { IComponent } from "./IComponent";
 import { Menu } from "./Menu";
 
-export function convertNutzMenu(app: ICommandHost, menu: MenuItem[]): NutzMenuItem[] {
-    const nutzMenu: NutzMenuItem[] = menu.map(m => ({
+export function convertNutzMenu(app: ICommandHost, menu: CommandMenuItem[]): MenuItem[] {
+    const nutzMenu: MenuItem[] = menu.map(m => ({
         label: m.label,
         action: m.action,
         icon: app.getCommand(m.action)?.icon,
@@ -24,7 +24,7 @@ export class MenuBar implements IComponent {
     selectedIndex: number = -1;
     open: boolean = false;
     hovering: boolean = false;
-    menuItems: MenuItem[] = null;
+    menuItems: CommandMenuItem[] = null;
 
     constructor(app: ICommandHost) {
         this.app = app;
@@ -99,7 +99,7 @@ export class MenuBar implements IComponent {
         itemNode.className = "px-1 rounded " + (hover ? "bg-neutral-700 text-neutral-100" : "bg-neutral-800 text-neutral-300"); // hover:bg-neutral-700 hover:text-neutral-100";
     }
 
-    bindMenubarMenu(menu: MenuItem[]) {
+    bindMenubarMenu(menu: CommandMenuItem[]) {
 
         this.menuItems = menu;
         while (this.menuContainer.childNodes.length > 0) this.menuContainer.removeChild(this.menuContainer.lastChild);
@@ -168,7 +168,7 @@ export class MenuBar implements IComponent {
         }
     }
 
-    showMenu(x: number, y: number, menu: MenuItem[]) {
+    showMenu(x: number, y: number, menu: CommandMenuItem[]) {
         // translate to menu component's menuitem with shortcut, icon etc from the command
         const nutzMenu = convertNutzMenu(this.app, menu)
         this.menu.bindMenu(nutzMenu);

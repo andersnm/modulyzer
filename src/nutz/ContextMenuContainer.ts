@@ -1,7 +1,6 @@
-import { MenuItem } from "../menu/menu";
+import { CommandMenuItem } from "../menu/menu";
 import { ICommandHost } from "./CommandHost";
-import { IComponent } from "./IComponent";
-import { Menu, MenuItem as NutzMenuItem } from "./Menu";
+import { Menu, MenuItem } from "./Menu";
 import { convertNutzMenu } from "./Menubar";
 
 export class ContextMenuContainer {
@@ -17,13 +16,13 @@ export class ContextMenuContainer {
         this.menu.addEventListener("keydown", this.onMenuKeyDown);
     }
 
-    async show(app: ICommandHost, x: number, y: number, menu: MenuItem[]) {
+    async show(app: ICommandHost, x: number, y: number, menu: CommandMenuItem[]) {
         const nutzMenu = convertNutzMenu(app, menu)
 
         this.commandHost = app;
 
         const action = await this.showPopup(x, y, nutzMenu);
-        if (!action) {
+        if (!action || typeof action === "function") {
             return null;
         }
 
@@ -31,7 +30,7 @@ export class ContextMenuContainer {
     }
 
     // Returns the action property of the selected menu item, or null if canceled
-    async showPopup(x: number, y: number, menu: NutzMenuItem[]): Promise<string | null> {
+    async showPopup(x: number, y: number, menu: MenuItem[]): Promise<string | (() => void) | null> {
 
         if (this.resolve) {
             this.resolve(null);

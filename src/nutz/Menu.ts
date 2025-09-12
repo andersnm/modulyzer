@@ -1,6 +1,6 @@
 export interface MenuItem {
     label: string;
-    action?: any;
+    action?: string | (() => void);
     icon?: string;
     shortcut?: string; //
     checked?: boolean;
