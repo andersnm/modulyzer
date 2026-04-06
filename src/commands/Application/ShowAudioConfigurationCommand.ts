@@ -16,12 +16,13 @@ export class ShowAudioConfigurationCommand {
         audioConfiguration.cancelable = !!this.app.device.context;
         audioConfiguration.currentOutputDeviceId = this.app.device.outputDeviceId;
         audioConfiguration.currentInputDeviceId = this.app.device.inputDeviceId;
+        audioConfiguration.inputMode = this.app.device.inputMode;
 
         const result = await this.app.modalDialogContainer.showModal("Audio Configuration", audioConfiguration, false);
         if (!result) {
             return;
         }
 
-        await this.app.setAudioDevice(audioConfiguration.currentOutputDeviceId, audioConfiguration.currentInputDeviceId, audioConfiguration.latencySec);
+        await this.app.setAudioDevice(audioConfiguration.currentOutputDeviceId, audioConfiguration.currentInputDeviceId, audioConfiguration.latencySec, audioConfiguration.inputMode);
     }
 }

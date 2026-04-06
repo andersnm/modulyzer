@@ -27,7 +27,7 @@ export class AudioConfiguration implements IComponent {
     currentInputDeviceId: string;
     currentOutputDeviceId: string;
     microphonePermission: string = "denied";
-    inputMode: string = "stereo";
+    inputMode: "stereo" | "left" | "right" = "stereo";
     currentInputSampleRate = 44100;
     currentInputChannelCount = 2;
     latencySec = 0.5;
@@ -41,6 +41,7 @@ export class AudioConfiguration implements IComponent {
     outputDevicesSelect: HTMLSelectElement;
     inputDevicesSelect: HTMLSelectElement;
     latencySelect: HTMLSelectElement;
+    inputModeSelect: HTMLSelectElement;
     buttonBar: ModalButtonBar;
 
     constructor(app: Appl) {
@@ -95,6 +96,7 @@ export class AudioConfiguration implements IComponent {
         this.bindOutputDevices(outputDevices)
         this.bindInputDevices(inputDevices)
         this.bindLatency();
+        this.bindInputMode();
         this.bindButtons();
 
         this.bind();
@@ -116,6 +118,10 @@ export class AudioConfiguration implements IComponent {
             channelCount: capabilities.channelCount,
         } as DeviceInfo;
     };
+
+    bindInputMode() {
+        this.inputModeSelect.value = this.inputMode;
+    }
 
     bindLatency() {
         while (this.latencySelect.options.length > 0) this.latencySelect.options.remove(0);
@@ -228,11 +234,32 @@ export class AudioConfiguration implements IComponent {
 
         const latencyGroup = FormGroup("Latency", this.latencySelect);
 
+        this.inputModeSelect = document.createElement("select");
+        this.inputModeSelect.className = "w-full rounded-lg p-1 bg-neutral-800";
+        this.inputModeSelect.addEventListener("change", () => {
+            this.inputMode = this.inputModeSelect.value as "stereo" | "left" | "right";
+        });
+
+        const inputModeOptions: { value: string; label: string }[] = [
+            { value: "stereo", label: "Stereo" },
+            { value: "left", label: "Left Channel Only" },
+            { value: "right", label: "Right Channel Only" },
+        ];
+        for (const { value, label } of inputModeOptions) {
+            const opt = document.createElement("option");
+            opt.value = value;
+            opt.label = label;
+            this.inputModeSelect.options.add(opt);
+        }
+
+        const inputModeGroup = FormGroup("Mono Input Channel", this.inputModeSelect);
+
         this.buttonBar = new ModalButtonBar(this.app);
 
         this.configForm.appendChild(outputGroup);
         this.configForm.appendChild(inputGroup);
         this.configForm.appendChild(latencyGroup);
+        this.configForm.appendChild(inputModeGroup);
 
         this.configForm.appendChild(this.buttonBar.getDomNode());
     }

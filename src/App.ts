@@ -302,6 +302,7 @@ export class Appl extends CommandHost implements IComponent {
         this.device.outputDeviceId = await this.readSetting<string>("OutputDevice") ?? null;
         this.device.inputDeviceId = await this.readSetting<string>("InputDevice") ?? null;
         this.device.latencySec = await this.readSetting<number>("Latency") ?? 125;
+        this.device.inputMode = await this.readSetting<"stereo" | "left" | "right">("InputMode") ?? "stereo";
 
         await this.executeCommand("show-audio-configuration");
     }
@@ -316,7 +317,8 @@ export class Appl extends CommandHost implements IComponent {
         await handleMap.set(key, value);
     }
 
-    async setAudioDevice(outputDeviceId: string, inputDeviceId: string, latencySec: number) {
+    async setAudioDevice(outputDeviceId: string, inputDeviceId: string, latencySec: number, inputMode: "stereo" | "left" | "right" = "stereo") {
+        this.device.inputMode = inputMode;
         await this.device.create(outputDeviceId, inputDeviceId, latencySec);
 
         this.player = new Player(this.instrumentFactories, this.device);
@@ -327,6 +329,7 @@ export class Appl extends CommandHost implements IComponent {
         await this.writeSetting("OutputDevice", outputDeviceId);
         await this.writeSetting("InputDevice", inputDeviceId);
         await this.writeSetting("Latency", latencySec);
+        await this.writeSetting("InputMode", inputMode);
     }
 
     render() {
@@ -420,16 +423,15 @@ export class Appl extends CommandHost implements IComponent {
             return;
         }
 
-        this.song.replaceWaveBuffer(this.recordWave, this.recordOffset, inputs);
-
-        for (let i = 0; i < this.recordWave.buffers.length; i++) {
-            const output = this.recordWave.buffers[i];
-            const input = inputs[i % inputs.length];
-
-            for (let j = 0; j < input.length; j++) {
-                output[this.recordOffset + j] = input[j];
-            }
+        // For mono waves, select the channel specified by inputMode.
+        // "stereo" and "left" both default to channel 0 (left); "right" selects channel 1.
+        let effectiveInputs = inputs;
+        if (this.recordWave.buffers.length === 1) {
+            const channelIndex = this.device.inputMode === "right" && inputs.length > 1 ? 1 : 0;
+            effectiveInputs = [inputs[channelIndex]];
         }
+
+        this.song.replaceWaveBuffer(this.recordWave, this.recordOffset, effectiveInputs);
 
         this.recordOffset += inputLength;
         // notify document
