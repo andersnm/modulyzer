@@ -15,7 +15,8 @@ class RecordProcessor extends AudioWorkletProcessor {
 
   allocateBuffers(bufferCount: number = 2) {
     if (this.arrayBufferPool.length < bufferCount) {
-      throw new Error("Out of buffers in pool");
+      console.error("Out of buffers in pool");
+      return null;
     }
 
     return this.arrayBufferPool.splice(0, bufferCount);
@@ -23,15 +24,23 @@ class RecordProcessor extends AudioWorkletProcessor {
 
   postBuffers() {
     this.port.postMessage({ type: "input", buffers: this.arrayBuffers }, this.arrayBuffers); 
-    this.arrayBuffers = this.allocateBuffers(2); 
-    this.buffers = [ new Float32Array(this.arrayBuffers[0]), new Float32Array(this.arrayBuffers[1]) ];
+    this.arrayBuffers = this.allocateBuffers(2);
+    if (this.arrayBuffers) {
+      this.buffers = [ new Float32Array(this.arrayBuffers[0]), new Float32Array(this.arrayBuffers[1]) ];
+    } else {
+      this.buffers = null;
+    }
   }
 
   onMessage = (ev: MessageEvent<{type, buffers}>) => {
     if (ev.data.type === "init") {
       this.arrayBufferPool = ev.data.buffers;
       this.arrayBuffers = this.allocateBuffers(2); 
-      this.buffers = [ new Float32Array(this.arrayBuffers[0]), new Float32Array(this.arrayBuffers[1]) ];
+      if (this.arrayBuffers) {
+        this.buffers = [ new Float32Array(this.arrayBuffers[0]), new Float32Array(this.arrayBuffers[1]) ];
+      } else {
+        this.buffers = null;
+      }
     } else if (ev.data.type === "recycle") {
       this.arrayBufferPool.push(...ev.data.buffers);
     } else if (ev.data.type === "quit") {

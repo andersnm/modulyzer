@@ -266,7 +266,7 @@ export class PlayerSongAdapter {
 
         const instrumenteer = this.instrumentMap.get(w.instrument);
 
-        const audioBuffer = this.player.device.context.createBuffer(w.buffers.length, w.sampleCount, w.sampleRate);
+        const audioBuffer = this.player.device.context.createBuffer(w.buffers.length, w.sampleCount || 1, w.sampleRate);
         for (let i = 0; i < w.buffers.length; i++) {
             const buffer = audioBuffer.getChannelData(i);
             buffer.set(w.buffers[i]);
