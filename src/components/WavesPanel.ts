@@ -110,8 +110,6 @@ export class WavesPanel extends ViewFrame {
         this.clearWaves();
         this.playButtons.length = 0;
 
-        let clickedButton = null;
-
         for (let wave of waves) {
             const playButton = Button();
             const iconSpan = document.createElement("span");
@@ -120,18 +118,18 @@ export class WavesPanel extends ViewFrame {
 
             playButton.addEventListener("click", async (e: Event) => {
 
-                if (clickedButton === playButton) {
-                    this.app.wavePlayer.stopWave();
-                    return;
+                if (this.app.wavePlayer.node) {
+                    await this.app.wavePlayer.stopWave();
+                    if (this.app.wavePlayer.source === playButton) {
+                        return;
+                    }
                 }
 
-                clickedButton = playButton;
                 iconSpan.className = "hgi-stroke hgi-stop";
 
-                await this.app.wavePlayer.playWave(wave);
+                await this.app.wavePlayer.playWave(wave, playButton);
 
                 iconSpan.className = "hgi-stroke hgi-next";
-                clickedButton = null;
 
                 e.stopPropagation(); // dont run global handler
                 e.preventDefault(); // dont do button default

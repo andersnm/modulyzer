@@ -14,6 +14,6 @@ export class PlayWaveCommand implements ICommand {
             return ;
         }
 
-        await this.app.wavePlayer.playWave(this.component.wave);
+        this.component.playWave();
     }
 }

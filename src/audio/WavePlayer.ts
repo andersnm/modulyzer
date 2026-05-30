@@ -8,7 +8,8 @@ import { WaveDocument } from "../audio/SongDocument";
  */
 export class WavePlayer extends EventTarget {
     app: Appl;
-    nodes: AudioBufferSourceNode[] = [];
+    node: AudioBufferSourceNode | null = null;
+    source: any;
 
     constructor(app: Appl) {
         super();
@@ -16,8 +17,10 @@ export class WavePlayer extends EventTarget {
         this.app = app;
     }
 
-    playWave(wave: WaveDocument) {
-        this.stopWave();
+    async playWave(wave: WaveDocument, source: any) {
+        if (this.node) {
+            await this.stopWave();
+        }
 
         return new Promise<void>((resolve, reject) => {
             const context = this.app.device.context;
@@ -29,12 +32,12 @@ export class WavePlayer extends EventTarget {
             node.addEventListener("ended", () => {
                 console.log("end of WavePlayer");
                 node.disconnect(context.destination);
-                const index = this.nodes.indexOf(node);
-                this.nodes.splice(index, 1);
+                this.node = null;
                 resolve();
             });
 
-            this.nodes.push(node);
+            this.node = node;
+            this.source = source;
 
             node.connect(context.destination);
             if (wave.selection) {
@@ -49,9 +52,20 @@ export class WavePlayer extends EventTarget {
         });
     }
 
-    stopWave() {
-        for (let node of this.nodes) {
-            node.stop();
+    async stopWave() {
+        if (!this.node) {
+            return;
         }
+
+        const node = this.node;
+        return new Promise<void>((resolve) => {
+            const onEnded = () => {
+                node.removeEventListener("ended", onEnded)
+                resolve();
+            };
+
+            node.addEventListener("ended", onEnded);
+            node.stop();
+        });
     }
 }

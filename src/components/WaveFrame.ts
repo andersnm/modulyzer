@@ -168,4 +168,17 @@ export class WaveFrame extends GridFrame {
             this.waveList.list.setSelectedIndex(-1);
         }
     }
+
+    async playWave() {
+        if (this.app.wavePlayer.node) {
+            await this.app.wavePlayer.stopWave();
+            if (this.app.wavePlayer.source === this) {
+                return;
+            }
+        }
+
+        this.app.setCommandState("play-wave", { toggled: true })
+        await this.app.wavePlayer.playWave(this.wave, this);
+        this.app.setCommandState("play-wave", { toggled: false })
+    }
 }
