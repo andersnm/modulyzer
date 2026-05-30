@@ -1,7 +1,7 @@
 import { Appl } from "../App";
 import { InstrumentDocument, PatternDocument } from "../audio/SongDocument";
 import { patternListMenu } from "../menu/menu";
-import { ButtonToolbar, DataTable, GridFrame, ICommandHost, IComponent, VInset } from "../nutz";
+import { ButtonToolbar, CommandHost, DataTable, GridFrame, VInset } from "../nutz";
 import { InstrumentDropdown } from "./InstrumentDropdown";
 
 export class PatternsPanel extends GridFrame {
@@ -9,7 +9,7 @@ export class PatternsPanel extends GridFrame {
     instrumentDropdown: InstrumentDropdown;
     list: DataTable;
 
-    constructor(app: Appl, parent: ICommandHost) {
+    constructor(app: Appl, parent: CommandHost) {
         super(parent);
         this.app = app;
 

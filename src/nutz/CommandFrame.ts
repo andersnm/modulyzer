@@ -9,7 +9,7 @@ import { VFlex } from "./StandardStuff";
 export class CommandFrame extends CommandHost implements IComponent {
     container: HTMLElement;
 
-    constructor(parent: ICommandHost) {
+    constructor(parent: CommandHost) {
         super(parent);
 
         this.container = VFlex(undefined, [ "flex-1", "gap-1"]);

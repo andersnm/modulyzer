@@ -1,7 +1,7 @@
 import { Appl } from "../App";
 import { PatternDocument } from "../audio/SongDocument";
 import { patternMenu } from "../menu/menu";
-import { CommandButtonBar, ICommandHost, IComponent, StatusBar } from "../nutz";
+import { CommandButtonBar, CommandHost, ICommandHost, IComponent, StatusBar } from "../nutz";
 import { ViewFrame } from "../nutz/ViewFrame";
 import { PatternEditorCanvas } from "./PatternEditorCanvas";
 import { formatNote, getCursorColumnAt, getPatternRenderColumns } from "./PatternEditorHelper";
@@ -57,7 +57,7 @@ export class PatternPanel extends ViewFrame implements IComponent {
     octaveInput: OctaveInput;
     statusBar: StatusBar;
 
-    constructor(app: Appl, parent: ICommandHost) {
+    constructor(app: Appl, parent: CommandHost) {
         super(parent);
         this.app = app;
 

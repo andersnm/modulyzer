@@ -728,7 +728,8 @@ export class SongDocument extends EventTarget {
             for (let jsonEvent of jsonSequenceColumn.events) {
                 const pattern = instrument.patterns[jsonEvent.pattern];
                 if (!pattern) {
-                    throw new Error("Invalid pattern in sequence column events")
+                    console.error("Invalid pattern in sequence column events")
+                    continue;
                 }
 
                 this.createSequenceEvent(sc, jsonEvent.time, pattern);

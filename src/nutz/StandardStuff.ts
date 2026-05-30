@@ -56,7 +56,7 @@ export class FormGroupRadio implements IComponent {
 
 export function Button() {
     const button = document.createElement("button");
-    button.className = "flex flex-row gap-1 font-bold p-1 px-2 rounded-lg text-neutral-300 bg-neutral-600 hover:bg-neutral-500 disabled:bg-neutral-700 disabled:text-neutral-400";
+    button.className = "flex flex-row gap-1 font-bold p-1 px-2 rounded-lg text-neutral-300 bg-neutral-600 hover:bg-neutral-500 disabled:bg-neutral-700 disabled:text-neutral-400 aria-pressed:text-neutral-900 aria-pressed:bg-neutral-300";
     return button;
 }
 

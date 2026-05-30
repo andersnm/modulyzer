@@ -376,6 +376,7 @@ export class Appl extends CommandHost implements IComponent {
         this.recordWave = wave;
         this.recordOffset = offset;
         this.device.recorder.addEventListener("input", this.onInput);
+        this.setCommandState("record-wave", { toggled: true });
     }
 
     stopRecordWave() {
@@ -383,6 +384,7 @@ export class Appl extends CommandHost implements IComponent {
             return;
         }
 
+        this.setCommandState("record-wave", { toggled: false });
         this.device.recorder.removeEventListener("input", this.onInput);
         this.recordWave = null;
         this.recordOffset = 0;

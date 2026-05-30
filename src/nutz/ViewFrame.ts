@@ -9,7 +9,7 @@ export class ViewFrame extends CommandFrame {
     toolbars: HTMLDivElement;
     content: HTMLElement;
 
-    constructor(parent: ICommandHost) {
+    constructor(parent: CommandHost) {
         super(parent);
 
         this.content = document.createElement("div");

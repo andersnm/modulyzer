@@ -1,7 +1,7 @@
 import { WaveEditorCanvas } from "./WaveEditorCanvas";
 import { WaveScrollCanvas } from "./WaveScrollCanvas";
 import { Appl } from "../App";
-import { ButtonToolbar, ICommandHost, StatusBar } from "../nutz";
+import { ButtonToolbar, CommandButtonBar, CommandHost, ICommandHost, StatusBar } from "../nutz";
 import { InstrumentDocument, WaveDocument } from "../audio/SongDocument";
 import { ViewFrame } from "../nutz/ViewFrame";
 import { formatNote } from "./PatternEditorHelper";
@@ -10,13 +10,14 @@ import { showCreateNewWaveDialog } from "../dialogs/CreateNewWaveDialog";
 
 export class WavePanel extends ViewFrame {
     app: Appl;
+    actionButtons: CommandButtonBar;
     view: HTMLDivElement;
     document: WaveDocument;
     waveEditor: WaveEditorCanvas;
     waveScroll: WaveScrollCanvas;
     statusBar: StatusBar;
 
-    constructor(app: Appl, parent: ICommandHost) {
+    constructor(app: Appl, parent: CommandHost) {
         super(parent);
         this.app = app;
 
@@ -32,7 +33,7 @@ export class WavePanel extends ViewFrame {
         this.waveScroll.addEventListener("selchange", this.onWaveScrollSelChange);
         this.waveScroll.addEventListener("zoomchange", this.onWaveScrollZoomChange);
 
-        this.addToolbar(ButtonToolbar(this, [
+        this.actionButtons = new CommandButtonBar(this, [
             {
                 type: "button",
                 label: "Cut",
@@ -91,7 +92,9 @@ export class WavePanel extends ViewFrame {
                 label: "Properties...",
                 action: "edit-wave",
             },
-        ]));
+        ]);
+
+        this.addToolbar(this.actionButtons.getDomNode() as HTMLElement);
 
         this.view.appendChild(this.waveEditor.getDomNode());
         this.view.appendChild(this.waveScroll.getDomNode());

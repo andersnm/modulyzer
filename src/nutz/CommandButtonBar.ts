@@ -1,4 +1,4 @@
-import { ICommandHost } from "./CommandHost";
+import { ICommandHost, ICommandState } from "./CommandHost";
 import { IComponent } from "./IComponent";
 import { Button, ButtonToolbarType, HFlex, isButtonToolbarButton } from "./StandardStuff";
 
@@ -52,7 +52,32 @@ export class CommandButtonBar implements IComponent {
                 this.container.appendChild(spacer);
             }
         }
+
+        this.container.addEventListener("nutz:mounted", this.onMounted);
+        this.container.addEventListener("nutz:unmounted", this.onUnmounted);
     }
+
+
+    onMounted = () => {
+        for (const btn of this.buttonToolbarButtons) {
+            if (btn.type === "button") {
+                this.cmdHost.addStateListener(btn.action, this.onCommandStateChange);
+            }
+        }
+    };
+
+    onUnmounted = () => {
+        for (const btn of this.buttonToolbarButtons) {
+            if (btn.type === "button") {
+                this.cmdHost.removeStateListener(btn.action, this.onCommandStateChange);
+            }
+        }
+    };
+
+    onCommandStateChange = (command: string, state: ICommandState) => {
+        this.setCommandEnabled(command, state.enabled);
+        this.setCommandToggled(command, state.toggled);
+    };
 
     setCommandEnabled(command: string, enabled: boolean) {
         const index = this.buttonToolbarButtons.findIndex(b => b.type === "button" && b.action === command);
@@ -62,6 +87,16 @@ export class CommandButtonBar implements IComponent {
 
         const button = this.container.childNodes[index] as HTMLButtonElement;
         button.disabled = !enabled;
+    }
+
+    setCommandToggled(command: string, toggled: boolean) {
+        const index = this.buttonToolbarButtons.findIndex(b => b.type === "button" && b.action === command);
+        if (index === -1) {
+            return;
+        }
+
+        const button = this.container.childNodes[index] as HTMLButtonElement;
+        button.setAttribute("aria-pressed", String(toggled));
     }
 
     getDomNode(): Node {

@@ -1,5 +1,5 @@
 import { CommandFrame } from "./CommandFrame";
-import { ICommandHost } from "./CommandHost";
+import { CommandHost, ICommandHost } from "./CommandHost";
 import { FrameWhere, GridFrameContainer } from "./GridFrameContainer";
 
 /** 
@@ -8,7 +8,7 @@ import { FrameWhere, GridFrameContainer } from "./GridFrameContainer";
 export class GridFrame extends CommandFrame {
     grid: GridFrameContainer;
 
-    constructor(parent: ICommandHost) {
+    constructor(parent: CommandHost) {
         super(parent);
 
         this.grid = new GridFrameContainer();

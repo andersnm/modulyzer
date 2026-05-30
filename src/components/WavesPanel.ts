@@ -1,7 +1,7 @@
 import { Appl } from "../App";
 import { InstrumentDocument, WaveDocument } from "../audio/SongDocument";
 import { waveInstrumentMenu, waveListMenu } from "../menu/menu";
-import { Button, DataTable, ICommandHost } from "../nutz";
+import { Button, CommandHost, DataTable, ICommandHost } from "../nutz";
 import { ViewFrame } from "../nutz/ViewFrame";
 import { InstrumentDropdown } from "./InstrumentDropdown";
 import { formatNote } from "./PatternEditorHelper";
@@ -18,7 +18,7 @@ export class WavesPanel extends ViewFrame {
     list: DataTable;
     playButtons: HTMLButtonElement[] = [];
 
-    constructor(app: Appl, parent: ICommandHost) {
+    constructor(app: Appl, parent: CommandHost) {
         super(parent);
         this.app = app;
 
