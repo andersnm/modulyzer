@@ -7,6 +7,7 @@ class DragSelect extends DragTarget {
     component: WaveEditorCanvas;
     start: number;
     end: number;
+    moved: boolean = false;
 
     constructor(component: WaveEditorCanvas, e: PointerEvent) {
         super();
@@ -26,12 +27,16 @@ class DragSelect extends DragTarget {
             this.end = this.component.buffers[0].length - 1;
         }
 
+        this.moved = true;
         this.component.setSelection(this.start, this.end);
         this.component.dispatchEvent(new CustomEvent("selchange"));
     }
 
     up(e: PointerEvent) {
-
+        if (!this.moved) {
+            this.component.clearSelection();
+            this.component.dispatchEvent(new CustomEvent("selchange"));
+        }
     }
 }
 

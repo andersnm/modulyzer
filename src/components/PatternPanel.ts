@@ -205,11 +205,11 @@ export class PatternPanel extends ViewFrame implements IComponent {
     }
 
     bindButtons() {
-        this.actionButtons.setCommandEnabled("paste", !!this.patternEditor.pattern);
-        this.actionButtons.setCommandEnabled("add-column", !!this.patternEditor.pattern);
-        this.actionButtons.setCommandEnabled("edit-pattern", !!this.patternEditor.pattern);
-        this.actionButtons.setCommandEnabled("duplicate-pattern", !!this.patternEditor.pattern);
-        this.actionButtons.setCommandEnabled("cut", this.patternEditor.pattern && !!this.patternEditor.selection);
-        this.actionButtons.setCommandEnabled("copy", this.patternEditor.pattern && !!this.patternEditor.selection);
+        this.setCommandState("paste", { enabled: !!this.patternEditor.pattern });
+        this.setCommandState("add-column", { enabled: !!this.patternEditor.pattern });
+        this.setCommandState("edit-pattern", { enabled: !!this.patternEditor.pattern });
+        this.setCommandState("duplicate-pattern", { enabled: !!this.patternEditor.pattern });
+        this.setCommandState("cut", { enabled: this.patternEditor.pattern && !!this.patternEditor.selection });
+        this.setCommandState("copy", { enabled: this.patternEditor.pattern && !!this.patternEditor.selection });
     }
 }

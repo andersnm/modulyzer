@@ -1,13 +1,13 @@
-import { ICommandHost, ICommandState } from "./CommandHost";
+import { CommandHost, ICommandHost, ICommandState } from "./CommandHost";
 import { IComponent } from "./IComponent";
 import { Button, ButtonToolbarType, HFlex, isButtonToolbarButton } from "./StandardStuff";
 
 export class CommandButtonBar implements IComponent {
     container: HTMLDivElement;
-    cmdHost: ICommandHost;
+    cmdHost: CommandHost;
     buttonToolbarButtons: ButtonToolbarType[];
 
-    constructor(cmdHost: ICommandHost, buttonToolbarButtons: ButtonToolbarType[]) {
+    constructor(cmdHost: CommandHost, buttonToolbarButtons: ButtonToolbarType[]) {
         this.cmdHost = cmdHost;
         this.buttonToolbarButtons = buttonToolbarButtons;
         this.container = HFlex(null, "gap-1");
@@ -57,10 +57,13 @@ export class CommandButtonBar implements IComponent {
         this.container.addEventListener("nutz:unmounted", this.onUnmounted);
     }
 
-
     onMounted = () => {
         for (const btn of this.buttonToolbarButtons) {
             if (btn.type === "button") {
+                const state = this.cmdHost.getCommandState(btn.action);
+                this.setCommandEnabled(btn.action, state.enabled);
+                this.setCommandToggled(btn.action, state.toggled);
+
                 this.cmdHost.addStateListener(btn.action, this.onCommandStateChange);
             }
         }

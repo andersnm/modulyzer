@@ -114,6 +114,22 @@ export class WavePanel extends ViewFrame {
 
         // NOTE: Adding statusbar in ViewFrame's container
         this.container.appendChild(this.statusBar.getDomNode());
+
+        this.updateToolbarButtons();
+    }
+
+    updateToolbarButtons() {
+        this.setCommandState("copy", { enabled: !!this.document && !!this.document.selection });
+        this.setCommandState("cut", { enabled: !!this.document && !!this.document.selection });
+        this.setCommandState("paste", { enabled: !!this.document && !!this.document.selection });
+        this.setCommandState("crop", { enabled: !!this.document && !!this.document.selection });
+        this.setCommandState("zoom", { enabled: !!this.document && !!this.document.selection });
+        this.setCommandState("zoom-in", { enabled: !!this.document && !!this.document });
+        this.setCommandState("zoom-out", { enabled: !!this.document });
+        this.setCommandState("play-wave", { enabled: !!this.document });
+        this.setCommandState("record-wave", { enabled: !!this.document });
+        this.setCommandState("save-wave", { enabled: !!this.document });
+        this.setCommandState("edit-wave", { enabled: !!this.document });
     }
 
     onStatusBarInstrumentContextMenu = async (ev: MouseEvent) => {
@@ -168,6 +184,8 @@ export class WavePanel extends ViewFrame {
             this.waveScroll.clearSelection();
             this.document.selection = null;
         }
+
+        this.updateToolbarButtons();
     }
 
     // onWaveEditorZoomChange = () => {
@@ -196,6 +214,8 @@ export class WavePanel extends ViewFrame {
             this.waveEditor.clearSelection();
             this.document.selection = null;
         }
+
+        this.updateToolbarButtons();
     };
 
     onWaveScrollZoomChange = () => {
@@ -274,6 +294,8 @@ export class WavePanel extends ViewFrame {
             this.statusBar.setText(2, "No instrument selected");
             this.statusBar.setText(3, "No wave selected");
         }
+
+        this.updateToolbarButtons();
     }
 
     zoomSelection() {

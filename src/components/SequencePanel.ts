@@ -52,6 +52,26 @@ export class SequencePanel extends ViewFrame {
         this.addToolbar(this.actionButtons.getDomNode() as HTMLElement);
         this.setView(this.sequenceEditor.getDomNode());
 
+        this.container.addEventListener("nutz:mounted", this.onMounted);
+        this.container.addEventListener("nutz:unmounted", this.onUnmounted);
+    }
+
+    onMounted = () => {
+        this.bindButtons();
+        this.app.song.addEventListener("createSequenceColumn", this.onCreateSequenceColumn);
+        this.app.song.addEventListener("deleteSequenceColumn", this.onDeleteSequenceColumn);
+    };
+
+    onUnmounted = () => {
+        this.app.song.removeEventListener("createSequenceColumn", this.onCreateSequenceColumn);
+        this.app.song.removeEventListener("deleteSequenceColumn", this.onDeleteSequenceColumn);
+    };
+
+    onCreateSequenceColumn = (ev: CustomEvent) => {
+        this.bindButtons();
+    }
+
+    onDeleteSequenceColumn = (ev: CustomEvent) => {
         this.bindButtons();
     }
 
@@ -60,8 +80,10 @@ export class SequencePanel extends ViewFrame {
     }
 
     bindButtons() {
-        this.actionButtons.setCommandEnabled("cut", !!this.sequenceEditor.selection);
-        this.actionButtons.setCommandEnabled("copy", !!this.sequenceEditor.selection);
+        this.setCommandState("cut", { enabled: !!this.sequenceEditor.selection });
+        this.setCommandState("copy", { enabled: !!this.sequenceEditor.selection });
+        this.setCommandState("paste", { enabled: this.app.song.sequenceColumns.length > 0 });
+        this.setCommandState("delete-column", { enabled: this.app.song.sequenceColumns.length > 0 });
     }
 
     getDomNode(): Node {
