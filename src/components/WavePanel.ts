@@ -27,7 +27,7 @@ export class WavePanel extends ViewFrame {
 
         this.waveEditor = new WaveEditorCanvas();
         this.waveEditor.addEventListener("selchange", this.onWaveEditorSelChange);
-        this.waveEditor.addEventListener("zoomchange", this.onWaveEditorZoomChange);
+        // this.waveEditor.addEventListener("zoomchange", this.onWaveEditorZoomChange);
 
         this.waveScroll = new WaveScrollCanvas();
         this.waveScroll.addEventListener("selchange", this.onWaveScrollSelChange);
@@ -170,21 +170,21 @@ export class WavePanel extends ViewFrame {
         }
     }
 
-    onWaveEditorZoomChange = () => {
-        if (!this.document) {
-            return;
-        }
+    // onWaveEditorZoomChange = () => {
+    //     if (!this.document) {
+    //         return;
+    //     }
 
-        if (this.waveEditor.zoom) {
-            const start = this.waveEditor.zoom.start;
-            const end = this.waveEditor.zoom.end;
-            this.waveScroll.setZoom(start, end);
-            this.document.zoom = { ... this.waveEditor.zoom };
-        } else {
-            this.waveScroll.clearZoom();
-            this.document.zoom = null;
-        }
-    };
+    //     if (this.waveEditor.zoom) {
+    //         const start = this.waveEditor.zoom.start;
+    //         const end = this.waveEditor.zoom.end;
+    //         this.waveScroll.setZoom(start, end);
+    //         this.document.zoom = { ... this.waveEditor.zoom };
+    //     } else {
+    //         this.waveScroll.clearZoom();
+    //         this.document.zoom = null;
+    //     }
+    // };
 
     onWaveScrollSelChange = () => {
         if (this.waveScroll.selection) {
@@ -286,6 +286,8 @@ export class WavePanel extends ViewFrame {
 
         this.waveEditor.setZoom(start, end);
         this.waveScroll.setZoom(start, end);
+
+        this.document.zoom = { start, end };
     }
 
     zoomRelative(ratio: number) {
@@ -307,6 +309,12 @@ export class WavePanel extends ViewFrame {
         this.waveEditor.setZoom(zoom[0], zoom[1]);
         this.waveScroll.setZoom(zoom[0], zoom[1]);
 
-        console.log("zoomeling after", ratio, this.waveEditor.zoom);
+        this.document.zoom = { start: zoom[0], end: zoom[1] };
+    }
+
+    clearZoom() {
+        this.waveEditor.clearZoom();
+        this.waveScroll.clearZoom();
+        this.document.zoom = null;
     }
 }

@@ -26,7 +26,8 @@ class DragSelect extends DragTarget {
             this.end = this.component.buffers[0].length - 1;
         }
 
-        this.component.setSelection(this.start, this.end)
+        this.component.setSelection(this.start, this.end);
+        this.component.dispatchEvent(new CustomEvent("selchange"));
     }
 
     up(e: PointerEvent) {
@@ -127,7 +128,6 @@ export class WaveEditorCanvas extends EventTarget implements IComponent {
         this.selection = { start, end };
 
         console.log(this.selection)
-        this.dispatchEvent(new CustomEvent("selchange"));
         this.redrawCanvas();
     }
 
@@ -137,7 +137,6 @@ export class WaveEditorCanvas extends EventTarget implements IComponent {
         }
 
         this.selection = null;
-        this.dispatchEvent(new CustomEvent("selchange"));
         this.redrawCanvas();
     }
 
@@ -148,7 +147,6 @@ export class WaveEditorCanvas extends EventTarget implements IComponent {
 
         console.log("edit: zoom")
         this.zoom = { start, end };
-        this.dispatchEvent(new CustomEvent("zoomchange"));
         this.redrawCanvas();
     }
 
@@ -158,7 +156,6 @@ export class WaveEditorCanvas extends EventTarget implements IComponent {
         }
 
         this.zoom = null;
-        this.dispatchEvent(new CustomEvent("zoomchange"));
         this.redrawCanvas();
     }
 

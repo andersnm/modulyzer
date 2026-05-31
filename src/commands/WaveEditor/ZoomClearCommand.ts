@@ -6,6 +6,6 @@ export class ZoomClearCommand implements ICommand {
     }
 
     async handle(...args: any[]) {
-        this.component.waveView.waveEditor.clearZoom();
+        this.component.waveView.clearZoom();
     }
 }
