@@ -76,53 +76,6 @@ export function isButtonToolbarButton(b): b is ButtonToolbarButton {
     return b.type === "button";
 }
 
-export function ButtonToolbar(app: ICommandHost, buttonToolbarButtons: (ButtonToolbarButton|ButtonToolbarSeparator)[]) {
-    const container = HFlex(null, "gap-1");
-
-    for (let toolbarButton of buttonToolbarButtons) {
-        if (isButtonToolbarButton(toolbarButton)) {
-            const button = Button();
-            button.classList.add("whitespace-nowrap");
-
-            const cmd = app.getCommand(toolbarButton.action);
-
-            if (cmd) {
-                if (cmd.icon) {
-                    const iconSpan = document.createElement("span");
-                    iconSpan.className = cmd.icon;
-                    button.appendChild(iconSpan);
-                }
-
-                const hotkey = app.getHotkeyForCommand(toolbarButton.action);
-
-                if (cmd.description) {
-                    button.title = cmd.description;
-                    if (hotkey) {
-                        button.title += " (" + hotkey + ")";
-                    }
-                } else
-                if (hotkey) {
-                    button.title = hotkey;
-                }
-            }
-
-            const t = document.createTextNode(toolbarButton.label)
-            button.appendChild(t);
-
-            button.addEventListener("mousedown", e => e.preventDefault() ); // prevent taking focus
-            button.addEventListener("click", () => app.executeCommand(toolbarButton.action));
-
-            container.appendChild(button);
-        } else {
-            const spacer = document.createElement("div");
-            spacer.className = "w-0";
-            container.appendChild(spacer);
-        }
-    }
-
-    return container;
-}
-
 export class ModalButtonBar implements IComponent {
     app: Appl;
     container: HTMLDivElement;

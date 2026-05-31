@@ -1,4 +1,4 @@
-import { ButtonToolbar, CommandButtonBar, CommandHost, formatHotkey, FullScreen, getOrCreateDirectory, GridFrameContainer, HFlex, ICommand, IComponent, StatusBar, TabFrameContainer, visitNodeAndChildNodesBreadth, visitNodeAndChildNodesDepth } from "./nutz";
+import { CommandButtonBar, CommandHost, formatHotkey, FullScreen, getOrCreateDirectory, GridFrameContainer, HFlex, ICommand, IComponent, StatusBar, TabFrameContainer, visitNodeAndChildNodesBreadth, visitNodeAndChildNodesDepth } from "./nutz";
 import { MenuBar } from "./nutz/Menubar";
 import { ModalDialogContainer } from "./nutz/ModalDialogContainer";
 import { mainMenu } from './menu/menu';

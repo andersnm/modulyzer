@@ -1,11 +1,12 @@
 import { Appl } from "../App";
 import { InstrumentDocument, PatternDocument } from "../audio/SongDocument";
 import { patternListMenu } from "../menu/menu";
-import { ButtonToolbar, CommandHost, DataTable, GridFrame, VInset } from "../nutz";
+import { CommandButtonBar, CommandHost, DataTable, GridFrame, VInset } from "../nutz";
 import { InstrumentDropdown } from "./InstrumentDropdown";
 
 export class PatternsPanel extends GridFrame {
     app: Appl;
+    actionButtons: CommandButtonBar;
     instrumentDropdown: InstrumentDropdown;
     list: DataTable;
 
@@ -24,14 +25,15 @@ export class PatternsPanel extends GridFrame {
 
         this.grid.addFrame("top", VInset(this.instrumentDropdown.getDomNode()), undefined, 1);
 
-        // TODO: move into context menu
-        this.grid.addFrame("top", VInset(ButtonToolbar(this, [
+        this.actionButtons = new CommandButtonBar(this, [
             {
                 type: "button",
                 label: "New...",
                 action: "create-pattern",
             },
-        ])), undefined, 1);
+        ]);
+
+        this.grid.addFrame("top", VInset(this.actionButtons.getDomNode()), undefined, 1);
 
         this.grid.addFrame("main", VInset(this.list.getDomNode() as HTMLElement, "flex-1"));
     }

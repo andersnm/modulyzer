@@ -1,7 +1,7 @@
 import { WaveEditorCanvas } from "./WaveEditorCanvas";
 import { WaveScrollCanvas } from "./WaveScrollCanvas";
 import { Appl } from "../App";
-import { ButtonToolbar, CommandButtonBar, CommandHost, ICommandHost, StatusBar } from "../nutz";
+import { CommandButtonBar, CommandHost, StatusBar } from "../nutz";
 import { InstrumentDocument, WaveDocument } from "../audio/SongDocument";
 import { ViewFrame } from "../nutz/ViewFrame";
 import { formatNote } from "./PatternEditorHelper";

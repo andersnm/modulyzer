@@ -225,6 +225,7 @@ export class MixerCanvas implements IComponent {
                 if (connection) {
                     this.selectedInstrument = null;
                     this.selectedConnection = connection;
+                    this.container.dispatchEvent(new CustomEvent("selchange"))
                     this.dragTarget = new DragConnectionGain(this, connection, e);
                     this.canvas.setPointerCapture(e.pointerId);
 
@@ -232,6 +233,11 @@ export class MixerCanvas implements IComponent {
                 } else {
                     const p: PointType = [ e.offsetX, e.offsetY ];
                     this.clickPt = this.convertScreenToInstrument(p);
+
+                    this.selectedInstrument = null;
+                    this.selectedConnection = null;
+                    this.container.dispatchEvent(new CustomEvent("selchange"))
+                    this.redrawCanvas();
                 }
 
                 return;
@@ -239,6 +245,7 @@ export class MixerCanvas implements IComponent {
 
             this.selectedInstrument = instrument;
             this.selectedConnection = null;
+            this.container.dispatchEvent(new CustomEvent("selchange"))
 
             if (e.shiftKey) {
                 this.dragTarget = new DragConnect(this, instrument, e);
