@@ -1,4 +1,4 @@
-import { ButtonToolbar, CommandHost, formatHotkey, FullScreen, getOrCreateDirectory, GridFrameContainer, HFlex, ICommand, IComponent, StatusBar, TabFrameContainer, visitNodeAndChildNodesBreadth, visitNodeAndChildNodesDepth } from "./nutz";
+import { ButtonToolbar, CommandButtonBar, CommandHost, formatHotkey, FullScreen, getOrCreateDirectory, GridFrameContainer, HFlex, ICommand, IComponent, StatusBar, TabFrameContainer, visitNodeAndChildNodesBreadth, visitNodeAndChildNodesDepth } from "./nutz";
 import { MenuBar } from "./nutz/Menubar";
 import { ModalDialogContainer } from "./nutz/ModalDialogContainer";
 import { mainMenu } from './menu/menu';
@@ -151,6 +151,7 @@ class BpmInput implements IComponent {
 
 export class Appl extends CommandHost implements IComponent {
     fullscreen: FullScreen;
+    actionButtons: CommandButtonBar;
     menuBar: MenuBar;
     bpmInput: BpmInput;
     peakMeter: PeakMeter;
@@ -205,7 +206,7 @@ export class Appl extends CommandHost implements IComponent {
         this.menuBar = new MenuBar(this);
         this.menuBar.bindMenubarMenu(mainMenu);
 
-        const toolbar = ButtonToolbar(this, [
+        this.actionButtons = new CommandButtonBar(this, [
             {
                 type: "button",
                 label: "",
@@ -231,7 +232,7 @@ export class Appl extends CommandHost implements IComponent {
         this.bpmInput = new BpmInput(this);
         this.peakMeter = new PeakMeter(this);
 
-        const toolbarContainer = HFlex([toolbar, this.bpmInput.getDomNode(), this.peakMeter.getDomNode()], "gap-1");
+        const toolbarContainer = HFlex([this.actionButtons.getDomNode(), this.bpmInput.getDomNode(), this.peakMeter.getDomNode()], "gap-1");
 
         this.mainTabs = new TabFrameContainer(false);
 
@@ -278,6 +279,7 @@ export class Appl extends CommandHost implements IComponent {
             e.returnValue = true;
             e.preventDefault();
           });
+        this.updateToolbarButtons();
     }
 
     async init() {
@@ -307,6 +309,11 @@ export class Appl extends CommandHost implements IComponent {
         await this.executeCommand("show-audio-configuration");
     }
 
+    updateToolbarButtons() {
+        this.setCommandState("play-song", { enabled: this.player && !this.player.playing });
+        this.setCommandState("stop-song", { enabled: this.player && this.player.playing });
+    }
+
     async readSetting<T>(key: string) {
         const handleMap = new IndexedDBMap("settings");
         return await handleMap.get<T>(key);
@@ -324,12 +331,22 @@ export class Appl extends CommandHost implements IComponent {
         this.player = new Player(this.instrumentFactories, this.device);
         this.playerSongAdapter.attachPlayer(this.player);
 
+        this.player.addEventListener("playing", () => {
+            this.updateToolbarButtons();
+        });
+
+        this.player.addEventListener("stopped", () => {
+            this.updateToolbarButtons();
+        });
+
         this.peakMeter.setDevice();
 
         await this.writeSetting("OutputDevice", outputDeviceId);
         await this.writeSetting("InputDevice", inputDeviceId);
         await this.writeSetting("Latency", latencySec);
         await this.writeSetting("InputMode", inputMode);
+
+        this.updateToolbarButtons();
     }
 
     render() {

@@ -82,7 +82,7 @@ export class CommandButtonBar implements IComponent {
         this.setCommandToggled(command, state.toggled);
     };
 
-    setCommandEnabled(command: string, enabled: boolean) {
+    private setCommandEnabled(command: string, enabled: boolean) {
         const index = this.buttonToolbarButtons.findIndex(b => b.type === "button" && b.action === command);
         if (index === -1) {
             return;
@@ -92,7 +92,7 @@ export class CommandButtonBar implements IComponent {
         button.disabled = !enabled;
     }
 
-    setCommandToggled(command: string, toggled: boolean) {
+    private setCommandToggled(command: string, toggled: boolean) {
         const index = this.buttonToolbarButtons.findIndex(b => b.type === "button" && b.action === command);
         if (index === -1) {
             return;
