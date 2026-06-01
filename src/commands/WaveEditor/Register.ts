@@ -16,6 +16,7 @@ import { CreateWaveCommand } from "./CreateWaveCommand";
 import { DeleteWaveCommand } from "./DeleteWaveCommand";
 import { OpenWaveCommand } from "./OpenWaveCommand";
 import { PasteNewWaveCommand } from "./PasteNewWaveCommand";
+import { FocusInstrumentDropdownCommand } from "./FocusInstrumentDropdownCommand";
 
 export function registerWaveEditorCommands(component: WaveFrame) {
     component.registerCommand("save-wave", "hgi-stroke hgi-folder-02", "Save...", new SaveWaveCommand(component));
@@ -38,6 +39,8 @@ export function registerWaveEditorCommands(component: WaveFrame) {
     component.registerCommand("paste-new-wave", "hgi-stroke hgi-task-add-01", "Import New Wave from Clipboard", new PasteNewWaveCommand(component));
     component.registerCommand("delete-wave", "hgi-stroke hgi-folder", null, new DeleteWaveCommand(component));
 
+    component.registerCommand("focus-instrument-dropdown", "hgi-stroke hgi-column-insert", "Focus instrument dropdown", new FocusInstrumentDropdownCommand(component));
+
     component.registerHotkey("CTRL+SHIFT+V", "paste-new-wave");
     component.registerHotkey("CTRL+SHIFT+N", "create-wave");
     component.registerHotkey("CTRL+SHIFT+Delete", "delete-wave");
@@ -55,4 +58,5 @@ export function registerWaveEditorCommands(component: WaveFrame) {
     component.registerHotkey("CTRL+Backspace", "edit-wave");
     component.registerHotkey("Delete", "delete");
     component.registerHotkey(" ", "play-wave");
+    component.registerHotkey("ALT+I", "focus-instrument-dropdown");
 }

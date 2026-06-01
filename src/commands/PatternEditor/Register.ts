@@ -11,6 +11,7 @@ import { OctaveUpCommand } from "./OctaveUpCommand";
 import { PasteCommand } from "./PasteCommand";
 import { CreatePatternCommand } from "./CreatePatternCommand";
 import { DeletePatternCommand } from "./DeletePatternCommand";
+import { FocusInstrumentDropdownCommand } from "./FocusInstrumentDropdownCommand";
 
 export function registerPatternEditorCommands(component: PatternFrame) {
     component.registerCommand("add-column", "hgi-stroke hgi-plus-sign", "Add a Column", new AddColumnCommand(component));
@@ -26,6 +27,7 @@ export function registerPatternEditorCommands(component: PatternFrame) {
     component.registerCommand("duplicate-pattern", "hgi-stroke hgi-copy-02", "Create a new duplicate pattern", new DuplicatePatternCommand(component));
     component.registerCommand("delete-pattern", "hgi-stroke hgi-delete", "Delete Pattern", new DeletePatternCommand(component));
     component.registerCommand("create-pattern", "hgi-stroke hgi-plus-sign-square", "Create New Pattern", new CreatePatternCommand(component));
+    component.registerCommand("focus-instrument-dropdown", "hgi-stroke hgi-column-insert", "Focus instrument dropdown", new FocusInstrumentDropdownCommand(component));
 
     component.registerHotkey("CTRL+A", "select-all");
     component.registerHotkey("CTRL+X", "cut");
@@ -39,4 +41,5 @@ export function registerPatternEditorCommands(component: PatternFrame) {
     component.registerHotkey("CTRL+SHIFT+Enter", "duplicate-pattern");
     component.registerHotkey("CTRL+SHIFT+ArrowUp", "octave-up");
     component.registerHotkey("CTRL+SHIFT+ArrowDown", "octave-down");
+    component.registerHotkey("ALT+I", "focus-instrument-dropdown");
 }

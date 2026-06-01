@@ -34,6 +34,11 @@ export class WavesPanel extends ViewFrame {
 
         this.addToolbar(this.instrumentDropdown.getDomNode() as HTMLElement);
 
+        const hotkey = this.getHotkeyForCommand("focus-instrument-dropdown");
+        const command = this.getCommand("focus-instrument-dropdown");
+        const tooltip = (command?.description ?? command?.name) +  " (" + hotkey + ")"
+        this.instrumentDropdown.instrumentSelect.title = tooltip;
+
         this.setView(this.list.getDomNode() as HTMLElement);
 
         this.container.addEventListener("keydown", this.onKeyDown);

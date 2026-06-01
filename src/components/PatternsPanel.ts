@@ -23,6 +23,11 @@ export class PatternsPanel extends GridFrame {
 
         this.instrumentDropdown = new InstrumentDropdown();
 
+        const hotkey = this.getHotkeyForCommand("focus-instrument-dropdown");
+        const command = this.getCommand("focus-instrument-dropdown");
+        const tooltip = (command?.description ?? command?.name) +  " (" + hotkey + ")"
+        this.instrumentDropdown.instrumentSelect.title = tooltip;
+
         this.grid.addFrame("top", VInset(this.instrumentDropdown.getDomNode()), undefined, 1);
 
         this.actionButtons = new CommandButtonBar(this, [
