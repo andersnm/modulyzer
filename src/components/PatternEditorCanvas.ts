@@ -59,7 +59,7 @@ class DragSelect extends DragTarget {
         this.component.cursorColumn = getCursorColumnIndex(this.component.renderColumns, cursorColumn);
         this.component.cursorTime = t;
 
-        this.component.redrawCanvas();
+        this.component.redrawOverlayCanvas();
         this.component.dispatchEvent(new CustomEvent("cursormove"));
     }
 
@@ -70,11 +70,13 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
     dragTarget: DragTarget;
     container: HTMLElement;
     canvas: HTMLCanvasElement;
+    overlayCanvas: HTMLCanvasElement;
     cursorColumn: number = 0;
     cursorTime: number = 0;
     pattern: PatternDocument;
     scrollRow: number = 0;
     octave: number = 4;
+    redrawTimer: number = null;
 
     renderColumns: RenderColumnInfo[];
     cursorColumns: CursorColumnInfo[];
@@ -86,21 +88,28 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
         super();
         this.app = app;
         this.container = document.createElement("div");
-        this.container.className = "flex-1 w-full pb-1";
+        this.container.classList.add("flex-1", "w-full", "pb-1", "relative");
         this.container.tabIndex = 0;
         this.container.addEventListener("keydown", this.onKeyDown);
         this.container.addEventListener("keyup", this.onKeyUp);
 
         this.canvas = FlexCanvas();
-        this.canvas.classList.add("rounded-lg", "touch-none"); // touch-none class fixes pointermove
+        this.canvas.classList.add("rounded-lg", "touch-none", "absolute", "w-full", "h-full"); // touch-none class fixes pointermove
 
-        this.canvas.addEventListener("pointerdown", this.onMouseDown);
-        this.canvas.addEventListener("pointerup", this.onMouseUp);
-        this.canvas.addEventListener("pointermove", this.onMouseMove);
+        this.container.addEventListener("pointerdown", this.onMouseDown);
+        this.container.addEventListener("pointerup", this.onMouseUp);
+        this.container.addEventListener("pointermove", this.onMouseMove);
 
         this.canvas.addEventListener("resize", this.onResize);
 
+        this.overlayCanvas = FlexCanvas();
+        this.overlayCanvas.classList.add("rounded-lg", "touch-none", "absolute", "w-full", "h-full");
+        this.overlayCanvas.style.mixBlendMode = "difference"; 
+
+        this.overlayCanvas.addEventListener("resize", this.onResizeOverlay);
+
         this.container.appendChild(this.canvas);
+        this.container.appendChild(this.overlayCanvas);
 
         this.container.addEventListener("nutz:mounted", this.onMounted);
         this.container.addEventListener("nutz:unmounted", this.onUnmounted);
@@ -115,6 +124,12 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
     }
 
     onMounted = () => {
+        if (this.app.player?.playing) {
+            this.onPlaying();
+        }
+
+        this.app.song.addEventListener("playing", this.onPlaying);
+        this.app.song.addEventListener("stopped", this.onStopped);
         this.app.song.addEventListener("updateInstrument", this.onResize);
         this.app.song.addEventListener("updatePattern", this.onRebind);
         this.app.song.addEventListener("createPatternColumn", this.onRebind);
@@ -125,6 +140,12 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
     };
 
     onUnmounted = () => {
+        if (this.app.player?.playing) {
+            this.onStopped();
+        }
+
+        this.app.song.removeEventListener("playing", this.onPlaying);
+        this.app.song.removeEventListener("stopped", this.onStopped);
         this.app.song.removeEventListener("updateInstrument", this.onResize);
         this.app.song.removeEventListener("updatePattern", this.onRebind);
         this.app.song.removeEventListener("createPatternColumn", this.onRebind);
@@ -134,12 +155,28 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
         this.app.song.removeEventListener("deletePatternEvent", this.onResize);
     };
 
+    onPlaying = () => {
+        // Redraw every 100 msec during playback
+        this.redrawTimer = setInterval(() => {
+            this.redrawOverlayCanvas();
+        }, 100);
+    };
+
+    onStopped = () => {
+        clearInterval(this.redrawTimer);
+        this.redrawTimer = null;
+    };
+
     onRebind = () => {
         this.setPattern(this.pattern);
     };
 
     onResize = () => {
         this.redrawCanvas();
+    };
+
+    onResizeOverlay = () => {
+        this.redrawOverlayCanvas();
     };
 
     onMouseDown = (e: PointerEvent) => {
@@ -312,8 +349,11 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
             this.setSelection(this.selection.startColumn, this.selection.startRow, renderIndex, this.cursorTime);
         }
 
-        this.scrollIntoView();
-        this.redrawCanvas();
+        if (this.scrollIntoView()) {
+            this.redrawCanvas();
+        }
+
+        this.redrawOverlayCanvas();
 
         // Returns true if the cursor moved
         return ct !== this.cursorTime || cc !== this.cursorColumn;
@@ -330,8 +370,10 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
             }
         }
 
-        this.scrollIntoView();
-        this.redrawCanvas();
+        if (this.scrollIntoView()) {
+            this.redrawCanvas();
+        }
+        this.redrawOverlayCanvas();
     }
 
     movePreviousColumn() {
@@ -358,8 +400,10 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
 
         this.cursorColumn = i + 1;
 
-        this.scrollIntoView();
-        this.redrawCanvas();
+        if (this.scrollIntoView()) {
+            this.redrawCanvas();
+        }
+        this.redrawOverlayCanvas();
     }
 
     moveHome(withSelection: boolean) {
@@ -378,16 +422,21 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
         const fontHeight = em.fontBoundingBoxAscent + em.fontBoundingBoxDescent;
 
         const visibleRows = Math.floor(this.canvas.height / fontHeight) - 1; // -1 for the heading
-        if (visibleRows <= 0) return;
+        if (visibleRows <= 0) return false;
 
+        let scrolled = false;
         // The +1 is to ensure the whole row is in view
         if (this.cursorTime + 1 - this.scrollRow > visibleRows) {
             this.scrollRow = this.cursorTime + 1 - visibleRows
+            scrolled = true;
         }
 
         if (this.cursorTime - this.scrollRow < 0) {
             this.scrollRow = this.cursorTime;
+            scrolled = true;
         }
+
+        return scrolled;
     }
 
     shiftEventsAfterCursor(delta: number) {
@@ -556,12 +605,13 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
         }
 
         this.redrawCanvas();
+        this.redrawOverlayCanvas();
     }
 
     setSelection(startColumn: number, startRow: number, endColumn: number, endRow: number) {
         this.selection = { startColumn, startRow, endColumn, endRow };
-        console.log("Set selection:", this.selection);
-        this.redrawCanvas();
+        // console.log("Set selection:", this.selection);
+        this.redrawOverlayCanvas();
     }
 
     redrawCanvas() {
@@ -658,6 +708,26 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
             ctx.stroke();
         }
 
+        // scroll
+        ctx.fillStyle = "#333";
+        ctx.fillRect(this.canvas.width - 20, 0, 20, this.canvas.height)
+
+        const scrollbarHeight = Math.floor((visibleRows / totalRows) * this.canvas.height);
+        const scrollbarPosition = Math.floor((this.scrollRow / totalRows) * this.canvas.height);
+
+        ctx.fillStyle = "#AAA";
+        ctx.fillRect(this.canvas.width - 20, scrollbarPosition, 20, scrollbarHeight);
+    }
+
+    redrawOverlayCanvas() {
+        const ctx = this.overlayCanvas.getContext("2d");
+        ctx.font = "14px monospace";
+
+        const fontHeight = this.fontEm.fontBoundingBoxAscent + this.fontEm.fontBoundingBoxDescent;
+        const rowNumberWidth = this.fontEm.width * 5;
+
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
         // cursor
         const currentCursorColumn = getCursorColumnAt(this.renderColumns, this.cursorColumn);
         if (currentCursorColumn) {
@@ -692,15 +762,17 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
             ctx.globalCompositeOperation = ori;
         }
 
-        // scroll
-        ctx.fillStyle = "#333";
-        ctx.fillRect(this.canvas.width - 20, 0, 20, this.canvas.height)
+        // play position
+        const playerPattern = this.app.playerSongAdapter.patternMap.get(this.pattern);
+        const playingPattern = this.app.player?.playingPatterns.find(p => p.pattern === playerPattern);
+        const playPos = playingPattern?.currentBeat * this.pattern?.subdivision;
 
-        const scrollbarHeight = Math.floor((visibleRows / totalRows) * this.canvas.height);
-        const scrollbarPosition = Math.floor((this.scrollRow / totalRows) * this.canvas.height);
+        ctx.strokeStyle = "#FFF";
+        ctx.beginPath();
+        ctx.moveTo(0, (playPos - this.scrollRow) * fontHeight + fontHeight);
+        ctx.lineTo(this.canvas.width, (playPos - this.scrollRow) * fontHeight + fontHeight);
+        ctx.stroke();
 
-        ctx.fillStyle = "#AAA";
-        ctx.fillRect(this.canvas.width - 20, scrollbarPosition, 20, scrollbarHeight);
     }
 
     getDomNode(): Node {
