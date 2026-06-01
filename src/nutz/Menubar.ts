@@ -1,10 +1,10 @@
 import { CommandMenuItem } from "../menu/menu";
 import { MenuItem } from "./Menu";
-import { ICommandHost } from "./CommandHost";
+import { CommandHost } from "./CommandHost";
 import { IComponent } from "./IComponent";
 import { Menu } from "./Menu";
 
-export function convertNutzMenu(app: ICommandHost, menu: CommandMenuItem[]): MenuItem[] {
+export function convertNutzMenu(app: CommandHost, menu: CommandMenuItem[]): MenuItem[] {
     const nutzMenu: MenuItem[] = menu.map(m => ({
         label: m.label,
         action: m.action,
@@ -12,13 +12,14 @@ export function convertNutzMenu(app: ICommandHost, menu: CommandMenuItem[]): Men
         shortcut: app.getHotkeyForCommand(m.action),
         checked: m.checked,
         items: m.items ? convertNutzMenu(app, m.items) : null,
+        disabled: !app.getCommandState(m.action).enabled,
     }));
 
     return nutzMenu;
 }
 
 export class MenuBar implements IComponent {
-    app: ICommandHost;
+    app: CommandHost;
     menuContainer: HTMLElement;
     menu: Menu;
     selectedIndex: number = -1;
@@ -26,7 +27,7 @@ export class MenuBar implements IComponent {
     hovering: boolean = false;
     menuItems: CommandMenuItem[] = null;
 
-    constructor(app: ICommandHost) {
+    constructor(app: CommandHost) {
         this.app = app;
         this.menuContainer = document.createElement("div");
         this.menuContainer.className = "flex flex-row nutz-menubar";

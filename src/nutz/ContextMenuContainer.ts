@@ -1,12 +1,12 @@
 import { CommandMenuItem } from "../menu/menu";
-import { ICommandHost } from "./CommandHost";
+import { CommandHost } from "./CommandHost";
 import { Menu, MenuItem } from "./Menu";
 import { convertNutzMenu } from "./Menubar";
 
 export class ContextMenuContainer {
     menu: Menu;
     overlay: HTMLDivElement;
-    commandHost: ICommandHost;
+    commandHost: CommandHost;
     focusElement: HTMLElement;
     resolve: (item: any) => void;
 
@@ -16,7 +16,7 @@ export class ContextMenuContainer {
         this.menu.addEventListener("keydown", this.onMenuKeyDown);
     }
 
-    async show(app: ICommandHost, x: number, y: number, menu: CommandMenuItem[]) {
+    async show(app: CommandHost, x: number, y: number, menu: CommandMenuItem[]) {
         const nutzMenu = convertNutzMenu(app, menu)
 
         this.commandHost = app;

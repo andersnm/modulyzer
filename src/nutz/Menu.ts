@@ -4,6 +4,7 @@ export interface MenuItem {
     icon?: string;
     shortcut?: string; //
     checked?: boolean;
+    disabled?: boolean;
     items?: MenuItem[]; 
 }
 
@@ -123,8 +124,10 @@ export class Menu extends EventTarget {
             return;
         }
 
-        const open = this.selectedIndex == itemIndex || this.submenuItemIndex == itemIndex; // === item; // !!item.open; // if the flyout; hover
-        itemOuterNode.className = "flex flex-row " + (open ? "bg-neutral-200 text-neutral-700" : "");
+        const open = this.selectedIndex == itemIndex || this.submenuItemIndex == itemIndex; // if the flyout; hover
+        itemOuterNode.className = "flex flex-row"
+            + ((!item.disabled && open) ? " bg-neutral-200 text-neutral-700" : "")
+            + (item.disabled? " opacity-50" : "");
     }
 
     bindMenuItem(itemOuterNode: HTMLElement, itemIndex: number) {
@@ -150,6 +153,7 @@ export class Menu extends EventTarget {
 
         const labelNode = document.createElement("div");
         labelNode.className = "flex-1";
+
         labelNode.innerText = item.label;
 
         const hotkeyNode = document.createElement("div");
@@ -234,9 +238,11 @@ export class Menu extends EventTarget {
                 }
             });
 
-            itemOuterNode.addEventListener("click", () => {
-                this.dispatchEvent(new CustomEvent("action", { detail: item.action }));
-            });
+            if (!item.disabled) {
+                itemOuterNode.addEventListener("click", () => {
+                    this.dispatchEvent(new CustomEvent("action", { detail: item.action }));
+                });
+            }
 
             this.bindMenuItem(itemOuterNode, itemIndex);
             this.inner.appendChild(itemOuterNode);

@@ -1,10 +1,8 @@
-import { DragTarget, ICommandHost, IComponent, PointType, ptInRect, rectCenter, RectType } from "../nutz";
+import { CommandHost, DragTarget, IComponent, PointType, ptInRect, rectCenter, RectType } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 import { Appl } from "../App";
 import { ConnectionDocument, InstrumentDocument } from "../audio/SongDocument";
-import { PinsPanel } from "./PinsPanel";
 import { CommandMenuItem } from "../menu/menu";
-import { getNoteForKey } from "./PatternEditorHelper";
 import { noteKeyDown, noteKeyStopAll, noteKeyUp } from "../KeyboardNoteHelper";
 
 function colorWithBrightness(r: number, g: number, b: number, brightness: number) {
@@ -134,7 +132,7 @@ class DragConnectionGain extends DragTarget {
 
 export class MixerCanvas implements IComponent {
     app: Appl;
-    commandHost: ICommandHost
+    commandHost: CommandHost;
     container: HTMLElement;
     canvas: HTMLCanvasElement;
 
@@ -149,7 +147,7 @@ export class MixerCanvas implements IComponent {
     drawConnectionPosition: PointType | null = null;
     clickPt: PointType = [ 0, 0 ];
 
-    constructor(app: Appl, commandHost: ICommandHost) {
+    constructor(app: Appl, commandHost: CommandHost) {
         this.app = app;
         this.commandHost = commandHost;
         this.container = document.createElement("div");
