@@ -20,12 +20,10 @@ export class InflictorFactory extends InstrumentFactory {
 export class Inflictor extends Instrument {
     context: AudioContext;
     voicePool: SynthNote[];
-    notes: Map<number, SynthNote>;
 
     constructor(context: AudioContext, factory: InstrumentFactory) {
         super(factory);
         this.context = context;
-        this.notes = new Map();
         this.voicePool = Array.from({ length: factory.maxPolyphony }, () => new SynthNote(context));
 
         this.outputNode = this.context.createGain();
@@ -34,32 +32,32 @@ export class Inflictor extends Instrument {
         // each voice have filter etc, change all at once
         this.parameters = [
             new VirtualParameter("Osc1-Waveform", 0, 3, 2, "linear", (time, value) => {
-                this.voicePool.forEach((voice) => voice.osc1.oscillator.type = oscTypeTable[Math.round(value)]);
+                this.voicePool.forEach((voice) => voice.osc1.setOscType(oscTypeTable[Math.round(value)]));
             }, describeTable(oscTypeTable)),
             new VirtualParameter("Osc1-Gain", 0, 1, 0.5, "linear", (time, value) => {
                 this.voicePool.forEach((voice) => voice.osc1.gainNode.gain.setValueAtTime(value, time));
             }),
             new VirtualParameter("Osc1-Detune", 0, 100, 0, "linear", (time, value) => {
-                this.voicePool.forEach((voice) => voice.osc1.oscillator.detune.setValueAtTime(value, time));
+                this.voicePool.forEach((voice) => voice.osc1.setOscDetune(value));
             }),
             new VirtualParameter("Osc1-LfoFreq", 0, 20, 0.2, "linear", (time, value) => {
-                this.voicePool.forEach((voice) => voice.osc1.lfo.frequency.setValueAtTime(value, time));
+                this.voicePool.forEach((voice) => voice.osc1.setLfoFreq(value));
             }),
             new VirtualParameter("Osc1-LfoDepth", 0, 20, 10, "linear", (time, value) => {
                 this.voicePool.forEach((voice) => voice.osc1.lfoGain.gain.setValueAtTime(value, time));
             }),
 
             new VirtualParameter("Osc2-Waveform", 0, 3, 1, "linear", (time, value) => {
-                this.voicePool.forEach((voice) => voice.osc2.oscillator.type = oscTypeTable[Math.round(value)]);
+                this.voicePool.forEach((voice) => voice.osc2.setOscType(oscTypeTable[Math.round(value)]));
             }, describeTable(oscTypeTable)),
             new VirtualParameter("Osc2-Gain", 0, 1, 0.5, "linear", (time, value) => {
                 this.voicePool.forEach((voice) => voice.osc2.gainNode.gain.setValueAtTime(value, time));
             }),
             new VirtualParameter("Osc2-Detune", 0, 100, 5, "linear", (time, value) => {
-                this.voicePool.forEach((voice) => voice.osc2.oscillator.detune.setValueAtTime(value, time));
+                this.voicePool.forEach((voice) => voice.osc2.setOscDetune(value));
             }),
             new VirtualParameter("Osc2-LfoFreq", 0, 20, 0.3, "linear", (time, value) => {
-                this.voicePool.forEach((voice) => voice.osc2.lfo.frequency.setValueAtTime(value, time));
+                this.voicePool.forEach((voice) => voice.osc2.setLfoFreq(value));
             }),
             new VirtualParameter("Osc2-LfoDepth", 0, 20, 10, "linear", (time, value) => {
                 this.voicePool.forEach((voice) => voice.osc2.lfoGain.gain.setValueAtTime(value, time));
@@ -97,27 +95,37 @@ export class Inflictor extends Instrument {
         ];
     }
 
-    private allocateVoice(note: number): SynthNote | null {
-        if (this.notes.has(note)) {
-            return this.notes.get(note);
+    allocateVoice(note: number) {
+        const now = this.context.currentTime;
+
+        for (const v of this.voicePool) {
+            if (v.isActive && v.isFinished(now)) {
+                v.clearNote();
+            }
         }
 
-        const idleVoice = this.voicePool.find((voice) => !voice.isPlaying);
-        if (idleVoice) {
-            this.notes.set(note, idleVoice);
-            return idleVoice;
+        const existing = this.voicePool.find(v => v.note === note && v.isActive);
+        if (existing) return existing;
+
+        const idle = this.voicePool.find(v => !v.isActive);
+        if (idle) {
+            idle.note = note;
+            return idle;
         }
 
-        // TODO: steal
-        return null;
+        const oldest = this.voicePool.reduce((a, b) =>
+            a.noteOnTime < b.noteOnTime ? a : b
+        );
+
+        oldest.releaseNote(now);
+        oldest.note = note;
+        return oldest;
     }
 
     private deallocateVoice(time: number, note: number): void {
-        if (this.notes.has(note)) {
-            const voice = this.notes.get(note);
-            voice.releaseNote(time);
-            this.notes.delete(note);
-        }
+        const voice = this.voicePool.find(v => v.note === note);
+        if (!voice) return ;
+        voice.releaseNote(time);
     }
 
     processMidi(time: number, command: number, value: number, data: number): void {
@@ -138,7 +146,6 @@ export class Inflictor extends Instrument {
             switch (value) {
                 case 123: // All Notes Off
                     this.voicePool.forEach((voice) => voice.releaseNote(time));
-                    this.notes.clear();
                     break;
                 default:
                     console.log("Unhandled control change: ", value);

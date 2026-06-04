@@ -15,8 +15,11 @@ export class SynthNote {
   ampGain: GainNode;
   ampEnvelope: ADSREnvelope;
 
-  isPlaying: boolean = false;
-  releaseTimeout = null;
+  isActive = false;
+  noteOnTime = 0;
+  noteOffTime = null;
+  releaseEndTime = null;
+  note = -1;
 
   constructor(context: AudioContext) {
 
@@ -34,26 +37,37 @@ export class SynthNote {
   }
 
   triggerNote(time: number, note: number, velocity: number) {
-
-    if (this.releaseTimeout) {
-      clearTimeout(this.releaseTimeout);
-      this.releaseTimeout = null;
-    }
+    this.note = note;
+    this.noteOnTime = time;
+    this.noteOffTime = null;
+    this.releaseEndTime = null;
+    this.isActive = true;
 
     const freq = noteToFreq(note);
-    this.osc1.oscillator.frequency.setValueAtTime(freq, time);
-    this.osc2.oscillator.frequency.setValueAtTime(freq, time);
+    this.osc1.play(time, freq);
+    this.osc2.play(time, freq);
     this.ampEnvelope.trigger(time);
-    this.isPlaying = true;
   }
 
   releaseNote(time: number) {
-    this.ampEnvelope.untrigger(time);
+    this.noteOffTime = time;
+    this.releaseEndTime = time + this.ampEnvelope.release;
 
-    // TODO: do this differently, set releaseTime and compare in voice allocation
-    this.releaseTimeout = window.setTimeout(() => {
-      this.isPlaying = false;
-      this.releaseTimeout = null;
-    }, ((time - this.context.currentTime) + this.ampEnvelope.release) * 1000);
+    this.ampEnvelope.untrigger(time);
+    this.osc1.stop(this.releaseEndTime);
+    this.osc2.stop(this.releaseEndTime);
+  }
+
+  clearNote() {
+    this.isActive = false;
+    this.note = -1;
+    this.osc1.oscillator = null;
+    this.osc2.oscillator = null;
+    this.osc1.lfo = null;
+    this.osc2.lfo = null;
+  }
+
+  isFinished(now: number) {
+    return this.releaseEndTime !== null && now >= this.releaseEndTime;
   }
 }
