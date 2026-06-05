@@ -8,9 +8,78 @@ function noteToFreq(note) {
 
 const oscTypeTable: OscillatorType[] = [ "sine", "square", "sawtooth", "triangle" ];
 
-function getOscType(value: number) {
-    const index = (value / 127) * (oscTypeTable.length - 1);
-    return oscTypeTable[Math.floor(index)];
+class OscVoice {
+    private context: AudioContext;
+    private osc: OscillatorNode | null = null;
+    private gain: GainNode;
+
+    note: number = -1;
+    isActive = false;
+    noteOnTime = 0;
+    releaseEndTime: number | null = null;
+
+    oscType: OscillatorType = "sine";
+    releaseTime = 0.02;
+
+    constructor(context: AudioContext) {
+        this.context = context;
+        this.gain = new GainNode(context);
+        this.gain.gain.setValueAtTime(0, 0);
+    }
+
+    connect(dest: AudioNode) {
+        this.gain.connect(dest);
+    }
+
+    trigger(time: number, note: number, freq: number, oscType: OscillatorType) {
+        this.note = note;
+        this.noteOnTime = time;
+        this.releaseEndTime = null;
+        this.isActive = true;
+        this.oscType = oscType;
+
+        if (this.osc) {
+            this.osc.stop(time);
+            this.osc = null;
+        }
+
+        const osc = new OscillatorNode(this.context);
+        osc.type = oscType;
+        osc.frequency.setValueAtTime(freq, time);
+        osc.connect(this.gain);
+        osc.start(time);
+
+        this.osc = osc;
+
+        // simple attack
+        this.gain.gain.cancelScheduledValues(time);
+        this.gain.gain.setValueAtTime(this.gain.gain.value, time);
+        this.gain.gain.setTargetAtTime(1, time, 0.01);
+    }
+
+    release(time: number) {
+        if (!this.isActive) return;
+
+        this.releaseEndTime = time + this.releaseTime;
+
+        this.gain.gain.cancelScheduledValues(time);
+        this.gain.gain.setValueAtTime(this.gain.gain.value, time);
+        this.gain.gain.setTargetAtTime(0, time, this.releaseTime);
+
+        if (this.osc) {
+            this.osc.stop(this.releaseEndTime);
+        }
+    }
+
+    isFinished(now: number) {
+        return this.releaseEndTime !== null && now >= this.releaseEndTime;
+    }
+
+    clear() {
+        this.isActive = false;
+        this.note = -1;
+        this.osc = null;
+    }
 }
 
 export class OscillatorFactory extends InstrumentFactory {
@@ -26,46 +95,76 @@ export class OscillatorFactory extends InstrumentFactory {
 }
 
 export class Oscillator extends Instrument {
+    private context: AudioContext;
+    private voicePool: OscVoice[];
 
-    oscNode: OscillatorNode;
-    gainNode: GainNode;
+    private oscType: OscillatorType = "sine";
 
     constructor(context: AudioContext, factory: InstrumentFactory) {
         super(factory);
+        this.context = context;
 
-        this.oscNode = new OscillatorNode(context, {});
-        this.gainNode = new GainNode(context, {});
+        this.voicePool = Array.from(
+            { length: 4 },
+            () => new OscVoice(context)
+        );
 
-        this.gainNode.gain.setValueAtTime(0, 0)
+        this.outputNode = new GainNode(context);
 
-        this.oscNode.connect(this.gainNode);
-
-        this.oscNode.start(0);
-
-        this.outputNode = this.gainNode;
+        this.voicePool.forEach(v => v.connect(this.outputNode));
 
         this.parameters = [
-            new VirtualParameter("Waveform", 0, oscTypeTable.length - 1, 0, "linear", (time, value) => {
-                // description: "sine, square, sawtooth, triangle",
-                this.oscNode.type = oscTypeTable[Math.round(value)];
-            }, describeTable(oscTypeTable)),
+            new VirtualParameter(
+                "Waveform",
+                0,
+                oscTypeTable.length - 1,
+                0,
+                "linear",
+                (time, value) => {
+                    this.oscType = oscTypeTable[Math.round(value)];
+                },
+                describeTable(oscTypeTable)
+            ),
         ];
-
     }
 
-    processMidi(time: number, command: number, value: number, data: number): void {
-        if (command === 0x90) {
-            if (data !== 0) {
-                // note on
-                const freq = noteToFreq(value);
-                console.log("osc note on, ", value, freq, time)
-                this.oscNode.frequency.setValueAtTime(freq, time);
-                this.gainNode.gain.setTargetAtTime(1, time, 0.02)
-            } else {
-                // note off
-                console.log("osc note off, ", time)
-                this.gainNode.gain.setTargetAtTime(0, time, 0.02)
+    private allocateVoice(note: number): OscVoice {
+        const now = this.context.currentTime;
+
+        for (const v of this.voicePool) {
+            if (v.isActive && v.isFinished(now)) {
+                v.clear();
             }
+        }
+
+        const existing = this.voicePool.find(v => v.note === note && v.isActive);
+        if (existing) return existing;
+
+        const idle = this.voicePool.find(v => !v.isActive);
+        if (idle) return idle;
+
+        // steal
+        return this.voicePool.reduce((a, b) =>
+            a.noteOnTime < b.noteOnTime ? a : b
+        );
+    }
+
+    private releaseVoice(time: number, note: number) {
+        const v = this.voicePool.find(v => v.note === note && v.isActive);
+        if (v) v.release(time);
+    }
+
+    processMidi(time: number, command: number, value: number, velocity: number): void {
+        if (command === 0x90) {
+            if (velocity !== 0) {
+                const freq = noteToFreq(value);
+                const v = this.allocateVoice(value);
+                v.trigger(time, value, freq, this.oscType);
+            } else {
+                this.releaseVoice(time, value);
+            }
+        } else if (command === 0x80) {
+            this.releaseVoice(time, value);
         }
     }
 }
