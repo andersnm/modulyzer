@@ -764,8 +764,8 @@ export class PatternEditorCanvas extends EventTarget implements IComponent {
 
         // play position
         const playerPattern = this.app.playerSongAdapter.patternMap.get(this.pattern);
-        const playingPattern = this.app.player?.playingPatterns.find(p => p.pattern === playerPattern);
-        const playPos = playingPattern?.currentBeat * this.pattern?.subdivision;
+        const playingPatternPosition = this.app.player?.getPatternPlayPosition(playerPattern);
+        const playPos = playingPatternPosition * this.pattern?.subdivision;
 
         ctx.strokeStyle = "#FFF";
         ctx.beginPath();
