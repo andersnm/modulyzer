@@ -15,6 +15,7 @@ import { ShowMixerCommand } from './ShowMixerCommand';
 import { ShowPinsCommand } from './ShowPinsCommand';
 import { ShowFileSystemConfigurationCommand } from './ShowFileSystemConfigurationCommand';
 import { ClearSongCommand } from './ClearSongCommand';
+import { RenderSongCommand } from './RenderSongCommand';
 
 export function registerApplicationCommands(app: Appl) {
     app.registerCommand("show-audio-configuration", null, null, new ShowAudioConfigurationCommand(app));
@@ -27,6 +28,7 @@ export function registerApplicationCommands(app: Appl) {
     app.registerCommand("show-mixer", null, null, new ShowMixerCommand(app));
     app.registerCommand("show-pins", null, null, new ShowPinsCommand(app));
     app.registerCommand("save-song", "hgi-stroke hgi-download-04", "Save Song", new SaveSongCommand(app));
+    app.registerCommand("render-song", "hgi-stroke hgi-bounce-right", "Render Song", new RenderSongCommand(app));
     app.registerCommand("open-song", "hgi-stroke hgi-folder-02", "Load Song", new OpenSongCommand(app));
     app.registerCommand("clear-song", "hgi-stroke hgi-file-01", "Clear Song", new ClearSongCommand(app));
     app.registerCommand("play-song", "hgi-stroke hgi-next", "Play Song", new PlaySongCommand(app));

@@ -16,7 +16,7 @@ export class ModalDialogContainer {
     constructor() {
     }
 
-    async showModal(title: string, content: IComponent, closable: boolean = true) {
+    buildDialogFrame(title: string, content: IComponent, closable: boolean = true) {
 
         if (this.modalStack.length === 0) {
             this.focusElement = document.activeElement as HTMLElement;
@@ -55,6 +55,12 @@ export class ModalDialogContainer {
 
         (content.getDomNode() as HTMLElement).focus();
 
+        return wrapperNode;
+    }
+
+    async showModal(title: string, content: IComponent, closable: boolean = true) {
+        const wrapperNode = this.buildDialogFrame(title, content, closable);
+
         // return promise that resolves when dialog is closed
         // and the content must be able to endDialog too
         return new Promise((resolve) => {
@@ -66,6 +72,16 @@ export class ModalDialogContainer {
         });
     }
 
+    showBusyModal(title: string, content: IComponent, closable: boolean = true) {
+        const wrapperNode = this.buildDialogFrame(title, content, closable);
+
+        this.modalStack.push({
+            resolve: null,
+            element: wrapperNode,
+            content: content.getDomNode() as HTMLElement,
+        });
+    }
+
     endModal(value: any = null) {
         const modal = this.modalStack.pop();
         if (!modal) {
@@ -73,7 +89,7 @@ export class ModalDialogContainer {
         }
 
         document.body.removeChild(modal.element);
-        modal.resolve(value);
+        if (modal.resolve) modal.resolve(value);
 
         if (this.modalStack.length === 0) {
             if (this.focusElement) {

@@ -15,13 +15,13 @@ export class KickDrumFactory extends InstrumentFactory {
         return "@modulyzer/KickDrum";
     }
 
-    createInstrument(context: AudioContext, player: Player): Instrument {
+    createInstrument(context: BaseAudioContext, player: Player): Instrument {
         return new KickDrum(context, this);
     }
 }
 
 class KickVoice {
-    private context: AudioContext;
+    private context: BaseAudioContext;
 
     private osc: OscillatorNode | null = null;
     private shaper: WaveShaperNode | null = null;
@@ -38,19 +38,28 @@ class KickVoice {
     noteOnTime = 0;
     releaseEndTime: number | null = null;
 
-    constructor(context: AudioContext) {
+    constructor(context: BaseAudioContext) {
         this.context = context;
 
         this.toneGain = context.createGain();
-        this.toneGain.gain.value = 0;
+        this.toneGain.gain.setValueAtTime(0, 0);
 
         this.clickGain = context.createGain();
-        this.clickGain.gain.value = 0;
+        this.clickGain.gain.setValueAtTime(0, 0);
 
         this.outGain = context.createGain();
-        this.outGain.gain.value = 1;
+        this.outGain.gain.setValueAtTime(1, 0);
 
+        this.shaper = this.context.createWaveShaper();
+
+        this.noiseFilter = this.context.createBiquadFilter();
+        this.noiseFilter.type = "lowpass";
+        this.noiseFilter.frequency.setValueAtTime(4000, 0);
+
+        this.shaper.connect(this.toneGain);
         this.toneGain.connect(this.outGain);
+
+        this.noiseFilter.connect(this.clickGain);
         this.clickGain.connect(this.outGain);
     }
 
@@ -84,15 +93,12 @@ class KickVoice {
         this.osc = this.context.createOscillator();
         this.osc.type = oscType;
 
-        this.shaper = this.context.createWaveShaper();
-        this.shaper.curve = shaperCurve as Float32Array<ArrayBuffer>;
-
-        this.osc.connect(this.shaper);
-        this.shaper.connect(this.toneGain);
-
         const baseFreq = noteToFreq(note) * 0.5;
         this.osc.frequency.setValueAtTime(baseFreq * pitch, time);
         this.osc.frequency.exponentialRampToValueAtTime(baseFreq, time + pitchDuration);
+
+        this.shaper.curve = shaperCurve as Float32Array<ArrayBuffer>;
+        this.osc.connect(this.shaper);
 
         this.toneGain.gain.cancelScheduledValues(time);
         this.toneGain.gain.setValueAtTime(0, time);
@@ -105,12 +111,7 @@ class KickVoice {
 
         // Click noise
         this.noiseSrc = new AudioBufferSourceNode(this.context, { buffer: noiseBuffer });
-        this.noiseFilter = this.context.createBiquadFilter();
-        this.noiseFilter.type = "lowpass";
-        this.noiseFilter.frequency.setValueAtTime(4000, time);
-
         this.noiseSrc.connect(this.noiseFilter);
-        this.noiseFilter.connect(this.clickGain);
 
         this.clickGain.gain.cancelScheduledValues(time);
         this.clickGain.gain.setValueAtTime(0, time);
@@ -133,22 +134,13 @@ class KickVoice {
         this.note = -1;
         this.releaseEndTime = null;
 
-        if (this.shaper) {
-            this.shaper.disconnect();
-        }
-        if (this.noiseFilter) {
-            this.noiseFilter.disconnect();
-        }
-
         this.osc = null;
-        this.shaper = null;
         this.noiseSrc = null;
-        this.noiseFilter = null;
     }
 }
 
 export class KickDrum extends Instrument {
-    private context: AudioContext;
+    private context: BaseAudioContext;
 
     private voicePool: KickVoice[];
 
@@ -162,7 +154,7 @@ export class KickDrum extends Instrument {
     clickIntensity: number = 0.5;
     level: number = 0.8;
 
-    constructor(context: AudioContext, factory: InstrumentFactory) {
+    constructor(context: BaseAudioContext, factory: InstrumentFactory) {
         super(factory);
         this.context = context;
 
@@ -203,9 +195,7 @@ export class KickDrum extends Instrument {
         ];
     }
 
-    private allocateVoice(): KickVoice {
-        const now = this.context.currentTime;
-
+    private allocateVoice(now: number): KickVoice {
         for (const v of this.voicePool) {
             if (v.isActive && v.isFinished(now)) {
                 v.clear();
@@ -225,7 +215,7 @@ export class KickDrum extends Instrument {
 
     processMidi(time: number, command: number, value: number, velocity: number): void {
         if (command === 0x90 && velocity !== 0) {
-            const v = this.allocateVoice();
+            const v = this.allocateVoice(time);
             v.trigger(time, value, {
                 pitch: this.pitch,
                 pitchDuration: this.pitchDuration,
@@ -240,7 +230,7 @@ export class KickDrum extends Instrument {
     }
 }
 
-function generateNoiseBuffer(context: AudioContext): AudioBuffer {
+function generateNoiseBuffer(context: BaseAudioContext): AudioBuffer {
     const bufferSize = context.sampleRate * 0.02;
     const buffer = context.createBuffer(1, bufferSize, context.sampleRate);
     const output = buffer.getChannelData(0);

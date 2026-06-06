@@ -27,6 +27,10 @@ export const fileMenu: CommandMenuItem[] = [
         label: "Save As...",
         action: "save-song"
     },
+    {
+        label: "Render As .WAV...",
+        action: "render-song"
+    },
 ];
 
 export const waveMenu: CommandMenuItem[] = [

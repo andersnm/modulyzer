@@ -1,4 +1,4 @@
-import { AudioDevice } from "./AudioDevice";
+import { AudioDevice, AudioDeviceBase } from "./AudioDevice";
 import { Instrumenteer } from "./Instrumenteer";
 import { InstrumentFactory } from "./plugins/InstrumentFactory";
 import { PatternColumnType } from "./SongDocument";
@@ -124,7 +124,7 @@ function visitPlayingPatterns(
 }
 
 export class Player extends EventTarget {
-    device: AudioDevice;
+    device: AudioDeviceBase<any>;
     playing: boolean = false;
     playInterval: number;
     startTime: number;
@@ -140,7 +140,7 @@ export class Player extends EventTarget {
     loopStart: number = 0;
     loopEnd: number = 8;
 
-    constructor(instrumentFactories: InstrumentFactory[], device: AudioDevice) {
+    constructor(instrumentFactories: InstrumentFactory[], device: AudioDeviceBase<any>) {
         super();
         this.instrumentFactories = instrumentFactories;
         this.device = device;
@@ -182,6 +182,44 @@ export class Player extends EventTarget {
         }, SCHEDULE_INTERVAL * 1000 / 2);
 
         this.dispatchEvent(new CustomEvent("playing"))
+    }
+
+    async playOffline(): Promise<AudioBuffer> {
+        const context = this.device.context;
+        if (!(context instanceof OfflineAudioContext)) {
+            throw new Error("Device context is not an OfflineAudioContext");
+        }
+
+        const totalBeats = this.loopEnd;
+
+        let beat = 0;
+        let timeSec = 0;
+        this.startTime = this.device.context.currentTime; // TODO: Get rid on this.startTime in the scheduler
+
+        const beatsPerSecond = this.bpm / 60;
+        let remainingBeats = totalBeats;
+
+        while (remainingBeats > 0) {
+            const chunkBeats = Math.min(remainingBeats, this.loopEnd - beat);
+            const chunkSec = chunkBeats / beatsPerSecond;
+
+            this.scheduleSequence(
+                beat,
+                timeSec,
+                chunkBeats
+            );
+
+            beat += chunkBeats;
+            timeSec += chunkSec;
+            remainingBeats -= chunkBeats;
+
+            if (beat >= this.loopEnd) {
+                beat = this.loopStart;
+            }
+        }
+
+        const buffer = await context.startRendering();
+        return buffer;
     }
 
     stop() {

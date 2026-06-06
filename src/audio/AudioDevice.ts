@@ -4,18 +4,38 @@ import open303WorkletUrl from "./open303/Open303Worklet.js?worker&url";
 
 import { Recorder } from "./Recorder.js";
 
-export class AudioDevice {
+export class AudioDeviceBase<TDevice extends AudioContext | OfflineAudioContext> {
+    context: TDevice | null = null;
+    masterGainNode: GainNode;
+}
+
+export class OfflineAudioDevice extends AudioDeviceBase<OfflineAudioContext> {
+    async create(sampleRate: number, length: number, numChannels: number) {
+        if (this.context) {
+            this.context = null;
+        }
+        this.context = new OfflineAudioContext(numChannels, length * sampleRate, sampleRate);
+
+        await this.context.audioWorklet.addModule(recorderWorkletUrl);
+        await this.context.audioWorklet.addModule(dx7WorkletUrl);
+        await this.context.audioWorklet.addModule(open303WorkletUrl);
+
+        this.masterGainNode = new GainNode(this.context, { gain: 1.0 });
+        this.masterGainNode.connect(this.context.destination);
+    }
+}
+
+export class AudioDevice extends AudioDeviceBase<AudioContext> {
 
     latencySec: number = 0.125;
     inputDeviceId: string = null;
     outputDeviceId: string = null;
-    context: AudioContext | null = null;
     inputNode: MediaStreamAudioSourceNode;
     recorder: Recorder;
-    masterGainNode: GainNode
     inputMode: "stereo" | "left" | "right";
 
     constructor() {
+        super();
         this.inputMode = "stereo";
     }
 
@@ -55,11 +75,13 @@ export class AudioDevice {
     }
 
     async close() {
+        this.masterGainNode.disconnect();
         this.inputNode.disconnect(this.recorder.recordNode);
         this.recorder.destroy();
 
         await this.context.close();
         this.context = null;
         this.inputNode = null;
+        this.masterGainNode = null;
     }
 }
