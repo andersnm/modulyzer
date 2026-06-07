@@ -1,4 +1,5 @@
 import recorderWorkletUrl from "./RecorderWorklet.js?worker&url";
+import monitorWorkletUrl from "./MonitorWorklet.js?worker&url";
 import dx7WorkletUrl from "./dx7/Dx7Worklet.js?worker&url";
 import open303WorkletUrl from "./open303/Open303Worklet.js?worker&url";
 
@@ -17,6 +18,7 @@ export class OfflineAudioDevice extends AudioDeviceBase<OfflineAudioContext> {
         this.context = new OfflineAudioContext(numChannels, length * sampleRate, sampleRate);
 
         await this.context.audioWorklet.addModule(recorderWorkletUrl);
+        await this.context.audioWorklet.addModule(monitorWorkletUrl);
         await this.context.audioWorklet.addModule(dx7WorkletUrl);
         await this.context.audioWorklet.addModule(open303WorkletUrl);
 
@@ -53,6 +55,7 @@ export class AudioDevice extends AudioDeviceBase<AudioContext> {
         this.context = new AudioContext({ sinkId: outputDeviceId, latencyHint: latencySec } as any);
 
         await this.context.audioWorklet.addModule(recorderWorkletUrl);
+        await this.context.audioWorklet.addModule(monitorWorkletUrl);
         await this.context.audioWorklet.addModule(dx7WorkletUrl);
         await this.context.audioWorklet.addModule(open303WorkletUrl);
 

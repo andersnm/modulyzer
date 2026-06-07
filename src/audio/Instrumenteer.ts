@@ -4,9 +4,11 @@ export class Instrumenteer {
     factory: InstrumentFactory;
     instrument: Instrument;
     gainNode: GainNode;
+    monitorNode: AudioWorkletNode;
     muted: boolean = false;
+    activity: boolean = false;
 
-    constructor(factory: InstrumentFactory, instrument: Instrument, context: AudioContext) {
+    constructor(factory: InstrumentFactory, instrument: Instrument, context: BaseAudioContext) {
         this.factory = factory;
         this.instrument = instrument;
 
@@ -15,8 +17,18 @@ export class Instrumenteer {
             this.gainNode.gain.value = 1.0;
 
             instrument.outputNode.connect(this.gainNode);
+
+            this.monitorNode = new AudioWorkletNode(context, "monitor-processor");
+            this.monitorNode.port.addEventListener("message", this.onMonitorMessage);
+            this.monitorNode.port.start();
+
+            this.gainNode.connect(this.monitorNode);
         }
     }
+
+    onMonitorMessage = (ev: MessageEvent<boolean>) => {
+        this.activity = ev.data;
+    };
 
     connect(destination: AudioNode) {
         if (!this.gainNode) {
