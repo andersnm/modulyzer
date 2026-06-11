@@ -1,4 +1,5 @@
 import { Appl } from "../App";
+import { deleteSequenceEvents } from "../commands/SequenceEditor/CutCommand";
 import { DragTarget, formatHotkey, IComponent } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 import { PatternFrame } from "./PatternFrame";
@@ -82,6 +83,7 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
         this.container = document.createElement("div");
         this.container.classList.add("flex-1", "w-full", "pb-1", "relative");
         this.container.tabIndex = 0;
+        this.container.addEventListener("dblclick", this.onDblClick)
         this.container.addEventListener("pointerdown", this.onMouseDown);
         this.container.addEventListener("pointerup", this.onMouseUp);
         this.container.addEventListener("pointermove", this.onMouseMove);
@@ -163,6 +165,10 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
 
     onResizeOverlay = async () => {
         this.redrawOverlayCanvas();
+    };
+
+    onDblClick = (e: MouseEvent) => {
+        this.gotoPattern();
     };
 
     onMouseDown = (e: PointerEvent) => {
@@ -256,13 +262,52 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
                 this.gotoPattern();
                 return true;
             case "Delete":
-                this.deleteAtCursor();
+                if (this.selection) {
+                    this.deleteSelection();
+                    this.clearSelection();
+                } else {
+                    this.deleteAtCursor();
+                    this.shiftEventsAfterCursor(-1);
+                }
+                return true;
+            case "Insert":
+                this.shiftEventsAfterCursor(1);
+                return true;
+            case "Backspace":
+                if (this.selection) {
+                    this.deleteSelection();
+                    this.clearSelection();
+                } else {
+                    this.moveCursor(0, -1, e.shiftKey);
+                    this.deleteAtCursor();
+                    this.shiftEventsAfterCursor(-1);
+                }
                 return true;
             case "0": case "1": case "2": case "3": case "4":
             case "5": case "6": case "7": case "8": case "9":
                 this.editPatternIndex(e.key.charCodeAt(0) - 48);
                 return true;
         }
+    }
+
+    shiftEventsAfterCursor(delta: number) {
+        // add +1 to all events time at cursor and below
+        const sequenceColumn = this.app.song.sequenceColumns[this.cursorColumn];
+        const events = sequenceColumn.events.filter(e => e.time >= this.cursorTime);
+        for (let sequenceEvent of events) {
+            this.app.song.deleteSequenceEvent(sequenceColumn, sequenceEvent);
+            this.app.song.createSequenceEvent(sequenceColumn, sequenceEvent.time + delta, sequenceEvent.pattern);
+        }
+    }
+
+    deleteSelection() {
+        const start = Math.min(this.selection.startColumn, this.selection.endColumn);
+        const end = Math.max(this.selection.startColumn, this.selection.endColumn);
+
+        const startRow = Math.min(this.selection.startRow, this.selection.endRow);
+        const endRow = Math.max(this.selection.startRow, this.selection.endRow);
+
+        deleteSequenceEvents(this.app.song, start, end, startRow, endRow);
     }
 
     scrollIntoView() {
@@ -297,7 +342,7 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
 
     async gotoPattern() {
         const sequenceColumn = this.app.song.sequenceColumns[this.cursorColumn];
-        const sequenceEvent = sequenceColumn.events.find(e => e.time === this.cursorTime);
+        const sequenceEvent = sequenceColumn.events.reverse().find(e => e.time <= this.cursorTime);
 
         if (sequenceEvent) {
             const panel = await this.app.executeCommand("show-pattern-editor") as PatternFrame;
