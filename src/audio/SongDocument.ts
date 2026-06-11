@@ -469,11 +469,26 @@ export class SongDocument extends EventTarget {
         this.dispatchEvent(new CustomEvent("deleteSequenceColumn", { detail: sequenceColumn }));
     }
 
-
     createSequenceEvent(sequenceColumn: SequenceColumnDocument, time: number, pattern: PatternDocument) {
         const se = new SequenceEventDocument(sequenceColumn, time, pattern);
 
-        sequenceColumn.events.push(se);
+        if (sequenceColumn.events.length > 0 && time >= sequenceColumn.events[sequenceColumn.events.length - 1].time) {
+            sequenceColumn.events.push(se)
+        } else {
+            let lo = 0;
+            let hi = sequenceColumn.events.length;
+
+            while (lo < hi) {
+                const mid = (lo + hi) >>> 1;
+                if (sequenceColumn.events[mid].time < time) {
+                    lo = mid + 1;
+                } else {
+                    hi = mid;
+                }
+            }
+
+            sequenceColumn.events.splice(lo, 0, se);
+        }
 
         this.dispatchEvent(new CustomEvent("createSequenceEvent", { detail: se }));
 
