@@ -127,6 +127,15 @@ export abstract class Instrument extends EventTarget {
 
     protected abstract processMidi(time: number, command: number, value: number, data: number): void;
 
+    resumeNote(time: number, value: number, data: number, offsetTimeSec: number): void {
+        // Override if the instrument can resume notes (f.ex. WaveTracker)
+    }
+
+    getWavePlayPosition(wave: Wave): number | null {
+        // Override if the instrument can report play position of waves (f.ex. WaveTracker)
+        return null;
+    }
+
     destroy() {
         // Override to shutdown f.ex audioworklets
     }

@@ -167,6 +167,10 @@ export class Player extends EventTarget {
         this.currentBeat = startBeat;
         this.startTime = this.device.context.currentTime;
 
+        if (startBeat > 0) {
+            this.scheduleResumeNotes(this.currentBeat);
+        }
+
         // schedule 1 second first, then reschedule after 500ms to fill so we remain 1 second ahead
         this.currentBeat = this.scheduleSequence(this.currentBeat, this.currentTime, SCHEDULE_INTERVAL);
         this.currentTime += SCHEDULE_INTERVAL;
@@ -182,6 +186,53 @@ export class Player extends EventTarget {
         }, SCHEDULE_INTERVAL * 1000 / 2);
 
         this.dispatchEvent(new CustomEvent("playing"))
+    }
+
+    getCurrentlyPlayingNotes(pattern, atRow): PatternEvent[] {
+        const noteMap = new Map<number, PatternEvent>();
+        for (let column of pattern.columns) {
+            if (column.type !== "midinote") {
+                continue;
+            }
+
+            for (let event of column.events) {
+                // event.time
+                if (event.time > atRow) {
+                    break; // assume sorted
+                }
+
+                if (event.data0 !== 0) {
+                    noteMap.set(event.value, event);
+                } else {
+                    noteMap.delete(event.value);
+                }
+            }
+        }
+
+        return [ ... noteMap.values() ];
+    }
+
+    scheduleResumeNotes(startBeat: number) {
+        const secondsPerBeat = 60 / this.bpm;
+
+        visitPlayingPatterns(this.sequence, startBeat, startBeat, (pattern, patternLocalBeat, durationBeats, patternStartBeat) => {
+            for (let column of pattern.columns) {
+                const instrumenteer = column.instrumenteer;
+                if (instrumenteer.factory.identifier !== "@modulyzer/WaveTracker") {
+                    continue; // TODO: support other instruments
+                }
+
+                const notes = this.getCurrentlyPlayingNotes(pattern, patternLocalBeat);
+
+                for (let noteEvent of notes) {
+                    const noteStartBeat = patternStartBeat + noteEvent.time / pattern.subdivision;
+                    const beatDelta = startBeat - noteStartBeat;
+                    const offsetSec = beatDelta * secondsPerBeat;
+                    instrumenteer.instrument.resumeNote(this.device.context.currentTime, noteEvent.value, noteEvent.data0, offsetSec);
+                }
+
+            }
+        });
     }
 
     async playOffline(): Promise<AudioBuffer> {

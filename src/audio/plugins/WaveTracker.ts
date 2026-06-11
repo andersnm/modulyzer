@@ -19,6 +19,7 @@ interface WaveNode {
     node: AudioBufferSourceNode;
     gain: GainNode;
     active: boolean;
+    startTime: number;
 }
 
 export class WaveTracker extends Instrument {
@@ -65,7 +66,23 @@ export class WaveTracker extends Instrument {
         }
     }
 
-    noteOn(note: number, velocity: number, time: number) {
+    resumeNote(time: number, note: number, velocity: number, offsetTimeSec: number): void {
+        this.noteOn(note, velocity, time, offsetTimeSec);
+    }
+
+    getWavePlayPosition(wave: Wave): number | null {
+        for (let n of this.nodes) {
+            if (n.wave === wave && n.active) {
+                const currentTime = this.context.currentTime;
+                const elapsedTime = currentTime - n.startTime;
+                return elapsedTime;
+            }
+        }
+
+        return null;
+    }
+
+    noteOn(note: number, velocity: number, time: number, offsetTimeSec: number = 0) {
         const wave = this.getWaveByNote(note);
         if (!wave) {
             return;
@@ -83,7 +100,7 @@ export class WaveTracker extends Instrument {
         const gainValue = Math.pow(10, dB / 20);
         waveGain.gain.setValueAtTime(gainValue, 0);
 
-        const waveNode = {wave, node, gain: waveGain, active: true};
+        const waveNode = { wave, node, gain: waveGain, active: true, startTime: time - offsetTimeSec };
         this.nodes.push(waveNode); // there may be two same notes here, but will sort out after the "ended" event
 
         node.addEventListener("ended", () => {
@@ -96,7 +113,7 @@ export class WaveTracker extends Instrument {
         node.connect(waveGain);
         waveGain.connect(this.gainNode);
 
-        node.start(time);
+        node.start(time, offsetTimeSec);
     }
 
     noteOff(note: number, time: number) {
