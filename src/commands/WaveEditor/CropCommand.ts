@@ -10,20 +10,17 @@ export class CropCommand implements ICommand {
     }
 
     async handle(...args: any[]) {
-        const waveEditor = this.component.waveView.waveEditor;
-        if (!waveEditor.selection) {
+        const selection = this.component.waveView.getSelection();
+        if (!selection) {
             return;
         }
 
-        const start = Math.min(waveEditor.selection.start, waveEditor.selection.end);
-        const end = Math.max(waveEditor.selection.start, waveEditor.selection.end);
-
         const wave = this.component.wave;
-        wave.deleteRange(end, wave.sampleCount);
-        wave.deleteRange(0, start);
+        wave.deleteRange(selection.end, wave.sampleCount);
+        wave.deleteRange(0, selection.start);
 
-        waveEditor.clearSelection();
-        waveEditor.clearZoom();
+        this.component.waveView.clearSelection();
+        this.component.waveView.clearZoom();
 
         this.app.song.updateWave(wave, wave.name, wave.note, null, null, wave.sampleRate);
     }

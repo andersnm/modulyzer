@@ -10,7 +10,7 @@ drag zoom range edge = extend zoom
 */
 // import { resizeCanvas } from "../FlexCanvasHelper";
 import { WaveRange } from "../audio/SongDocument";
-import { convertRemToPixels, drawWaveBuffer, drawWaveRange, samplePositionFromPixel } from "../audio/WaveCanvasUtil";
+import { convertRemToPixels, drawWaveBuffer, drawWaveRange, getHeightPerChannel, samplePositionFromPixel } from "../audio/WaveCanvasUtil";
 import { DragTarget, IComponent, PointType, ptInRect, RectType } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 
@@ -157,6 +157,7 @@ class DragZoomRight extends DragTarget {
 export class WaveScrollCanvas extends EventTarget implements IComponent {
     container: HTMLElement;
     canvas: HTMLCanvasElement;
+    overlayCanvas: HTMLCanvasElement;
 
     buffers: Float32Array[] = [new Float32Array(0)];
     selection?: WaveRange;
@@ -172,19 +173,26 @@ export class WaveScrollCanvas extends EventTarget implements IComponent {
     constructor() {
         super();
         this.container = document.createElement("div");
-        this.container.className = "h-32 w-full pb-1";
+        this.container.classList.add("h-32", "w-full", "pb-1", "relative");
 
         this.canvas = FlexCanvas();
-        this.canvas.classList.add("rounded-lg", "touch-none"); // touch-none class fixes pointermove
+        this.canvas.classList.add("rounded-lg", "touch-none", "absolute", "w-full", "h-full"); // touch-none class fixes pointermove
 
-        this.canvas.addEventListener("pointerdown", this.onMouseDown);
-        this.canvas.addEventListener("pointerup", this.onMouseUp);
-        this.canvas.addEventListener("pointermove", this.onMouseMove);
+        this.container.addEventListener("pointerdown", this.onMouseDown);
+        this.container.addEventListener("pointerup", this.onMouseUp);
+        this.container.addEventListener("pointermove", this.onMouseMove);
         // this.canvas.addEventListener("contextmenu", this.onContextMenu);
         // this.canvas.addEventListener("keydown", this.onKeyDown);
         this.canvas.addEventListener("resize", this.onResize);
 
+        this.overlayCanvas = FlexCanvas();
+        this.overlayCanvas.classList.add("rounded-lg", "touch-none", "absolute", "w-full", "h-full"); // touch-none class fixes pointermove
+        this.overlayCanvas.style.mixBlendMode = "difference"; 
+
+        this.overlayCanvas.addEventListener("resize", this.onResizeOverlay);
+
         this.container.appendChild(this.canvas);
+        this.container.appendChild(this.overlayCanvas);
 
         this.container.addEventListener("nutz:mounted", this.onMounted);
         this.container.addEventListener("nutz:unmounted", this.onUnmounted);
@@ -199,6 +207,11 @@ export class WaveScrollCanvas extends EventTarget implements IComponent {
     onResize = async () => {
         this.updateRects();
         this.redrawCanvas();
+    };
+
+    onResizeOverlay = async () => {
+        this.updateRects();
+        this.redrawOverlayCanvas();
     };
 
     onMouseDown = (e: PointerEvent) => {
@@ -298,7 +311,7 @@ export class WaveScrollCanvas extends EventTarget implements IComponent {
         this.clearSelection();
         this.zoom = null;
         this.buffers = [new Float32Array(0)];
-        this.redrawCanvas();
+        this.redrawOverlayCanvas();
     }
 
     setSelection(start: number, end: number) {
@@ -307,7 +320,7 @@ export class WaveScrollCanvas extends EventTarget implements IComponent {
         }
 
         this.selection = { start, end };
-        this.redrawCanvas();
+        this.redrawOverlayCanvas();
     }
 
     clearSelection() {
@@ -316,7 +329,7 @@ export class WaveScrollCanvas extends EventTarget implements IComponent {
         }
 
         this.selection = null;
-        this.redrawCanvas();
+        this.redrawOverlayCanvas();
     }
 
     setZoom(start: number, end: number) {
@@ -326,7 +339,7 @@ export class WaveScrollCanvas extends EventTarget implements IComponent {
 
         this.zoom = { start, end };
         this.updateRects();
-        this.redrawCanvas();
+        this.redrawOverlayCanvas();
     }
 
     clearZoom() {
@@ -336,43 +349,50 @@ export class WaveScrollCanvas extends EventTarget implements IComponent {
 
         this.zoom = null;
         this.updateRects();
-        this.redrawCanvas();
+        this.redrawOverlayCanvas();
     }
 
     redrawCanvas() {
         const ctx = this.canvas.getContext("2d");
 
-        // Need height space for scrollbar, and time maarkers - want "full wave preview with timestamps, dragable-zoom-range-handles and scroll"
-        const channelCount = this.buffers.length;
         const channelMargin = convertRemToPixels(0.25); // p-1 is used for inset/outset spacing, which is 0.25rem
+        const channelHeight = getHeightPerChannel(this.canvas, this.buffers.length, channelMargin);
 
-        let h: number; // height per channel in the editor
-
-        if (channelCount > 1) {
-            h = (this.canvas.height - ((channelCount - 1) * channelMargin)) / channelCount;
-        } else {
-            h = this.canvas.height;
+        for (let i = 0; i < this.buffers.length; i++) {
+            drawWaveBuffer(ctx, 0, channelMargin * i + channelHeight * i, this.canvas.width, channelHeight, null, this.buffers[i], "#112", "#fff");
         }
+    }
 
-        // marg mellom channels; neutral-800 bar, height 0,25rem
+    redrawOverlayCanvas() {
+        const ctx = this.overlayCanvas.getContext("2d");
+        ctx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
 
-        // TODO; print markers and time pos, toggle units time/pct/offset
+        const channelMargin = convertRemToPixels(0.25); // p-1 is used for inset/outset spacing, which is 0.25rem
+        const channelHeight = getHeightPerChannel(this.canvas, this.buffers.length, channelMargin);
 
-        for (let i = 0; i < channelCount; i++) {
-            // selection in some color, zoom in some color, 
-            drawWaveBuffer(ctx, 0, channelMargin * i + h * i, this.canvas.width, h, null, this.playPosition, this.buffers[0], "#112", "#fff");
+        for (let i = 0; i < this.buffers.length; i++) {
+
+            const y = channelMargin * i + channelHeight * i;
 
             if (this.zoom)
-                drawWaveRange(ctx, 0, channelMargin * i + h * i, this.canvas.width, h, null, this.zoom, this.buffers[0].length, "#000");
+                drawWaveRange(ctx, 0, y, this.overlayCanvas.width, channelHeight, null, this.zoom, this.buffers[i].length, "#333");
 
             if (this.selection) {
                 const start = Math.min(this.selection.start, this.selection.end);
                 const end = Math.max(this.selection.start, this.selection.end);
 
-                drawWaveRange(ctx, 0, channelMargin * i + h * i, this.canvas.width, h, null, {start,end}, this.buffers[0].length, "#FFF");
+                drawWaveRange(ctx, 0, y, this.overlayCanvas.width, channelHeight, null, {start,end}, this.buffers[i].length, "#FFF");
             }
 
             // draw draggable handles
+
+            // draw play position
+            const playX = (this.playPosition) / this.buffers[i].length * this.overlayCanvas.width;
+            ctx.strokeStyle = "#0F0"
+            ctx.beginPath();
+            ctx.moveTo(playX, y);
+            ctx.lineTo(playX, y + channelHeight);
+            ctx.stroke();
         }
     }
 

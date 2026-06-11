@@ -16,6 +16,7 @@ export class WavePanel extends ViewFrame {
     waveEditor: WaveEditorCanvas;
     waveScroll: WaveScrollCanvas;
     statusBar: StatusBar;
+    redrawTimer: number | null = null;
 
     constructor(app: Appl, parent: CommandHost) {
         super(parent);
@@ -116,7 +117,34 @@ export class WavePanel extends ViewFrame {
         this.container.appendChild(this.statusBar.getDomNode());
 
         this.updateToolbarButtons();
+
+        this.container.addEventListener("nutz:mounted", this.onMounted);
+        this.container.addEventListener("nutz:unmounted", this.onUnmounted);
     }
+
+    onMounted = () => {
+        let playPosition = -1;
+        this.redrawTimer = setInterval(() => {
+            if (this.document) {
+                const playerWave = this.app.playerSongAdapter.waveMap.get(this.document);
+                const playerInstrument = this.app.playerSongAdapter.instrumentMap.get(this.document.instrument);
+                const wavePlayPosition = playerInstrument?.instrument.getWavePlayPosition(playerWave) ?? 0;
+                if (wavePlayPosition !== playPosition) {
+                    playPosition = wavePlayPosition;
+                    // const waveDurationSec = this.document.sampleCount / this.document.sampleRate;
+                    this.waveEditor.playPosition = playPosition * this.document.sampleRate;
+                    this.waveEditor.redrawOverlayCanvas();
+                    this.waveScroll.playPosition = playPosition * this.document.sampleRate;
+                    this.waveScroll.redrawOverlayCanvas();
+                }
+            }
+        }, 100);
+    };
+
+    onUnmounted = () => {
+        clearInterval(this.redrawTimer);
+        this.redrawTimer = null;
+    };
 
     updateToolbarButtons() {
         this.setCommandState("copy", { enabled: !!this.document && !!this.document.selection });
@@ -337,6 +365,27 @@ export class WavePanel extends ViewFrame {
     clearZoom() {
         this.waveEditor.clearZoom();
         this.waveScroll.clearZoom();
-        this.document.zoom = null;
+        this.document.zoom = null; // TODO: not great
+    }
+
+    setSelection(start: number, end: number) {
+        this.waveEditor.setSelection(start, end);
+        this.waveScroll.setSelection(start, end);
+    }
+
+    clearSelection() {
+        this.waveEditor.clearSelection();
+        this.waveScroll.clearSelection();
+    }
+
+    getSelection() {
+        if (!this.waveEditor.selection) {
+            return null;
+        }
+
+        const start = Math.min(this.waveEditor.selection.start, this.waveEditor.selection.end);
+        const end = Math.max(this.waveEditor.selection.start, this.waveEditor.selection.end);
+
+        return { start, end };
     }
 }

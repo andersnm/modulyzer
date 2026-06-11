@@ -18,7 +18,6 @@ export function convertRemToPixels(rem) {
 export function drawWaveRange(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, zoom: WaveRange, range: WaveRange, bufferLength, color) {
     // invert selection rec, eller tegne opp og ned?
     ctx.fillStyle = color; //"#fff"
-    ctx.globalAlpha = 0.5;
     // is in samples, fix to canvass ize
 
     const zoomStart = zoom ? zoom.start : 0;
@@ -32,10 +31,8 @@ export function drawWaveRange(ctx: CanvasRenderingContext2D, x: number, y: numbe
     ctx.fillRect(x + startX, y, endX - startX, height);
 }
 
-export function drawWaveBuffer(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, zoom: WaveRange|null, playPosition: number, buffer: Float32Array, bgColor, color) {
+export function drawWaveBuffer(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, zoom: WaveRange|null, buffer: Float32Array, bgColor, color) {
     ctx.fillStyle = bgColor || "#000";
-    ctx.globalAlpha = 1;
-
     ctx.fillRect(x, y, width, height);
 
     const zoomStart = zoom ? zoom.start : 0;
@@ -43,10 +40,8 @@ export function drawWaveBuffer(ctx: CanvasRenderingContext2D, x: number, y: numb
     const zoomWidth = zoomEnd - zoomStart;
 
     const deltaX = zoomWidth / width;
-    // const deltaX = buffer.length / width;
     let samplePosition = zoomStart;
 
-    console.log("Drawing wave buffer", zoomStart, zoomEnd, deltaX)
 
     ctx.beginPath();
     ctx.moveTo(x, y + height / 2);
@@ -59,29 +54,19 @@ export function drawWaveBuffer(ctx: CanvasRenderingContext2D, x: number, y: numb
 
         samplePosition += deltaX;
     }
+
     ctx.strokeStyle = color || "#FFF"
-    // ctx.strokeStyle = "#fff"
     ctx.stroke();
+}
 
-    // // invert selection rec, eller tegne opp og ned?
-    // ctx.fillStyle = "#fff"
-    // ctx.globalAlpha = 0.5;
-    // if (selection) {
-    //     // is in samples, fix to canvass ize
-    //     const startX = (selection.start - zoomStart) / zoomWidth * width;
-    //     const endX = (selection.end - zoomStart) / zoomWidth * width;
-    //     // const startX = (this.props.selection.start) / buffer.length * width;
-    //     // const endX = this.props.selection.end / buffer.length * width;
-    //     ctx.fillRect(x + startX, y, endX - startX, height);
-    // }
+export function getHeightPerChannel(canvas: HTMLCanvasElement, channelCount: number, channelMargin: number) {
+    let h: number; // height per channel in the editor
 
-    // draw play position
-    const playX = (playPosition - zoomStart) / zoomWidth * width;
-    // const playX = this.props.playPosition / buffer.length * width;
-    ctx.strokeStyle = "#0F0"
-    ctx.globalAlpha = 1;
-    ctx.beginPath();
-    ctx.moveTo(x + playX, y);
-    ctx.lineTo(x + playX, y + height);
-    ctx.stroke();
+    if (channelCount > 1) {
+        h = (canvas.height - ((channelCount - 1) * channelMargin)) / channelCount;
+    } else {
+        h = canvas.height;
+    }
+
+    return h;
 }
