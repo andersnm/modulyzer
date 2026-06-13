@@ -168,3 +168,8 @@ export function HFlex(childNodes?: Node|Node[], classNames?: string|string[]) {
     div.classList.add("x-hflex", "flex", "flex-row");
     return setClassAndChildNodes(div, childNodes, classNames);
 }
+
+export function Div(child?: Node|Node[], classNames?: string|string[]) {
+    const div = document.createElement("div");
+    return setClassAndChildNodes(div, child, classNames);
+}

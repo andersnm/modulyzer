@@ -2,12 +2,13 @@ import { Appl } from "../App";
 import { SequenceEditorCanvas } from "./SequenceEditorCanvas";
 import { registerSequenceEditorCommands } from "../commands/SequenceEditor/Register";
 import { ViewFrame } from "../nutz/ViewFrame";
-import { CommandButtonBar } from "../nutz";
+import { CommandButtonBar, DataTable, Div, HFlex } from "../nutz";
 
 export class SequencePanel extends ViewFrame {
     app: Appl;
     actionButtons: CommandButtonBar;
     sequenceEditor: SequenceEditorCanvas;
+    patternList: DataTable;
 
     constructor(app: Appl) {
         super(app);
@@ -17,6 +18,12 @@ export class SequencePanel extends ViewFrame {
 
         this.sequenceEditor = new SequenceEditorCanvas(app);
         this.sequenceEditor.addEventListener("selchange", this.onSelChange);
+        this.sequenceEditor.addEventListener("cursormove", this.onCursorMove);
+
+        this.patternList = new DataTable();
+        this.patternList.container.classList.add("w-32");
+        this.patternList.addColumn("Key", "key")
+        this.patternList.addColumn("Pattern", "pattern")
 
         this.actionButtons = new CommandButtonBar(this, [
             {
@@ -50,7 +57,12 @@ export class SequencePanel extends ViewFrame {
         ]);
 
         this.addToolbar(this.actionButtons.getDomNode() as HTMLElement);
-        this.setView(this.sequenceEditor.getDomNode());
+
+        const panel = HFlex([
+            Div(this.sequenceEditor.getDomNode(), ["flex-1", "flex"]), 
+            Div(this.patternList.getDomNode(), ["w-32", "flex"])], 
+            [ "gap-1", "h-full" ]);
+        this.setView(panel);
 
         this.container.addEventListener("nutz:mounted", this.onMounted);
         this.container.addEventListener("nutz:unmounted", this.onUnmounted);
@@ -60,23 +72,34 @@ export class SequencePanel extends ViewFrame {
         this.bindButtons();
         this.app.song.addEventListener("createSequenceColumn", this.onCreateSequenceColumn);
         this.app.song.addEventListener("deleteSequenceColumn", this.onDeleteSequenceColumn);
+        this.app.song.addEventListener("createPattern", this.onCreatePattern);
     };
 
     onUnmounted = () => {
         this.app.song.removeEventListener("createSequenceColumn", this.onCreateSequenceColumn);
         this.app.song.removeEventListener("deleteSequenceColumn", this.onDeleteSequenceColumn);
+        this.app.song.removeEventListener("createPattern", this.onCreatePattern);
     };
 
     onCreateSequenceColumn = (ev: CustomEvent) => {
         this.bindButtons();
+        this.bindPatterns();
     }
 
     onDeleteSequenceColumn = (ev: CustomEvent) => {
         this.bindButtons();
     }
 
+    onCreatePattern = (ev: CustomEvent) => {
+        this.bindPatterns();
+    }
+
     onSelChange = () => {
         this.bindButtons();
+    }
+
+    onCursorMove = () => {
+        this.bindPatterns();
     }
 
     bindButtons() {
@@ -84,6 +107,20 @@ export class SequencePanel extends ViewFrame {
         this.setCommandState("copy", { enabled: !!this.sequenceEditor.selection });
         this.setCommandState("paste", { enabled: this.app.song.sequenceColumns.length > 0 });
         this.setCommandState("delete-column", { enabled: this.app.song.sequenceColumns.length > 0 });
+    }
+
+    bindPatterns() {
+        const sequence = this.app.song.sequenceColumns[this.sequenceEditor.cursorColumn];
+        if (!sequence) {
+            return;
+        }
+
+        while (this.patternList.getRowCount()) this.patternList.removeRow(0);
+        let key = 0;
+        for (let pattern of sequence.instrument.patterns) {
+            this.patternList.addRow({key: key < 10 ? key.toString() : "-", pattern: pattern.name});
+            key++;
+        }
     }
 
     getDomNode(): Node {
