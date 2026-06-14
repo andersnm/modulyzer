@@ -150,17 +150,17 @@ export const viewMenu: CommandMenuItem[] = [
 
 export const mainMenu: CommandMenuItem[] = [
     {
-        label: "File",
+        label: "&File",
         action: "",
         items: fileMenu,
     },
     {
-        label: "Edit",
+        label: "&Edit",
         action: "",
         items: editMenu,
     },
     {
-        label: "View",
+        label: "&View",
         action: "",
         items: viewMenu,
     },

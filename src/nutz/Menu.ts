@@ -263,12 +263,13 @@ export class Menu extends EventTarget {
 
     onSubMenuKeyDown = (ev: CustomEvent) => {
         const keyEv = ev.detail;
-        if (keyEv.key === "ArrowLeft") {
+        if (keyEv.key === "ArrowLeft" || keyEv.key === "Escape") {
             // close child menu and refocus current
             this.closeSubmenu();
             this.menuContainer.focus();
         } else {
             this.dispatchEvent(new CustomEvent("keydown", { detail: ev.detail }));
+            ev.preventDefault();
         }
     };
 };

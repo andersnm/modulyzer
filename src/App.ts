@@ -285,13 +285,13 @@ export class Appl extends CommandHost implements IComponent {
     async init() {
 
         // Default main views
-        this.executeCommand("show-sequence-editor");
-        this.executeCommand("show-pattern-editor");
-        this.executeCommand("show-wave-editor");
-        this.executeCommand("show-mixer");
+        await this.executeCommand("show-sequence-editor");
+        await this.executeCommand("show-pattern-editor");
+        await this.executeCommand("show-wave-editor");
+        await this.executeCommand("show-mixer");
 
         // re-focus
-        this.executeCommand("show-sequence-editor");
+        await this.executeCommand("show-sequence-editor");
 
         // Initialize filesystem
         this.homeDir = await this.readSetting<FileSystemDirectoryHandle>("HomeHandle");
