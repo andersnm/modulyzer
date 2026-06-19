@@ -56,8 +56,14 @@ export function FlexCanvas(fixedWidth: boolean = false, fixedHeight: boolean = f
         mountedParentElement = canvas.parentElement;
         observer.observe(mountedParentElement);
     }
-    
+
     const onUnmounted = () => {
+        if (!mountedParentElement) {
+            // bug / not fully understood: onMounted not called
+            console.warn("FlexCanvas: unmounted without being mounted");
+            return;
+        }
+
         window.removeEventListener("resize", onGlobalResize);
         observer.unobserve(mountedParentElement);
         mountedParentElement = null;

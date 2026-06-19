@@ -62,3 +62,29 @@ export function visitNodeAndChildNodesBreadth(node: Node, handler: (node: Node) 
         }
     }
 }
+
+export function isFocusable(el: HTMLElement): boolean {
+    if (!el.isConnected) return false;
+
+    const style = window.getComputedStyle(el);
+    if (style.display === "none" || style.visibility === "hidden") return false;
+
+    if ((el as any).disabled) return false;
+
+    const tabindex = el.getAttribute("tabindex");
+    if (tabindex !== null && !isNaN(parseInt(tabindex))) {
+        return true;
+    }
+
+    const focusableTags = ["A", "INPUT", "BUTTON", "SELECT", "TEXTAREA"];
+    if (focusableTags.includes(el.tagName)) {
+        if (el.tagName === "A") {
+            return (el as HTMLAnchorElement).href !== "";
+        }
+        return true;
+    }
+
+    if (el.hasAttribute("contenteditable")) return true;
+
+    return false;
+}

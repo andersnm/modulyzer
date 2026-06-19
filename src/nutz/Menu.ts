@@ -106,6 +106,10 @@ export class Menu extends EventTarget {
         }
     }
 
+    get visible() {
+        return this.menuContainer.parentNode !== null;
+    }
+
     closeSubmenu() {
         if (this.submenu) {
             this.submenu.hide();

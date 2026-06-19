@@ -173,3 +173,57 @@ export function Div(child?: Node|Node[], classNames?: string|string[]) {
     const div = document.createElement("div");
     return setClassAndChildNodes(div, child, classNames);
 }
+
+export type MnemonicPart = { text: string } | { mnemonic: string };
+
+export function parseMnemonic(label: string) {
+    let text = "";
+
+    const parts: MnemonicPart[] = [];
+    for (let i = 0; i < label.length; i++) {
+        const c = label[i];
+
+        if (c === "&") {
+            const next = label[i + 1];
+
+            if (next === "&") {
+                text += "&";
+                i++;
+            } else {
+                const mnemonic = next;
+                if (text.length > 0) {
+                    parts.push({ text });
+                    text = "";
+                }
+                parts.push({ mnemonic });
+                text = "";
+                i++;
+            }
+        } else {
+            text += c;
+        }
+    }
+
+    if (text.length > 0) {
+        parts.push({ text });
+    }
+
+    return parts;
+}
+
+export function MnemonicLabel(parts: MnemonicPart[]) {
+    const container = document.createElement("span");
+
+    for (let part of parts) {
+        if ("text" in part) {
+            container.appendChild(document.createTextNode(part.text));
+        } else if ("mnemonic" in part) {
+            const el = document.createElement("span");
+            el.className = "underline";
+            el.appendChild(document.createTextNode(part.mnemonic));
+            container.appendChild(el);
+        }
+    }
+
+    return container;
+}
