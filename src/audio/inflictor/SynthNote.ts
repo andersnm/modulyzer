@@ -14,7 +14,8 @@ export class SynthNote {
   filter: SynthFilter;
   ampGain: GainNode;
   ampEnvelope: ADSREnvelope;
-
+  subOsc: OscillatorNode | null = null;
+  subGain: GainNode;
   isActive = false;
   noteOnTime = 0;
   noteOffTime = null;
@@ -31,8 +32,13 @@ export class SynthNote {
     this.ampGain = this.context.createGain();
     this.ampEnvelope = new ADSREnvelope(this.ampGain.gain);
 
+    this.subGain = this.context.createGain();
+    this.subGain.gain.value = 0.3;
+
     this.osc1.connect(this.filter.input);
     this.osc2.connect(this.filter.input);
+    this.subGain.connect(this.filter.input);
+
     this.filter.connect(this.ampGain);
   }
 
@@ -44,9 +50,17 @@ export class SynthNote {
     this.isActive = true;
 
     const freq = noteToFreq(note);
+    this.osc1.setOscDetune(-12);
+    this.osc2.setOscDetune(12);
     this.osc1.play(time, freq);
     this.osc2.play(time, freq);
     this.ampEnvelope.trigger(time);
+
+    this.subOsc = this.context.createOscillator();
+    this.subOsc.type = "square";
+    this.subOsc.connect(this.subGain);
+    this.subOsc.frequency.setValueAtTime(freq / 2, time);
+    this.subOsc.start(time);
   }
 
   releaseNote(time: number) {
@@ -56,6 +70,7 @@ export class SynthNote {
     this.ampEnvelope.untrigger(time);
     this.osc1.stop(this.releaseEndTime);
     this.osc2.stop(this.releaseEndTime);
+    this.subOsc.stop(this.releaseEndTime);
   }
 
   clearNote() {
@@ -65,6 +80,7 @@ export class SynthNote {
     this.osc2.oscillator = null;
     this.osc1.lfo = null;
     this.osc2.lfo = null;
+    this.subOsc = null;
   }
 
   isFinished(now: number) {
