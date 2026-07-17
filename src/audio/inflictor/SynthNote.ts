@@ -50,8 +50,6 @@ export class SynthNote {
     this.isActive = true;
 
     const freq = noteToFreq(note);
-    this.osc1.setOscDetune(-12);
-    this.osc2.setOscDetune(12);
     this.osc1.play(time, freq);
     this.osc2.play(time, freq);
     this.ampEnvelope.trigger(time);
@@ -76,8 +74,8 @@ export class SynthNote {
   clearNote() {
     this.isActive = false;
     this.note = -1;
-    this.osc1.oscillator = null;
-    this.osc2.oscillator = null;
+    this.osc1.oscillators = [];
+    this.osc2.oscillators = [];
     this.osc1.lfo = null;
     this.osc2.lfo = null;
     this.subOsc = null;

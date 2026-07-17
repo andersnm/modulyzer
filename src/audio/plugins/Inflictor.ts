@@ -35,10 +35,10 @@ export class Inflictor extends Instrument {
                 this.voicePool.forEach((voice) => voice.osc1.setOscType(oscTypeTable[Math.round(value)]));
             }, describeTable(oscTypeTable)),
             new VirtualParameter("Osc1-Gain", 0, 1, 0.5, "linear", (time, value) => {
-                this.voicePool.forEach((voice) => voice.osc1.gainNode.gain.setValueAtTime(value, time));
+                this.voicePool.forEach((voice) => voice.osc1.setOscGain(time, value));
             }),
-            new VirtualParameter("Osc1-Detune", 0, 100, 0, "linear", (time, value) => {
-                this.voicePool.forEach((voice) => voice.osc1.setOscDetune(value));
+            new VirtualParameter("Osc1-Detune", -24, 24, -12, "linear", (time, value) => {
+                this.voicePool.forEach((voice) => voice.osc1.setOscDetune(time, value));
             }),
             new VirtualParameter("Osc1-LfoFreq", 0, 20, 0.2, "linear", (time, value) => {
                 this.voicePool.forEach((voice) => voice.osc1.setLfoFreq(value));
@@ -51,10 +51,10 @@ export class Inflictor extends Instrument {
                 this.voicePool.forEach((voice) => voice.osc2.setOscType(oscTypeTable[Math.round(value)]));
             }, describeTable(oscTypeTable)),
             new VirtualParameter("Osc2-Gain", 0, 1, 0.5, "linear", (time, value) => {
-                this.voicePool.forEach((voice) => voice.osc2.gainNode.gain.setValueAtTime(value, time));
+                this.voicePool.forEach((voice) => voice.osc2.setOscGain(time, value));
             }),
-            new VirtualParameter("Osc2-Detune", 0, 100, 5, "linear", (time, value) => {
-                this.voicePool.forEach((voice) => voice.osc2.setOscDetune(value));
+            new VirtualParameter("Osc2-Detune", -24, 24, 12, "linear", (time, value) => {
+                this.voicePool.forEach((voice) => voice.osc2.setOscDetune(time, value));
             }),
             new VirtualParameter("Osc2-LfoFreq", 0, 20, 0.3, "linear", (time, value) => {
                 this.voicePool.forEach((voice) => voice.osc2.setLfoFreq(value));
