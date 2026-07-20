@@ -29,35 +29,30 @@ export class SynthOscillator {
   }
 
   play(time: number, freq: number) {
-
-    for (let i = 0; i < this.unisonVoices; i++) {
-      const osc = this.context.createOscillator();
-      osc.type = this.oscType;
-
-      let voiceDetune = (this.unisonVoices === 1) ? 0 : (i / (this.unisonVoices - 1)) - 0.5 * 12;
-
-      if (this.oscDetune < 0)
-        voiceDetune *= -1;
-
-      voiceDetune += Math.random() * 5 - 2.5;
-
-      const unisonDetuneConstant = new ConstantSourceNode(this.context, { offset: voiceDetune + this.oscDetune });
-      unisonDetuneConstant.connect(osc.detune);
-
-      this.oscillators.push({ osc, voiceDetune: voiceDetune, unisonDetuneConstant });
-    }
-
     this.lfo = this.context.createOscillator();
     this.lfo.frequency.value = this.lfoFreq;
 
     this.lfo.connect(this.lfoGain);
 
-    for (let osc of this.oscillators) {
-      this.lfoGain.connect(osc.osc.detune);
-      osc.osc.frequency.setValueAtTime(freq, time);
-      osc.osc.connect(this.gainNode);
-      osc.osc.start(time);
-      osc.unisonDetuneConstant.start(time);
+    for (let i = 0; i < this.unisonVoices; i++) {
+      const osc = this.context.createOscillator();
+      osc.type = this.oscType;
+
+      let voiceDetune = (this.unisonVoices === 1) ? 0 : ((i / (this.unisonVoices - 1)) - 0.5) * 12;
+
+      if (this.oscDetune < 0)
+        voiceDetune *= -1;
+
+      const unisonDetuneConstant = new ConstantSourceNode(this.context, { offset: voiceDetune + this.oscDetune });
+      unisonDetuneConstant.connect(osc.detune);
+
+      this.lfoGain.connect(osc.detune);
+      osc.frequency.setValueAtTime(freq, time);
+      osc.connect(this.gainNode);
+      osc.start(time);
+      unisonDetuneConstant.start(time);
+
+      this.oscillators.push({ osc, voiceDetune: voiceDetune, unisonDetuneConstant });
     }
 
     this.lfo.start(time);
