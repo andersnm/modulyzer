@@ -21,6 +21,7 @@ export class PatternEvent {
 }
 
 export class Pattern {
+    instrumenteer: Instrumenteer;
     name: string;
     columns: PatternColumn[] = [];
     duration: number;
@@ -30,11 +31,26 @@ export class Pattern {
 
 export class SequenceEvent {
     time: number;
+}
+
+export class SequencePatternEvent extends SequenceEvent {
     pattern: Pattern;
 }
 
-export class SequenceColumn {
-    events: SequenceEvent[] = [];
+export class SequenceWaveEvent extends SequenceEvent {
+    wave: Wave;
+}
+
+export abstract class SequenceColumn {
+    events: SequenceEvent[];
+}
+
+export class SequencePatternColumn extends SequenceColumn {
+    events: SequencePatternEvent[] = [];
+}
+
+export class SequenceWaveColumn extends SequenceColumn {
+    events: SequenceWaveEvent[] = [];
 }
 
 export class Sequence {
@@ -48,6 +64,7 @@ export class Connection {
 }
 
 export class Wave {
+    instrumenteer: Instrumenteer;
     name: string;
     note: number;
     sampleRate: number;
@@ -99,6 +116,50 @@ function collectPatternEvents(pattern: Pattern, currentBeat: number, durationBea
     return result;
 }
 
+
+function visitPlayingSequenceEvents(
+    sequence: Sequence,
+    rangeStartBeat: number,
+    rangeEndBeat: number,
+    bpm: number,
+    fn: (
+        ev: SequenceEvent,
+        localBeat: number,
+        durationBeats: number,
+        eventStartBeat: number
+    ) => void,
+): void {
+
+    for (const column of sequence.columns) {
+        for (const ev of column.events) {
+
+            const eventStartBeat = ev.time;
+
+            // Determine event length
+            let eventLengthBeats: number;
+            if (ev instanceof SequencePatternEvent) {
+                const pattern = ev.pattern;
+                eventLengthBeats = pattern.duration / pattern.subdivision;
+            } else if (ev instanceof SequenceWaveEvent) {
+                const wave = ev.wave;
+                const beatsPerSecond = bpm / 60;
+                eventLengthBeats = wave.sampleCount / wave.sampleRate * beatsPerSecond;
+            } else {
+                continue;
+            }
+
+            const eventEndBeat = eventStartBeat + eventLengthBeats;
+
+            // Skip events outside the range
+            if (eventEndBeat <= rangeStartBeat) continue;
+            if (eventStartBeat >= rangeEndBeat) continue;
+
+            const localBeat = rangeStartBeat - eventStartBeat;
+            fn(ev, localBeat, rangeEndBeat - rangeStartBeat, eventStartBeat);
+        }
+    }
+}
+
 function visitPlayingPatterns(
     sequence: Sequence,
     rangeStartBeat: number,
@@ -106,21 +167,11 @@ function visitPlayingPatterns(
     fn: (pattern: Pattern, patternLocalBeat: number, durationBeats: number, patternStartBeat: number) => void,
 ): void {
 
-    for (const column of sequence.columns) {
-        for (const ev of column.events) {
-            const pattern = ev.pattern;
-
-            const patternStartBeat = ev.time; // sequence time in beats
-            const patternLength = pattern.duration / pattern.subdivision;
-            const patternEndBeat = patternStartBeat + patternLength;
-
-            if (patternEndBeat <= rangeStartBeat) continue;
-            if (patternStartBeat >= rangeEndBeat) continue;
-
-            const patternLocalBeat = rangeStartBeat - patternStartBeat;
-            fn(pattern, patternLocalBeat, rangeEndBeat - rangeStartBeat, patternStartBeat);
+    visitPlayingSequenceEvents(sequence, rangeStartBeat, rangeEndBeat, 125, (ev, localBeat, durationBeats, eventStartBeat) => {
+        if (ev instanceof SequencePatternEvent) {
+            fn(ev.pattern, localBeat, durationBeats, eventStartBeat);
         }
-    }
+    });
 }
 
 export class Player extends EventTarget {
@@ -254,11 +305,7 @@ export class Player extends EventTarget {
             const chunkBeats = Math.min(remainingBeats, this.loopEnd - beat);
             const chunkSec = chunkBeats / beatsPerSecond;
 
-            this.scheduleSequence(
-                beat,
-                timeSec,
-                chunkBeats
-            );
+            this.scheduleSequence(beat, timeSec, chunkBeats);
 
             beat += chunkBeats;
             timeSec += chunkSec;
@@ -346,9 +393,11 @@ export class Player extends EventTarget {
 
     getPatternPlayPosition(pattern: Pattern): number | null {
         let result: number | null = null;
-        visitPlayingPatterns(this.sequence, this.currentBeat, this.currentBeat, (p, patternLocalBeat) => {
-            if (p === pattern) {
-                result = result ?? patternLocalBeat;
+        visitPlayingSequenceEvents(this.sequence, this.currentBeat, this.currentBeat, this.bpm, (ev, patternLocalBeat) => {
+            if (ev instanceof SequencePatternEvent) {
+                if (ev.pattern === pattern) {
+                    result = result ?? patternLocalBeat;
+                }
             }
         });
 

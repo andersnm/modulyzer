@@ -11,7 +11,7 @@ import { OscillatorFactory } from "./audio/plugins/Oscillator";
 import { ReverbFactory } from "./audio/plugins/Reverb";
 import { Dx7Factory } from "./audio/plugins/Dx7";
 import { Player } from "./audio/Player";
-import { WaveTrackerFactory } from "./audio/plugins/WaveTracker";
+import { WaveSequencerFactory, WaveTrackerFactory } from "./audio/plugins/WaveTracker";
 import { Open303Factory } from "./audio/plugins/Open303";
 import { PlayerSongAdapter } from "./audio/PlayerSongAdapter";
 import { WavePlayer } from "./audio/WavePlayer"; 
@@ -179,6 +179,7 @@ export class Appl extends CommandHost implements IComponent {
         new ReverbFactory(),
         new Dx7Factory(),
         new WaveTrackerFactory(),
+        new WaveSequencerFactory(),
         new Open303Factory(),
         new KickDrumFactory(),
         new InflictorFactory(),
@@ -412,10 +413,12 @@ export class Appl extends CommandHost implements IComponent {
 
         // If instrument has notes: Create sequence column and empty pattern with default pattern columns
         const instrumenteer = this.playerSongAdapter.instrumentMap.get(instrument);
-        if (instrumenteer.factory.maxPolyphony > 0) {
-            const column = this.song.createSequenceColumn(instrument);
+        if (instrumenteer.factory.useSequenceType === null || instrumenteer.factory.useSequenceType === "pattern") {
+            const column = this.song.createPatternSequenceColumn(instrument);
             const pa = this.song.createPattern(instrument, "00", 64, 4);
             this.song.createPatternColumn(pa, instrument, "midinote");
+        } else if (instrumenteer.factory.useSequenceType === "wave") {
+            const column = this.song.createWaveSequenceColumn(instrument);
         }
 
         // Load default preset bank if exist

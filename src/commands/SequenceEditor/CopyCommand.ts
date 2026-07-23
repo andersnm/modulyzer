@@ -1,5 +1,5 @@
 import { Appl } from "../../App";
-import { SongDocument } from "../../audio/SongDocument";
+import { SequencePatternColumnDocument, SongDocument } from "../../audio/SongDocument";
 import { SequencePanel } from "../../components/SequencePanel";
 import { ICommand } from "../../nutz";
 import { ClipboardSequence, ClipboardSequenceEvent, writeClipboardSequence } from "../PatternEditor/Clipboard";
@@ -13,15 +13,17 @@ export function exportClipboardSequence(song: SongDocument, start: number, end: 
 
     for (let i =  start; i <= end; i++) {
         const column = song.sequenceColumns[i];
-        const events = column.events
-            .filter(e => e.time >= startRow && e.time <= endRow)
-            .map(e => ({
-                time: e.time - startRow,
-                patternIndex: column.instrument.patterns.indexOf(e.pattern),
-            } as ClipboardSequenceEvent)
-        );
+        if (column instanceof SequencePatternColumnDocument) {
+            const events = column.events
+                .filter(e => e.time >= startRow && e.time <= endRow)
+                .map(e => ({
+                    time: e.time - startRow,
+                    patternIndex: column.instrument.patterns.indexOf(e.pattern),
+                } as ClipboardSequenceEvent)
+            );
 
-        clipboardObject.columns.push(events);
+            clipboardObject.columns.push(events);
+        }
     }
 
     return clipboardObject;

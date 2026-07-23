@@ -22,6 +22,15 @@ export class AddColumnCommand implements ICommand {
         if (!instrument) {
             throw new Error();
         }
-        this.app.song.createSequenceColumn(instrument);
+
+        const factory = this.app.instrumentFactories.find(i => i.identifier === instrument.instrumentId);
+
+        if (factory.useSequenceType === null || factory.useSequenceType === "pattern") {
+            const column = this.app.song.createPatternSequenceColumn(instrument);
+            const pa = this.app.song.createPattern(instrument, "00", 64, 4);
+            this.app.song.createPatternColumn(pa, instrument, "midinote");
+        } else if (factory.useSequenceType === "wave") {
+            const column = this.app.song.createWaveSequenceColumn(instrument);
+        }
     }
 }

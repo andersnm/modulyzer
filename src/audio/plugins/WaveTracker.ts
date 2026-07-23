@@ -14,6 +14,20 @@ export class WaveTrackerFactory extends InstrumentFactory {
     }
 }
 
+export class WaveSequencerFactory extends InstrumentFactory {
+    maxPolyphony: number = 8;
+    useSequenceType: "wave" = "wave";
+    useWaveTable = true;
+
+    get identifier(): string {
+        return "@modulyzer/WaveSequencer";
+    }
+
+    createInstrument(context: AudioContext, player: Player): Instrument {
+        return new WaveTracker(context, this, player);
+    }
+}
+
 interface WaveNode {
     wave: Wave;
     node: AudioBufferSourceNode;

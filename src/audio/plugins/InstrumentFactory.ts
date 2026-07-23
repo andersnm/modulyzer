@@ -143,6 +143,7 @@ export abstract class Instrument extends EventTarget {
 
 export abstract class InstrumentFactory {
     useWaveTable: boolean = false;
+    useSequenceType: "pattern" | "wave" | null = null;
     maxPolyphony: number = 0;
     abstract get identifier(): string;
     abstract createInstrument(context: AudioContext, player: Player): Instrument;

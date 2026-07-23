@@ -1,7 +1,7 @@
-import { Connection, Pattern, PatternColumn, PatternEvent, Player, SequenceColumn, SequenceEvent, Wave } from "./Player";
+import { Connection, Pattern, PatternColumn, PatternEvent, Player, SequenceColumn, SequenceEvent, SequencePatternColumn, SequencePatternEvent, SequenceWaveColumn, SequenceWaveEvent, Wave } from "./Player";
 import { Instrumenteer } from "./Instrumenteer";
 import { Parameter } from "./plugins/InstrumentFactory";
-import { ConnectionDocument, InstrumentDocument, PatternColumnDocument, PatternDocument, PatternEventDocument, SequenceColumnDocument, SequenceEventDocument, SetInstrumentParameterDetail, SongDocument, WaveDocument } from "./SongDocument";
+import { ConnectionDocument, InstrumentDocument, PatternColumnDocument, PatternDocument, PatternEventDocument, SequenceColumnDocument, SequenceEventDocument, SequencePatternColumnDocument, SequencePatternEventDocument, SequenceWaveColumnDocument, SequenceWaveEventDocument, SetInstrumentParameterDetail, SongDocument, WaveDocument } from "./SongDocument";
 
 export class PlayerSongAdapter {
     player: Player; 
@@ -273,6 +273,7 @@ export class PlayerSongAdapter {
         }
 
         const wave = new Wave();
+        wave.instrumenteer = instrumenteer;
         wave.buffers = w.buffers; // maybe dont need this
         wave.audioBuffer = audioBuffer;
         wave.name = w.name;
@@ -323,6 +324,7 @@ export class PlayerSongAdapter {
     onCreatePattern = (ev: CustomEvent<PatternDocument>) => {
         const pattern = ev.detail;
         const p = new Pattern();
+        p.instrumenteer = this.instrumentMap.get(pattern.instrument);
         p.name = pattern.name;
         p.duration = pattern.duration;
         p.subdivision = pattern.subdivision;
@@ -450,7 +452,15 @@ export class PlayerSongAdapter {
     onCreateSequenceColumn = (ev: CustomEvent<SequenceColumnDocument>) => {
         const sequenceColumn = ev.detail;
 
-        const sc = new SequenceColumn();
+        let sc: SequenceColumn;
+        if (sequenceColumn instanceof SequencePatternColumnDocument) {
+            sc = new SequencePatternColumn();
+        } else if (sequenceColumn instanceof SequenceWaveColumnDocument) {
+            sc = new SequenceWaveColumn();
+        } else {
+            throw new Error("Unknown sequence column type");
+        }
+
         this.player.sequence.columns.push(sc);
 
         this.sequenceColumnMap.set(sequenceColumn, sc);
@@ -469,23 +479,41 @@ export class PlayerSongAdapter {
     onCreateSequenceEvent = (ev: CustomEvent<SequenceEventDocument>) => {
         const sequenceEvent = ev.detail;
         const sequenceColumn = sequenceEvent.sequenceColumn;
-        const p = this.patternMap.get(sequenceEvent.pattern);
+
         const sc = this.sequenceColumnMap.get(sequenceColumn);
+        if (sequenceEvent instanceof SequenceWaveEventDocument) {
+            const p = this.waveMap.get(sequenceEvent.wave);
+            const se = new SequenceWaveEvent();
+            se.time = sequenceEvent.time;
+            se.wave = p;
+            sc.events.push(se);
 
-        const se = new SequenceEvent();
-        se.time = sequenceEvent.time;
-        se.pattern = p;
-        sc.events.push(se);
+            this.sequenceEventMap.set(sequenceEvent, se);
+        } else if (sequenceEvent instanceof SequencePatternEventDocument) {
+            const p = this.patternMap.get(sequenceEvent.pattern);
 
-        this.sequenceEventMap.set(sequenceEvent, se);
+            const se = new SequencePatternEvent();
+            se.time = sequenceEvent.time;
+            se.pattern = p;
+            sc.events.push(se);
+
+            this.sequenceEventMap.set(sequenceEvent, se);
+        }
+
     };
 
     onUpdateSequenceEvent = (ev: CustomEvent<SequenceEventDocument>) => {
         const sequenceEvent = ev.detail;
-        const p = this.patternMap.get(sequenceEvent.pattern);
-        const se = this.sequenceEventMap.get(sequenceEvent);
 
-        se.pattern = p;
+        if (sequenceEvent instanceof SequenceWaveEventDocument) {
+            const w = this.waveMap.get(sequenceEvent.wave);
+            const se = this.sequenceEventMap.get(sequenceEvent) as SequenceWaveEvent;
+            se.wave = w;
+        } else if (sequenceEvent instanceof SequencePatternEventDocument) {
+            const p = this.patternMap.get(sequenceEvent.pattern);
+            const se = this.sequenceEventMap.get(sequenceEvent) as SequencePatternEvent;
+            se.pattern = p;
+        }
     };
 
     onDeleteSequenceEvent = (ev: CustomEvent<SequenceEventDocument>) => {

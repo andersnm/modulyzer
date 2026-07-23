@@ -116,18 +116,42 @@ export class PatternDocument {
 export class SequenceEventDocument {
     sequenceColumn: SequenceColumnDocument;
     time: number;
+
+    constructor(sequenceColumn: SequenceColumnDocument, time: number) {
+        this.sequenceColumn = sequenceColumn;
+        this.time = time;
+    }
+}
+
+export class SequencePatternEventDocument extends SequenceEventDocument {
     pattern: PatternDocument;
 
     constructor(sequenceColumn: SequenceColumnDocument, time: number, pattern: PatternDocument) {
-        this.sequenceColumn = sequenceColumn;
-        this.time = time;
+        super(sequenceColumn, time);
         this.pattern = pattern;
+    }
+}
+
+export class SequenceWaveEventDocument extends SequenceEventDocument {
+    wave: WaveDocument;
+
+    constructor(sequenceColumn: SequenceColumnDocument, time: number, wave: WaveDocument) {
+        super(sequenceColumn, time);
+        this.wave = wave;
     }
 }
 
 export class SequenceColumnDocument {
     instrument: InstrumentDocument;
-    events: SequenceEventDocument[] = [];
+    events: SequenceEventDocument[];
+}
+
+export class SequencePatternColumnDocument extends SequenceColumnDocument {
+    events: SequencePatternEventDocument[] = [];
+}
+
+export class SequenceWaveColumnDocument extends SequenceColumnDocument {
+    events: SequenceWaveEventDocument[] = [];
 }
 
 export class WaveDocument {
@@ -443,8 +467,19 @@ export class SongDocument extends EventTarget {
         this.dispatchEvent(new CustomEvent("deletePatternEvent", { detail: patternEvent }));
     }
 
-    createSequenceColumn(instrument: InstrumentDocument) {
-        const sc = new SequenceColumnDocument();
+    createPatternSequenceColumn(instrument: InstrumentDocument) {
+        const sc = new SequencePatternColumnDocument();
+        sc.instrument = instrument;
+
+        this.sequenceColumns.push(sc);
+
+        this.dispatchEvent(new CustomEvent("createSequenceColumn", { detail: sc }));
+
+        return sc;
+    }
+
+    createWaveSequenceColumn(instrument: InstrumentDocument) {
+        const sc = new SequenceWaveColumnDocument();
         sc.instrument = instrument;
 
         this.sequenceColumns.push(sc);
@@ -469,9 +504,7 @@ export class SongDocument extends EventTarget {
         this.dispatchEvent(new CustomEvent("deleteSequenceColumn", { detail: sequenceColumn }));
     }
 
-    createSequenceEvent(sequenceColumn: SequenceColumnDocument, time: number, pattern: PatternDocument) {
-        const se = new SequenceEventDocument(sequenceColumn, time, pattern);
-
+    insertSequenceEvent(sequenceColumn: SequenceColumnDocument, time: number, se: SequenceEventDocument) {
         if (sequenceColumn.events.length > 0 && time >= sequenceColumn.events[sequenceColumn.events.length - 1].time) {
             sequenceColumn.events.push(se)
         } else {
@@ -489,14 +522,32 @@ export class SongDocument extends EventTarget {
 
             sequenceColumn.events.splice(lo, 0, se);
         }
+    }
 
+    createSequenceEvent(sequenceColumn: SequenceColumnDocument, time: number, pattern: PatternDocument) {
+        const se = new SequencePatternEventDocument(sequenceColumn, time, pattern);
+        this.insertSequenceEvent(sequenceColumn, time, se);
+        this.dispatchEvent(new CustomEvent("createSequenceEvent", { detail: se }));
+        return se;
+    }
+
+    createWaveSequenceEvent(sequenceColumn: SequenceColumnDocument, time: number, wave: WaveDocument) {
+        const se = new SequenceWaveEventDocument(sequenceColumn, time, wave);
+
+        this.insertSequenceEvent(sequenceColumn, time, se);
         this.dispatchEvent(new CustomEvent("createSequenceEvent", { detail: se }));
 
         return se;
     }
 
-    updateSequenceEvent(sequenceEvent: SequenceEventDocument, pattern: PatternDocument) {
+    updateSequenceEvent(sequenceEvent: SequencePatternEventDocument, pattern: PatternDocument) {
         sequenceEvent.pattern = pattern;
+
+        this.dispatchEvent(new CustomEvent("updateSequenceEvent", { detail: sequenceEvent }));
+    }
+
+    updateWaveSequenceEvent(sequenceEvent: SequenceWaveEventDocument, wave: WaveDocument) {
+        sequenceEvent.wave = wave;
 
         this.dispatchEvent(new CustomEvent("updateSequenceEvent", { detail: sequenceEvent }));
     }
@@ -605,6 +656,31 @@ export class SongDocument extends EventTarget {
     }
 
     exportProjectJson() {
+
+        const exportSequenceColumn = (column: SequenceColumnDocument) => {
+            if (column instanceof SequencePatternColumnDocument) {
+                return {
+                    type: "pattern",
+                    instrument: this.instruments.indexOf(column.instrument),
+                    events: column.events.map(event => ({
+                        time: event.time,
+                        pattern: event.pattern ? event.pattern.instrument.patterns.indexOf(event.pattern) : undefined,
+                    })),
+                };
+            } else if (column instanceof SequenceWaveColumnDocument) {
+                return {
+                    type: "wave",
+                    instrument: this.instruments.indexOf(column.instrument),
+                    events: column.events.map(event => ({
+                        time: event.time,
+                        wave: event.wave ? event.wave.instrument.waves.indexOf(event.wave) : undefined,
+                    })),
+                };
+            } else {
+                throw new Error("Unknown sequence column type");
+            }
+        }
+
         const project = {
             bpm: this.bpm,
             instruments: this.instruments.map(instrument => ({
@@ -653,13 +729,7 @@ export class SongDocument extends EventTarget {
             sequence: {
                 loopStart: this.loopStart,
                 loopEnd: this.loopEnd,
-                columns: this.sequenceColumns.map(column => ({
-                    instrument: this.instruments.indexOf(column.instrument),
-                    events: column.events.map(event => ({
-                        time: event.time,
-                        pattern: column.instrument.patterns.indexOf(event.pattern),
-                    })),
-                })),
+                columns: this.sequenceColumns.map(exportSequenceColumn),
             },
         };
     
@@ -739,15 +809,30 @@ export class SongDocument extends EventTarget {
                 throw new Error("Invalid instrument in sequence column");
             }
 
-            const sc = this.createSequenceColumn(instrument);
-            for (let jsonEvent of jsonSequenceColumn.events) {
-                const pattern = instrument.patterns[jsonEvent.pattern];
-                if (!pattern) {
-                    console.error("Invalid pattern in sequence column events")
-                    continue;
-                }
+            if (jsonSequenceColumn.type === undefined || jsonSequenceColumn.type === "pattern") {
+                const sc = this.createPatternSequenceColumn(instrument);
+                for (let jsonEvent of jsonSequenceColumn.events) {
+                    const pattern = instrument.patterns[jsonEvent.pattern];
+                    if (!pattern) {
+                        console.error("Invalid pattern in sequence column events")
+                        continue;
+                    }
 
-                this.createSequenceEvent(sc, jsonEvent.time, pattern);
+                    this.createSequenceEvent(sc, jsonEvent.time, pattern);
+                }
+            } else if (jsonSequenceColumn.type === "wave") {
+                const sc = this.createWaveSequenceColumn(instrument);
+                for (let jsonEvent of jsonSequenceColumn.events) {
+                    const wave = instrument.waves[jsonEvent.wave];
+                    if (!wave) {
+                        console.error("Invalid wave in sequence column events", jsonEvent.wave, instrument.waves)
+                        continue;
+                    }
+
+                    this.createWaveSequenceEvent(sc, jsonEvent.time, wave);
+                }
+            } else {
+                throw new Error("Invalid sequence column type: " + jsonSequenceColumn.type);
             }
         }
     }

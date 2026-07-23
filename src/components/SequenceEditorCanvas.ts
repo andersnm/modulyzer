@@ -1,8 +1,10 @@
 import { Appl } from "../App";
+import { SequencePatternColumnDocument, SequencePatternEventDocument, SequenceWaveColumnDocument, SequenceWaveEventDocument } from "../audio/SongDocument";
 import { deleteSequenceEvents } from "../commands/SequenceEditor/CutCommand";
 import { DragTarget, formatHotkey, IComponent } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
 import { PatternFrame } from "./PatternFrame";
+import { WaveFrame } from "./WaveFrame";
 
 const maxSequencerLength = 1024;
 
@@ -285,7 +287,7 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
                 return true;
             case "0": case "1": case "2": case "3": case "4":
             case "5": case "6": case "7": case "8": case "9":
-                this.editPatternIndex(e.key.charCodeAt(0) - 48);
+                this.editSequenceDigit(e.key.charCodeAt(0) - 48);
                 return true;
         }
     }
@@ -296,7 +298,11 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
         const events = sequenceColumn.events.filter(e => e.time >= this.cursorTime);
         for (let sequenceEvent of events) {
             this.app.song.deleteSequenceEvent(sequenceColumn, sequenceEvent);
-            this.app.song.createSequenceEvent(sequenceColumn, sequenceEvent.time + delta, sequenceEvent.pattern);
+            if (sequenceEvent instanceof SequencePatternEventDocument) {
+                this.app.song.createSequenceEvent(sequenceColumn, sequenceEvent.time + delta, sequenceEvent.pattern);
+            } else if (sequenceEvent instanceof SequenceWaveEventDocument) {
+                this.app.song.createWaveSequenceEvent(sequenceColumn, sequenceEvent.time + delta, sequenceEvent.wave);
+            }
         }
     }
 
@@ -344,15 +350,42 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
         const sequenceColumn = this.app.song.sequenceColumns[this.cursorColumn];
         const sequenceEvent = sequenceColumn.events.reverse().find(e => e.time <= this.cursorTime);
 
-        if (sequenceEvent) {
+        if (sequenceEvent instanceof SequencePatternEventDocument) {
             const panel = await this.app.executeCommand("show-pattern-editor") as PatternFrame;
             panel.setInstrument(sequenceEvent.pattern.instrument);
             panel.setPattern(sequenceEvent.pattern);
+        } else if (sequenceEvent instanceof SequenceWaveEventDocument) {
+            const panel = await this.app.executeCommand("show-wave-editor") as WaveFrame;
+            panel.setWave(sequenceEvent.wave);
         }
     }
 
-    editPatternIndex(patternIndex: number) {
+    editSequenceDigit(digit: number) {
         const sequenceColumn = this.app.song.sequenceColumns[this.cursorColumn];
+
+        if (sequenceColumn instanceof SequencePatternColumnDocument) {
+            this.editPatternIndex(sequenceColumn, digit);
+        } else if (sequenceColumn instanceof SequenceWaveColumnDocument) {
+            this.editWaveIndex(sequenceColumn, digit);
+        }
+    }
+
+    editWaveIndex(sequenceColumn: SequenceWaveColumnDocument, waveIndex: number) {
+        const sequenceEvent = sequenceColumn.events.find(e => e.time === this.cursorTime);
+        const wave = sequenceColumn.instrument.waves[waveIndex];
+
+        if (!wave) {
+            return;
+        }
+
+        if (!sequenceEvent) {
+            this.app.song.createWaveSequenceEvent(sequenceColumn, this.cursorTime, wave);
+        } else {
+            this.app.song.updateWaveSequenceEvent(sequenceEvent, wave);
+        }
+    }
+
+    editPatternIndex(sequenceColumn: SequencePatternColumnDocument, patternIndex: number) {
         const sequenceEvent = sequenceColumn.events.find(e => e.time === this.cursorTime);
         const pattern = sequenceColumn.instrument.patterns[patternIndex];
 
@@ -485,19 +518,10 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
             ctx.rect(0, fontHeight, this.canvas.width, this.canvas.height - fontHeight)
             ctx.clip();
 
-            for (let sequenceEvent of sequenceColumn.events) {
-
-                const pattern = sequenceEvent.pattern;
-                const patternBeats = pattern.duration / pattern.subdivision;
-
-                if (sequenceEvent.time + patternBeats - this.scrollRow < 0) {
-                    continue;
-                }
-
-                ctx.fillStyle = "#444";
-                ctx.fillRect(sequenceX, (sequenceEvent.time - this.scrollRow) * fontHeight + fontHeight, columnWidth - 1, patternBeats * fontHeight);
-                ctx.fillStyle = "#FFF";
-                ctx.fillText(pattern.name, sequenceX, (sequenceEvent.time - this.scrollRow) * fontHeight + fontHeight + this.fontEm.fontBoundingBoxAscent)
+            if (sequenceColumn instanceof SequencePatternColumnDocument) {
+                this.renderPatternColumn(ctx, sequenceColumn, sequenceX, fontHeight, columnWidth);
+            } else if (sequenceColumn instanceof SequenceWaveColumnDocument) {
+                this.renderWaveColumn(ctx, sequenceColumn, sequenceX, fontHeight, columnWidth);
             }
 
             ctx.restore();
@@ -514,6 +538,42 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
 
         ctx.fillStyle = "#AAA";
         ctx.fillRect(this.canvas.width - 20, scrollbarPosition, 20, scrollbarHeight);
+    }
+
+    renderPatternColumn(ctx: CanvasRenderingContext2D, sequenceColumn: SequencePatternColumnDocument, sequenceX: number, fontHeight: number, columnWidth: number) {
+        for (let sequenceEvent of sequenceColumn.events) {
+
+            const pattern = sequenceEvent.pattern;
+            const patternBeats = pattern.duration / pattern.subdivision;
+
+            if (sequenceEvent.time + patternBeats - this.scrollRow < 0) {
+                continue;
+            }
+
+            ctx.fillStyle = "#444";
+            ctx.fillRect(sequenceX, (sequenceEvent.time - this.scrollRow) * fontHeight + fontHeight, columnWidth - 1, patternBeats * fontHeight);
+            ctx.fillStyle = "#FFF";
+            ctx.fillText(pattern.name, sequenceX, (sequenceEvent.time - this.scrollRow) * fontHeight + fontHeight + this.fontEm.fontBoundingBoxAscent)
+        }
+    }
+
+    renderWaveColumn(ctx: CanvasRenderingContext2D, sequenceColumn: SequenceWaveColumnDocument, sequenceX: number, fontHeight: number, columnWidth: number) {
+        for (let sequenceEvent of sequenceColumn.events) {
+
+            const wave = sequenceEvent.wave;
+            const beatsPerSecond = this.app.song.bpm / 60;
+
+            const waveBeats = wave.sampleCount / wave.sampleRate * beatsPerSecond;
+
+            if (sequenceEvent.time + waveBeats - this.scrollRow < 0) {
+                continue;
+            }
+
+            ctx.fillStyle = "#444";
+            ctx.fillRect(sequenceX, (sequenceEvent.time - this.scrollRow) * fontHeight + fontHeight, columnWidth - 1, waveBeats * fontHeight);
+            ctx.fillStyle = "#FFF";
+            ctx.fillText(wave.name, sequenceX, (sequenceEvent.time - this.scrollRow) * fontHeight + fontHeight + this.fontEm.fontBoundingBoxAscent)
+        }
     }
 
     redrawOverlayCanvas() {

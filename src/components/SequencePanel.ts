@@ -3,6 +3,7 @@ import { SequenceEditorCanvas } from "./SequenceEditorCanvas";
 import { registerSequenceEditorCommands } from "../commands/SequenceEditor/Register";
 import { ViewFrame } from "../nutz/ViewFrame";
 import { CommandButtonBar, DataTable, Div, HFlex } from "../nutz";
+import { SequencePatternColumnDocument, SequenceWaveColumnDocument } from "../audio/SongDocument";
 
 export class SequencePanel extends ViewFrame {
     app: Appl;
@@ -116,10 +117,18 @@ export class SequencePanel extends ViewFrame {
         }
 
         while (this.patternList.getRowCount()) this.patternList.removeRow(0);
-        let key = 0;
-        for (let pattern of sequence.instrument.patterns) {
-            this.patternList.addRow({key: key < 10 ? key.toString() : "-", pattern: pattern.name});
-            key++;
+        if (sequence instanceof SequencePatternColumnDocument) {
+            let key = 0;
+            for (let pattern of sequence.instrument.patterns) {
+                this.patternList.addRow({key: key < 10 ? key.toString() : "-", pattern: pattern.name});
+                key++;
+            }
+        } else if (sequence instanceof SequenceWaveColumnDocument) {
+            let key = 0; // TODO: note input?
+            for (let wave of sequence.instrument.waves) {
+                this.patternList.addRow({key: key < 10 ? key.toString() : "-", wave: wave.name});
+                key++;
+            }
         }
     }
 
