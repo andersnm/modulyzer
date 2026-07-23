@@ -12,5 +12,6 @@ export class ClearSongCommand implements ICommand {
 
         this.app.song.clearAll();
         this.app.projectFile = null;
+        window.document.title = "Modulyzer";
     }
 }

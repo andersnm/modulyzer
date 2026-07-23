@@ -23,5 +23,6 @@ export class OpenSongCommand implements ICommand {
         this.app.song.importProjectJson(json);
 
         this.app.projectFile = openHandle;
+        window.document.title = `${this.app.projectFile.name} - Modulyzer`;
     }
 }

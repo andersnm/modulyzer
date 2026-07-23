@@ -24,5 +24,6 @@ export class SaveSongCommand {
         await presetsFile.close();
 
         this.app.projectFile = saveHandle;
+        window.document.title = `${this.app.projectFile.name} - Modulyzer`;
     }
 }
