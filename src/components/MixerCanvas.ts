@@ -95,9 +95,15 @@ class DragConnect extends DragTarget {
         this.component.connectToPt = null;
         this.component.redrawOverlayCanvas();
 
-        if (connectToInstrument) {
-            this.component.app.song.createConnection(connectFromInstrument, connectToInstrument);
+        if (!connectToInstrument) {
+            return;
         }
+
+        if (connectToInstrument === connectFromInstrument) {
+            return;
+        }
+
+        this.component.app.song.createConnection(connectFromInstrument, connectToInstrument);
     }
 }
 

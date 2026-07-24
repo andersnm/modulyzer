@@ -329,6 +329,10 @@ export class SongDocument extends EventTarget {
     }
 
     createConnection(from: InstrumentDocument, to: InstrumentDocument, gain: number = 1) {
+        if (from === to) {
+            throw new Error("Cannot connect instrument directly to same instrument");
+        }
+
         const connection = new ConnectionDocument();
         connection.from = from;
         connection.to = to;
