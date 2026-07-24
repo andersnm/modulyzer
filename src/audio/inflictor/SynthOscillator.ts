@@ -1,7 +1,6 @@
 class SynthOscillatorVoice {
   osc: OscillatorNode;
   voiceDetune: number;
-  unisonDetuneConstant: ConstantSourceNode;
 }
 
 export class SynthOscillator {
@@ -38,21 +37,19 @@ export class SynthOscillator {
       const osc = this.context.createOscillator();
       osc.type = this.oscType;
 
-      let voiceDetune = (this.unisonVoices === 1) ? 0 : ((i / (this.unisonVoices - 1)) - 0.5) * 12;
+      const fraction = (this.unisonVoices === 1) ? 0 : (i / (this.unisonVoices - 1)) - 0.5;
+      let voiceDetune = fraction * 12;
 
       if (this.oscDetune < 0)
         voiceDetune *= -1;
 
-      const unisonDetuneConstant = new ConstantSourceNode(this.context, { offset: voiceDetune + this.oscDetune });
-      unisonDetuneConstant.connect(osc.detune);
-
+      osc.detune.setValueAtTime(voiceDetune + this.oscDetune, time);
       this.lfoGain.connect(osc.detune);
       osc.frequency.setValueAtTime(freq, time);
       osc.connect(this.gainNode);
       osc.start(time);
-      unisonDetuneConstant.start(time);
 
-      this.oscillators.push({ osc, voiceDetune: voiceDetune, unisonDetuneConstant });
+      this.oscillators.push({ osc, voiceDetune });
     }
 
     this.lfo.start(time);
@@ -64,7 +61,6 @@ export class SynthOscillator {
   stop(time: number) {
     for (let osc of this.oscillators) {
       osc.osc.stop(time);
-      osc.unisonDetuneConstant.stop(time);
     }
     this.oscillators = [];
     if (this.lfo) {
@@ -84,7 +80,7 @@ export class SynthOscillator {
   setOscDetune(time: number, value: number) {
     this.oscDetune = value;
     for (let osc of this.oscillators) {
-      osc.unisonDetuneConstant.offset.setValueAtTime(osc.voiceDetune + this.oscDetune, time);
+      osc.osc.detune.setValueAtTime(osc.voiceDetune + this.oscDetune, time);
     }
   }
 

@@ -68,7 +68,9 @@ export class SynthNote {
     this.ampEnvelope.untrigger(time);
     this.osc1.stop(this.releaseEndTime);
     this.osc2.stop(this.releaseEndTime);
-    this.subOsc.stop(this.releaseEndTime);
+    if (this.subOsc) {
+      this.subOsc.stop(this.releaseEndTime);
+    }
   }
 
   clearNote() {
