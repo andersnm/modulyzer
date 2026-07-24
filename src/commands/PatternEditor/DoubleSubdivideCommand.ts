@@ -8,7 +8,7 @@ export class DoubleSubdivideCommand implements ICommand {
     handle(...args: any[]) {
         const app = this.component.app;
         const pattern = this.component.pattern;
-        app.song.updatePattern(pattern, pattern.name, pattern.duration * 2, pattern.subdivision * 2, pattern.swing);
+        app.song.updatePattern(pattern, pattern.name, pattern.duration * 2, pattern.subdivision * 2, pattern.swing, pattern.swingPerBeat);
 
         for (let column of pattern.columns) {
             for (let event of column.events) {

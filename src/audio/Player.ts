@@ -27,6 +27,7 @@ export class Pattern {
     duration: number;
     subdivision: number = 4;
     swing: number = 0.5;
+    swingPerBeat: number = 2;
 }
 
 export class SequenceEvent {
@@ -102,7 +103,7 @@ function collectPatternEvents(pattern: Pattern, currentBeat: number, durationBea
         const instrumenteer = column.instrumenteer;
 
         for (let event of column.events) {
-            const eventTime = getSwingTime(pattern, event.time / pattern.subdivision);
+            const eventTime = getSwingTime(pattern, event.time * pattern.swingPerBeat / pattern.subdivision) / pattern.swingPerBeat;
 
             if (eventTime >= currentBeat && eventTime < currentBeat + durationBeats) {
                 const deltaBeats = eventTime - currentBeat;

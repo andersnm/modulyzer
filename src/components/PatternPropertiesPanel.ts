@@ -10,18 +10,21 @@ export class PatternPropertiesPanel implements IComponent {
     lengthInput: HTMLInputElement;
     subdivisionInput: HTMLInputElement;
     swingInput: HTMLInputElement;
+    swingPerBeatInput: HTMLInputElement;
 
-    name: string = "00";
-    length: number = 64;
-    subdivision: number = 4;
-    swing: number = 50;
+    name: string;
+    length: number;
+    subdivision: number;
+    swing: number;
+    swingPerBeat: number;
 
-    constructor(app: Appl, name: string, length: number, subdivision: number, swing: number) {
+    constructor(app: Appl, name: string, length: number, subdivision: number, swing: number, swingPerBeat: number) {
         this.app = app;
         this.name = name;
         this.length = length;
         this.subdivision = subdivision;
         this.swing = swing;
+        this.swingPerBeat = swingPerBeat;
 
         this.container = VInset(undefined, [ "flex-1" , "gap-1"]);
         this.container.tabIndex = -1;
@@ -71,12 +74,26 @@ export class PatternPropertiesPanel implements IComponent {
 
         const swingGroup = FormGroup("Swing", this.swingInput);
 
+
+        this.swingPerBeatInput = document.createElement("input");
+        this.swingPerBeatInput.className = "w-full rounded-lg p-1 bg-neutral-800";
+        this.swingPerBeatInput.type = "number";
+        this.swingPerBeatInput.min = "1";
+        this.swingPerBeatInput.max = "4";
+        this.swingPerBeatInput.valueAsNumber = this.swingPerBeat;
+        this.swingPerBeatInput.addEventListener("change", () => {
+            this.swingPerBeat = this.swingPerBeatInput.valueAsNumber;
+        });
+
+        const swingPerBeatGroup = FormGroup("Swing Per Beat", this.swingPerBeatInput);
+
         const modalButtonBar = new ModalButtonBar(this.app);
 
         this.container.appendChild(nameGroup);
         this.container.appendChild(lengthGroup);
         this.container.appendChild(subdivisionGroup);
         this.container.appendChild(swingGroup);
+        this.container.appendChild(swingPerBeatGroup);
         this.container.appendChild(modalButtonBar.getDomNode());
     }
 

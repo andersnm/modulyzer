@@ -13,7 +13,7 @@ export class HalveSubdivideCommand implements ICommand {
             return;
         }
 
-        app.song.updatePattern(pattern, pattern.name, pattern.duration / 2, pattern.subdivision / 2, pattern.swing);
+        app.song.updatePattern(pattern, pattern.name, pattern.duration / 2, pattern.subdivision / 2, pattern.swing, pattern.swingPerBeat);
 
         for (let column of pattern.columns) {
             for (let event of column.events) {

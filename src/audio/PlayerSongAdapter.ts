@@ -328,6 +328,8 @@ export class PlayerSongAdapter {
         p.name = pattern.name;
         p.duration = pattern.duration;
         p.subdivision = pattern.subdivision;
+        p.swing = pattern.swing / 100;
+        p.swingPerBeat = pattern.swingPerBeat;
         this.player.patterns.push(p);
 
         this.patternMap.set(pattern, p);
@@ -341,6 +343,7 @@ export class PlayerSongAdapter {
         p.duration = pattern.duration;
         p.subdivision = pattern.subdivision;
         p.swing = pattern.swing / 100;
+        p.swingPerBeat = pattern.swingPerBeat;
     };
 
     onDeletePattern = (ev: CustomEvent<PatternDocument>) => {

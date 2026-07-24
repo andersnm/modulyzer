@@ -110,6 +110,7 @@ export class PatternDocument {
     duration: number = 1;
     subdivision: number = 4;
     swing: number = 50;
+    swingPerBeat: number = 2;
     columns: PatternColumnDocument[] = [];
 }
 
@@ -359,12 +360,14 @@ export class SongDocument extends EventTarget {
         this.dispatchEvent(new CustomEvent("deleteConnection", { detail: connection }));
     }
 
-    createPattern(instrument: InstrumentDocument, name: string, duration: number, subdivision: number) {
+    createPattern(instrument: InstrumentDocument, name: string, duration: number, subdivision: number, swing: number = 50, swingPerBeat: number = 2) {
         const pattern = new PatternDocument();
         pattern.instrument = instrument;
         pattern.name = name;
         pattern.duration = duration;
         pattern.subdivision = subdivision;
+        pattern.swing = swing;
+        pattern.swingPerBeat = swingPerBeat;
         instrument.patterns.push(pattern);
 
         this.dispatchEvent(new CustomEvent("createPattern", { detail: pattern }));
@@ -372,11 +375,12 @@ export class SongDocument extends EventTarget {
         return pattern;
     }
 
-    updatePattern(pattern: PatternDocument, name: string, length: number, subdivision: number, swing: number) {
+    updatePattern(pattern: PatternDocument, name: string, length: number, subdivision: number, swing: number, swingPerBeat: number) {
         pattern.name = name;
         pattern.duration = length;
         pattern.subdivision = subdivision;
         pattern.swing = swing;
+        pattern.swingPerBeat = swingPerBeat;
 
         this.dispatchEvent(new CustomEvent("updatePattern", { detail: pattern }));
     }
@@ -707,6 +711,8 @@ export class SongDocument extends EventTarget {
                     name: pattern.name,
                     duration: pattern.duration,
                     subdivision: pattern.subdivision,
+                    swing: pattern.swing,
+                    swingPerBeat: pattern.swingPerBeat,
                     columns: pattern.columns.map(column => ({
                         instrument: this.instruments.indexOf(column.instrument),
                         type: column.type,
@@ -763,7 +769,7 @@ export class SongDocument extends EventTarget {
 
             if (Array.isArray(jsonInstrument.patterns)) {
                 for (let jsonPattern of jsonInstrument.patterns) {
-                    const p = this.createPattern(i, jsonPattern.name, jsonPattern.duration, jsonPattern.subdivision ?? 4);
+                    const p = this.createPattern(i, jsonPattern.name, jsonPattern.duration, jsonPattern.subdivision ?? 4, jsonPattern.swing ?? 50, jsonPattern.swingPerBeat ?? 2);
 
                     for (let jsonColumn of jsonPattern.columns) {
                         const instrument = this.instruments[jsonColumn.instrument];
