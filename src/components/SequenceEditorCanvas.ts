@@ -1,5 +1,5 @@
 import { Appl } from "../App";
-import { SequencePatternColumnDocument, SequencePatternEventDocument, SequenceWaveColumnDocument, SequenceWaveEventDocument } from "../audio/SongDocument";
+import { SequenceEventDocument, SequencePatternColumnDocument, SequencePatternEventDocument, SequenceWaveColumnDocument, SequenceWaveEventDocument } from "../audio/SongDocument";
 import { deleteSequenceEvents } from "../commands/SequenceEditor/CutCommand";
 import { DragTarget, formatHotkey, IComponent } from "../nutz";
 import { FlexCanvas } from "./FlexCanvas";
@@ -348,7 +348,13 @@ export class SequenceEditorCanvas extends EventTarget implements IComponent {
 
     async gotoPattern() {
         const sequenceColumn = this.app.song.sequenceColumns[this.cursorColumn];
-        const sequenceEvent = sequenceColumn.events.reverse().find(e => e.time <= this.cursorTime);
+        let sequenceEvent: SequenceEventDocument = null;
+        for (let i = 0; i < sequenceColumn.events.length; i++) {
+            sequenceEvent = sequenceColumn.events[sequenceColumn.events.length - 1 - i];
+            if (sequenceEvent.time <= this.cursorTime) {
+                break;
+            }
+        }
 
         if (sequenceEvent instanceof SequencePatternEventDocument) {
             const panel = await this.app.executeCommand("show-pattern-editor") as PatternFrame;
