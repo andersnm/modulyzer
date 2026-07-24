@@ -1,8 +1,8 @@
 import { Player } from "../Player";
 import { describeTable, Instrument, InstrumentFactory, VirtualParameter } from "./InstrumentFactory";
 
-function noteToFreq(note) {
-    let a = 440; //frequency of A (coomon value is 440Hz)
+function noteToFreq(note: number): number {
+    let a = 440; // frequency of A4
     return (a / 32) * (2 ** ((note - 9) / 12));
 }
 
@@ -31,7 +31,7 @@ class OscVoice {
         this.gain.connect(dest);
     }
 
-    trigger(time: number, note: number, freq: number, oscType: OscillatorType) {
+    trigger(time: number, note: number, targetFreq: number, startFreq: number | null, glideTime: number, oscType: OscillatorType, lfoGainNode: GainNode) {
         this.note = note;
         this.noteOnTime = time;
         this.releaseEndTime = null;
@@ -45,13 +45,21 @@ class OscVoice {
 
         const osc = new OscillatorNode(this.context);
         osc.type = oscType;
-        osc.frequency.setValueAtTime(freq, time);
+
+        if (startFreq !== null && glideTime > 0) {
+            osc.frequency.setValueAtTime(startFreq, time);
+            osc.frequency.setTargetAtTime(targetFreq, time, glideTime);
+        } else {
+            osc.frequency.setValueAtTime(targetFreq, time);
+        }
+
+        lfoGainNode.connect(osc.detune);
+
         osc.connect(this.gain);
         osc.start(time);
 
         this.osc = osc;
 
-        // simple attack
         this.gain.gain.cancelScheduledValues(time);
         this.gain.gain.setValueAtTime(this.gain.gain.value, time);
         this.gain.gain.setTargetAtTime(1, time, 0.01);
@@ -99,10 +107,20 @@ export class Oscillator extends Instrument {
     private voicePool: OscVoice[];
 
     private oscType: OscillatorType = "sine";
+    private glideTime: number = 0;
+    private lastFreq: number | null = null;
+
+    private lfo: OscillatorNode;
+    private lfoGain: GainNode;
 
     constructor(context: AudioContext, factory: InstrumentFactory) {
         super(factory);
         this.context = context;
+
+        this.lfo = new OscillatorNode(context, { type: "sine", frequency: 5 });
+        this.lfoGain = new GainNode(context, { gain: 0 });
+        this.lfo.connect(this.lfoGain);
+        this.lfo.start();
 
         this.voicePool = Array.from(
             { length: 4 },
@@ -110,7 +128,6 @@ export class Oscillator extends Instrument {
         );
 
         this.outputNode = new GainNode(context);
-
         this.voicePool.forEach(v => v.connect(this.outputNode));
 
         this.parameters = [
@@ -125,6 +142,36 @@ export class Oscillator extends Instrument {
                 },
                 describeTable(oscTypeTable)
             ),
+            new VirtualParameter(
+                "Glide Time",
+                0,
+                1, // 0 to 1 second glide time
+                0,
+                "linear",
+                (time, value) => {
+                    this.glideTime = value;
+                }
+            ),
+            new VirtualParameter(
+                "LFO Speed",
+                0.1,
+                20, // 0.1Hz to 20Hz vibrato speed
+                5,
+                "linear",
+                (time, value) => {
+                    this.lfo.frequency.setValueAtTime(value, time);
+                }
+            ),
+            new VirtualParameter(
+                "LFO Depth",
+                0,
+                100, // 0 to 100 cents detune depth
+                0,
+                "linear",
+                (time, value) => {
+                    this.lfoGain.gain.setValueAtTime(value, time);
+                }
+            )
         ];
     }
 
@@ -159,12 +206,22 @@ export class Oscillator extends Instrument {
             if (velocity !== 0) {
                 const freq = noteToFreq(value);
                 const v = this.allocateVoice(value);
-                v.trigger(time, value, freq, this.oscType);
+                v.trigger(time, value, freq, this.lastFreq, this.glideTime, this.oscType, this.lfoGain);
+                this.lastFreq = freq;
             } else {
                 this.releaseVoice(time, value);
             }
         } else if (command === 0x80) {
             this.releaseVoice(time, value);
+        } else if (command === 0xB0) {
+            switch (value) {
+                case 123: // All Notes Off
+                    this.voicePool.forEach((voice) => voice.isActive && voice.release(time));
+                    this.lastFreq = null;
+                    break;
+                default:
+                    console.log("Unhandled control change: ", value);
+            }
         }
     }
 }
