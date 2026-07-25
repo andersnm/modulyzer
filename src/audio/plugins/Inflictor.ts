@@ -95,11 +95,9 @@ export class Inflictor extends Instrument {
         ];
     }
 
-    allocateVoice(note: number) {
-        const now = this.context.currentTime;
-
+    allocateVoice(time: number, note: number) {
         for (const v of this.voicePool) {
-            if (v.isActive && v.isFinished(now)) {
+            if (v.isActive && v.isFinished(time)) {
                 v.clearNote();
             }
         }
@@ -117,7 +115,7 @@ export class Inflictor extends Instrument {
             a.noteOnTime < b.noteOnTime ? a : b
         );
 
-        oldest.releaseNote(now);
+        oldest.releaseNote(time);
         oldest.note = note;
         return oldest;
     }
@@ -131,7 +129,7 @@ export class Inflictor extends Instrument {
     processMidi(time: number, command: number, value: number, data: number): void {
         if (command === 0x90) {
             if (data !== 0) {
-                const voice = this.allocateVoice(value);
+                const voice = this.allocateVoice(time, value);
                 if (voice) {
                     voice.triggerNote(time, value, data);
                 } else {

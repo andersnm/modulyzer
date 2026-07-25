@@ -175,11 +175,10 @@ export class Oscillator extends Instrument {
         ];
     }
 
-    private allocateVoice(note: number): OscVoice {
-        const now = this.context.currentTime;
+    private allocateVoice(time: number, note: number): OscVoice {
 
         for (const v of this.voicePool) {
-            if (v.isActive && v.isFinished(now)) {
+            if (v.isActive && v.isFinished(time)) {
                 v.clear();
             }
         }
@@ -205,7 +204,7 @@ export class Oscillator extends Instrument {
         if (command === 0x90) {
             if (velocity !== 0) {
                 const freq = noteToFreq(value);
-                const v = this.allocateVoice(value);
+                const v = this.allocateVoice(time, value);
                 v.trigger(time, value, freq, this.lastFreq, this.glideTime, this.oscType, this.lfoGain);
                 this.lastFreq = freq;
             } else {

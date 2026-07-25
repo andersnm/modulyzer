@@ -117,15 +117,16 @@ export class WaveTracker extends Instrument {
         const waveNode = { wave, node, gain: waveGain, active: true, startTime: time - offsetTimeSec };
         this.nodes.push(waveNode); // there may be two same notes here, but will sort out after the "ended" event
 
+        node.connect(waveGain);
+        waveGain.connect(this.gainNode);
+
         node.addEventListener("ended", () => {
             node.disconnect(waveGain);
             waveGain.disconnect(this.gainNode);
             const i = this.nodes.indexOf(waveNode)
+            if (i === -1) throw new Error("Ended wave not in voice pool");
             this.nodes.splice(i, 1);
         });
-
-        node.connect(waveGain);
-        waveGain.connect(this.gainNode);
 
         node.start(time, offsetTimeSec);
     }
