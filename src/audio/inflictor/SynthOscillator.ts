@@ -68,7 +68,6 @@ export class SynthOscillator {
       this.lfo = null;
     }
   }
-  
 
   setOscType(type: OscillatorType) {
     this.oscType = type;

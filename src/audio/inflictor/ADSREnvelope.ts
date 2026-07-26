@@ -12,14 +12,14 @@ export class ADSREnvelope {
     this.gain.value = 0;
   }
 
-  trigger(time: number) {
+  trigger(time: number, scale: number) {
     // Attack
     this.gain.cancelScheduledValues(time);
     this.gain.setValueAtTime(0, time);
-    this.gain.linearRampToValueAtTime(1, time + this.attack);
+    this.gain.linearRampToValueAtTime(1 * scale, time + this.attack);
 
     // Decay
-    this.gain.linearRampToValueAtTime(this.sustain, time + this.attack + this.decay);
+    this.gain.linearRampToValueAtTime(this.sustain * scale, time + this.attack + this.decay);
   }
 
   untrigger(time: number) {

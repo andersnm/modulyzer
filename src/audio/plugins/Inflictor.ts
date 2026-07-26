@@ -31,6 +31,10 @@ export class Inflictor extends Instrument {
 
         // each voice have filter etc, change all at once
         this.parameters = [
+            new VirtualParameter("Unison", 1, 4, 2, "linear", (time, value) => {
+                this.voicePool.forEach((voice) => voice.osc1.unisonVoices = value);
+            }),
+
             new VirtualParameter("Osc1-Waveform", 0, 3, 2, "linear", (time, value) => {
                 this.voicePool.forEach((voice) => voice.osc1.setOscType(oscTypeTable[Math.round(value)]));
             }, describeTable(oscTypeTable)),

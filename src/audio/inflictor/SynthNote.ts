@@ -43,6 +43,8 @@ export class SynthNote {
   }
 
   triggerNote(time: number, note: number, velocity: number) {
+    this.releaseNote(time);
+
     this.note = note;
     this.noteOnTime = time;
     this.noteOffTime = null;
@@ -52,7 +54,7 @@ export class SynthNote {
     const freq = noteToFreq(note);
     this.osc1.play(time, freq);
     this.osc2.play(time, freq);
-    this.ampEnvelope.trigger(time);
+    this.ampEnvelope.trigger(time, velocity / 127);
 
     this.subOsc = this.context.createOscillator();
     this.subOsc.type = "square";
