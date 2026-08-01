@@ -1,5 +1,5 @@
 
-function makewt(nw: number, ip: Int32Array, w: Float64Array): void {
+function makewt(nw: number, ip: Int32Array, w: Float32Array): void {
     let j: number, nwh: number;
     let delta: number, x: number, y: number;
 
@@ -26,7 +26,7 @@ function makewt(nw: number, ip: Int32Array, w: Float64Array): void {
     }
 }
 
-function makect(nc: number, ip: Int32Array, c: Float64Array): void {
+function makect(nc: number, ip: Int32Array, c: Float32Array): void {
     let j: number, nch: number;
     let delta: number;
 
@@ -43,7 +43,7 @@ function makect(nc: number, ip: Int32Array, c: Float64Array): void {
     }
 }
 
-function bitrv2(n: number, ip: Int32Array, a: Float64Array): void {
+function bitrv2(n: number, ip: Int32Array, a: Float32Array): void {
     let j: number, j1: number, k: number, k1: number, l: number, m: number, m2: number;
     let xr: number, xi: number, yr: number, yi: number;
 
@@ -156,7 +156,7 @@ function bitrv2(n: number, ip: Int32Array, a: Float64Array): void {
     }
 }
 
-function cftfsub(n: number, a: Float64Array, w: Float64Array): void {
+function cftfsub(n: number, a: Float32Array, w: Float32Array): void {
     let j: number, j1: number, j2: number, j3: number, l: number;
     let x0r: number, x0i: number, x1r: number, x1i: number, x2r: number, x2i: number, x3r: number, x3i: number;
 
@@ -204,7 +204,7 @@ function cftfsub(n: number, a: Float64Array, w: Float64Array): void {
     }
 }
 
-function cft1st(n: number, a: Float64Array, w: Float64Array): void {
+function cft1st(n: number, a: Float32Array, w: Float32Array): void {
     let j: number, k1: number, k2: number;
     let wk1r: number, wk1i: number, wk2r: number, wk2i: number, wk3r: number, wk3i: number;
     let x0r: number, x0i: number, x1r: number, x1i: number, x2r: number, x2i: number, x3r: number, x3i: number;
@@ -315,7 +315,7 @@ function cft1st(n: number, a: Float64Array, w: Float64Array): void {
     }
 }
 
-function cftmdl(n: number, l: number, a: Float64Array, w: Float64Array): void {
+function cftmdl(n: number, l: number, a: Float32Array, w: Float32Array): void {
     let j: number, j1: number, j2: number, j3: number, k: number, k1: number, k2: number, m: number, m2: number;
     let wk1r: number, wk1i: number, wk2r: number, wk2i: number, wk3r: number, wk3i: number;
     let x0r: number, x0i: number, x1r: number, x1i: number, x2r: number, x2i: number, x3r: number, x3i: number;
@@ -451,7 +451,7 @@ function cftmdl(n: number, l: number, a: Float64Array, w: Float64Array): void {
     }
 }
 
-function rftfsub(n: number, a: Float64Array, nc: number, c: Float64Array): void {
+function rftfsub(n: number, a: Float32Array, nc: number, c: Float32Array): void {
     let j: number, k: number, kk: number, ks: number, m: number;
     let wkr: number, wki: number, xr: number, xi: number, yr: number, yi: number;
 
@@ -475,7 +475,7 @@ function rftfsub(n: number, a: Float64Array, nc: number, c: Float64Array): void 
     }
 }
 
-function rftbsub(n: number, a: Float64Array, nc: number, c: Float64Array): void {
+function rftbsub(n: number, a: Float32Array, nc: number, c: Float32Array): void {
     let j: number, k: number, kk: number, ks: number, m: number;
     let wkr: number, wki: number, xr: number, xi: number, yr: number, yi: number;
 
@@ -502,7 +502,7 @@ function rftbsub(n: number, a: Float64Array, nc: number, c: Float64Array): void 
     a[m + 1] = -a[m + 1]; // Negate the middle imaginary part
 }
 
-function cftbsub(n: number, a: Float64Array, w: Float64Array): void {
+function cftbsub(n: number, a: Float32Array, w: Float32Array): void {
     let j: number, j1: number, j2: number, j3: number, l: number;
     let x0r: number, x0i: number, x1r: number, x1i: number, x2r: number, x2i: number, x3r: number, x3i: number;
 
@@ -550,7 +550,7 @@ function cftbsub(n: number, a: Float64Array, w: Float64Array): void {
     }
 }
 
-export function rdft(n: number, isgn: number, a: Float64Array, ip: Int32Array, w: Float64Array): void {
+export function rdft(n: number, isgn: number, a: Float32Array, ip: Int32Array, w: Float32Array): void {
     let nw = ip[0];
     if (n > (nw << 2)) {
         nw = n >> 2;

@@ -84,8 +84,8 @@ export class MipMappedWaveTable {
   numTables: number = 12; // Example value, adjust as needed
 
   prototypeTable: number[] = new Array(MipMappedWaveTable.tableLength + 4).fill(0);
-  tableSet: Float64Array[] = Array.from({ length: this.numTables }, () =>
-    new Float64Array(MipMappedWaveTable.tableLength + 4).fill(0)
+  tableSet: Float32Array[] = Array.from({ length: this.numTables }, () =>
+    new Float32Array(MipMappedWaveTable.tableLength + 4).fill(0)
   );
 
   fourierTransformer: FourierTransformerRadix2; // Placeholder for fourier transformer

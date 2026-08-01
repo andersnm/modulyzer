@@ -4,7 +4,7 @@ export class FourierTransformerRadix2 {
     private N: number;
     private logN: number;
     private ip: Int32Array; // Auxiliary array for FFT
-    private w: Float64Array;  // Work array for FFT
+    private w: Float32Array;  // Work array for FFT
     private direction: 'FORWARD' | 'INVERSE';
     private normalizationMode: 'ORTHONORMAL_TRAFO' | 'NORMALIZE_ON_FORWARD_TRAFO' | 'NORMALIZE_ON_INVERSE_TRAFO';
     private normalizationFactor: number;
@@ -50,7 +50,7 @@ export class FourierTransformerRadix2 {
                 this.updateNormalizationFactor();
 
                 // Reallocate and initialize work array
-                this.w = new Float64Array(2 * this.N).fill(0);
+                this.w = new Float32Array(2 * this.N).fill(0);
 
                 // Reallocate and initialize auxiliary array
                 this.ip = new Int32Array(Math.ceil(4.0 + Math.sqrt(this.N))).fill(0);
@@ -80,7 +80,7 @@ export class FourierTransformerRadix2 {
         }
     }
 
-    public transformSymmetricSpectrum(inSpectrum: { re: number; im: number }[], outSignal: Float64Array): void {
+    public transformSymmetricSpectrum(inSpectrum: { re: number; im: number }[], outSignal: Float32Array): void {
         this.setDirection('INVERSE');
 
         // Retrieve the real part of the first array entry
@@ -116,7 +116,7 @@ export class FourierTransformerRadix2 {
         this.setDirection('FORWARD');
 
         // Retrieve the buffer for transformation
-        const d_outBuffer: Float64Array = new Float64Array(this.N);
+        const d_outBuffer: Float32Array = new Float32Array(this.N);
 
         // Copy and normalize the input signal into the transformation buffer
         if (this.normalizationFactor !== 1.0) {
