@@ -27,13 +27,13 @@ jobs:
         run: npm install
 
       - name: Build TypeScript
-        run: npm run build-pages
+        run: npm run build-pages -w modulyzer
 
       - name: Upload static files as artifact
         id: deployment
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: modulyzer/dist
 
   deploy:
     needs: build

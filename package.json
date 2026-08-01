@@ -1,21 +1,14 @@
 {
-  "name": "waveweb",
+  "name": "modulyzer-monorepo",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "workspaces": [
+    "modulyzer"
+  ],
   "scripts": {
-    "vite": "vite --force",
-    "build": "tsc && vite build",
-    "build-pages": "tsc && vite build --mode pages",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "pako": "^2.1.0"
+    "build": "npm run build -ws",
+    "vite": "npm run vite -w modulyzer"
   },
   "devDependencies": {
-    "@types/pako": "^2.0.3",
-    "@types/wicg-file-system-access": "^2023.10.6",
-    "typescript": "^5.5.2",
-    "vite": "^5.0.8"
+    "typescript": "^5.9.3"
   }
 }
