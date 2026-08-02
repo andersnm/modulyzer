@@ -2,6 +2,7 @@ import recorderWorkletUrl from "./RecorderWorklet.js?worker&url";
 import monitorWorkletUrl from "./MonitorWorklet.js?worker&url";
 import dx7WorkletUrl from "./dx7/Dx7Worklet.js?worker&url";
 import open303WorkletUrl from "./open303/Open303Worklet.js?worker&url";
+import autotuneWorkletUrl from "./autotune/AutotuneWorklet.js?worker&url";
 
 import { Recorder } from "./Recorder.js";
 
@@ -21,6 +22,7 @@ export class OfflineAudioDevice extends AudioDeviceBase<OfflineAudioContext> {
         await this.context.audioWorklet.addModule(monitorWorkletUrl);
         await this.context.audioWorklet.addModule(dx7WorkletUrl);
         await this.context.audioWorklet.addModule(open303WorkletUrl);
+        await this.context.audioWorklet.addModule(autotuneWorkletUrl);
 
         this.masterGainNode = new GainNode(this.context, { gain: 1.0 });
         this.masterGainNode.connect(this.context.destination);
@@ -58,6 +60,7 @@ export class AudioDevice extends AudioDeviceBase<AudioContext> {
         await this.context.audioWorklet.addModule(monitorWorkletUrl);
         await this.context.audioWorklet.addModule(dx7WorkletUrl);
         await this.context.audioWorklet.addModule(open303WorkletUrl);
+        await this.context.audioWorklet.addModule(autotuneWorkletUrl);
 
         const stream = await navigator.mediaDevices.getUserMedia({
             audio: {

@@ -25,6 +25,7 @@ import { ChorusFactory } from "./audio/plugins/Chorus";
 import { CompressorFactory } from "./audio/plugins/Compressor";
 import { MasterizerFactory } from "./audio/plugins/Masterizer";
 import { SaturationFactory } from "./audio/plugins/Saturation";
+import { AutotuneFactory } from "./audio/plugins/Autotune";
 import { getInstrumentName } from "./components/PatternEditorHelper";
 import { importJsonPreset } from "./presetfile/JsonPreset";
 
@@ -188,6 +189,7 @@ export class Appl extends CommandHost implements IComponent {
         new CompressorFactory(),
         new MasterizerFactory(),
         new SaturationFactory(),
+        new AutotuneFactory(),
     ];
 
     constructor() {
